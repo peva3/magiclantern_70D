@@ -78,7 +78,10 @@ asm(
 
     ".code 32\n"                /* from now on, we've got generic code for all platforms */
     "xor_check:\n"
-    /* first comes the check if we were loaded successfully, efficiently packed into 0x20 bytes */
+    // Check for "bx r3" (0xe12fff13), that we expect build system
+    // to have inserted at EOF - 0x8.  If found, suggests complete file loaded okay.
+    // We then proceed to checksum this binary, else bail to DryOS code.
+    // Checksum value is stored at EOF - 0x4 (that is, the last word).
     "ADD   R4, PC, #0x0C\n"
     "LDM   R4, {R1-R3}\n"
     "LDR   R0, [R2]\n"
