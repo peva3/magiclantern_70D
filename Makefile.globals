@@ -92,6 +92,10 @@ ifeq ($(CONFIG_QEMU),y)
     CFLAGS += -DCONFIG_QEMU
 endif
 
+ifeq ($(FATAL_ASSERTS),y)
+    CFLAGS += -DFATAL_ASSERTS
+endif
+
 # Allow devs to make warnings break builds
 ifeq ($(FATAL_WARNINGS),y)
     CFLAGS += -Werror
