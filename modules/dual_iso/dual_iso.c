@@ -97,6 +97,7 @@ static int is_7d = 0;
 static int is_5d2 = 0;
 static int is_50d = 0;
 static int is_6d = 0;
+static int is_6d2 = 0;
 static int is_60d = 0;
 static int is_70d = 0;
 static int is_100d = 0;
@@ -126,6 +127,9 @@ static uint32_t PHOTO_CMOS_ISO_SIZE = 0;
 // is an ADTG part that has control registers.  See:
 // https://magiclantern.fandom.com/wiki/ADTG
 //
+// NB ADTG is the part, and it has subparts.  I'm not clear on this yet,
+// there are mentions of a CMOS and ADC sub part.
+//
 // Here we care primarily about ADTG control.  We alter cam mem so when DryOS
 // configures ADTG, it will send our control messages, and select
 // our desired hybrid ISO.  The control message is packed in a 32-bit value.
@@ -136,13 +140,20 @@ static uint32_t PHOTO_CMOS_ISO_SIZE = 0;
 //   unk   ADTG reg   ISO3   ISO2   ISO1   ISO0   flags
 //
 // An example value: 0x0b400220.  This splits into regions like so:
-// 0_b4_0_0_2_2_0, or:
-// unk = 0, ADTG reg = b4, ISO3-0 = 0, 0, 2, 2, flags = 0.
+// 0_b_4_0022_0, or:
+// unk = 0, ADTG reg = b, unk = 4, ISO3-0 = 0, 0, 2, 2, flags = 0.
 // On 200D, 0 => ISO 100, 2 => ISO 400.
 //
-// ADTG reg is b4 on 200d, meaning that ADTG takes the whole message,
-// uses b4 for internal addressing or config, and applies the command
-// portion to b4.
+// Existing ML docs are quite vague and confusing on usage of CMOS vs ADTG.
+// I think the CMOS sub-part is expected to have a small number of
+// internal registers, 7 or 8 on D45 cams.  This changes to 15 or 16
+// on later cams.
+//
+// Logging CMOS_write() shows the kinds of messages described here.
+//
+// ADTG reg is b on 200d, meaning that ADTG takes the whole message,
+// uses b for internal addressing or config, and applies the command
+// portion to b.  Probably to CMOS subpart?
 //
 // ML code treats the 4 ISO values as 2 combined values.  I presume
 // this is because of bayer pattern meaning it's easier to think about
@@ -317,6 +328,79 @@ end:
     return result;
 }
 
+// Return value is non-zero for error, but errors can be positive or negative.
+static int patch_cmos_iso_values_6d2(uint32_t start_addr, int item_size, int count)
+{
+    uint32_t table_size = item_size * count;
+    int32_t result = 0;
+
+    // save an alloc by getting space for both at once
+    uint8_t *new_values = malloc(table_size * 2);
+    if (new_values == NULL)
+        return -2;
+    uint8_t *old_values = new_values + table_size;
+
+    memcpy(new_values, (uint8_t *)start_addr, table_size);
+    memcpy(old_values, (uint8_t *)start_addr, table_size);
+
+    // ISO bits are 0x0000_0ff0, we will be preserving half and replacing half.
+    uint32_t iso_mask = 0x000000f0;
+
+    uint32_t other_iso_i = get_alternate_iso_index();
+    // could use CMOS_ISO_BITS for the mask, with some shifts, like dual_iso_enable() does:
+    uint32_t other_iso_bits = *(uint32_t *)(old_values + item_size * other_iso_i) & iso_mask;
+    if (other_iso_bits != 0x00
+        && other_iso_bits != 0x10
+        && other_iso_bits != 0x20
+        && other_iso_bits != 0x30
+        && other_iso_bits != 0x40
+        && other_iso_bits != 0x50
+        && other_iso_bits != 0x60
+        && other_iso_bits != 0x70) // one more "native" ISO than 200D
+    {
+        // ISO values are unexpected, we don't want to patch using them
+        DryosDebugMsg(0, 15, "weird ISO bits: 0x%x", other_iso_bits);
+        DryosDebugMsg(0, 15, "from: 0x%x", (start_addr + item_size * other_iso_i));
+        result = other_iso_bits;
+        goto end;
+    }
+
+    for (int i = 0; i < count; i++)
+    {
+        // 0d03a000 == 100, 0d03a440 == 1600
+        // field is 0xURUUU AB F, AB are ISO values, R is probably CMOS register,
+        // U are unknown.  F is probably a flag, purpose unknown.
+        //
+        // Old cams calculate this in a slightly more generic way, using
+        // CMOS_FLAG_BITS, CMOS_ISO_BITS, and some shifting.  The specific
+        // logic used doesn't work for the 6D2 data structure.
+
+        uint32_t val = *(uint32_t *)(old_values + item_size * i);
+        if ((val & 0xffff0000) == 0x0d030000) // Sanity check.  You can log the commands with adtglog2.mo
+                                              // to find patterns.
+        {
+            val &= (~iso_mask); // mask out old other ISO
+            val |= other_iso_bits; // mask in new
+            *(uint32_t *)(new_values + item_size * i) = val;
+        }
+    }
+    struct patch patch =
+    {
+        .addr = (uint8_t *)(start_addr),
+        .old_values = old_values,
+        .new_values = new_values,
+        .size = table_size,
+        .description = "dual_iso: CMOS[d] gains",
+        .is_instruction = 0
+    };
+    // NB this won't apply patch if location is already patched
+    result = apply_patches(&patch, 1);
+
+end:
+    free(new_values);
+    return result;
+}
+
 // start_addr should be the address of one of the arrays of ADTG command values,
 // which encode, amongst other things, the ISO values.
 // There is a different array for photo and video.
@@ -355,12 +439,26 @@ static int dual_iso_enable(uint32_t start_addr, int size, int count, uint32_t* b
         // checks since we patch rom; can't get the wrong location due to heap layout.
         //
         // When more MMU cams are added we can find the correct place to split.
-        //
-        // We do want to do proper, per ISO patching inside the 200D function.
-        // Currently we force to 100/800.
         if (is_200d)
         {
             return patch_cmos_iso_values_200d(start_addr, size, count);
+        }
+
+        // SJE FIXME now we have two special cases for modern cams...
+        // The below logic assumes the CMOS data buf contains 16 bit items,
+        // and the target CMOS reg is at a specific offset.  Neither of
+        // these things holds for 6d2.  We also can't trivially adapt
+        // the 200D logic, because the protocol is quite different there.
+        // 4 apparent ISO channels and a different command structure.
+        //
+        // It's looking like the best solution is move this stuff into
+        // the cam, making the code simpler in this module; just call the cam
+        // func which would have a fixed name.
+        // Or, give each cam a patch_cmos_iso_values_XXd() func and make this
+        // func closer to a switch/case.
+        if (is_6d2)
+        {
+            return patch_cmos_iso_values_6d2(start_addr, size, count);
         }
 
         // Get original values, used for sanity testing the address points at
@@ -1047,6 +1145,78 @@ static uint32_t get_photo_cmos_iso_start_650d(void)
     return ram_copy_start;
 }
 
+// 6d2 has some differences to earlier cams.  Unlike 200d,
+// I couldn't find a table of fixed commands in ROM.
+// It seems that a template command is copied rom -> ram,
+// as well as a short table of just the different ISO command words.
+// At runtime, the template command is patched with the relevant
+// ISO, then sent.
+//
+// Patching the rom copy doesn't work, presumably this happens too late.
+// Patching the heap copy is a bad idea, these addresses, while
+// much more stable than you might guess, are not fully stable.
+//
+// Here we search for what I believe to be heap or DMA memcpy metadata,
+// which holds the src and dst addr of the DMA transfer used for
+// the rom -> ram copy.  The offset from that start addr is fixed,
+// and the search is reliable.
+static uint32_t get_photo_cmos_iso_start_6d2(void)
+{
+    // The struct for the rom -> ram transfer ends up in the
+    // 0x7b_0000 region.  How much this can vary hasn't been tested much.
+    //
+    // That struct contains the src addr, e198_0000.
+
+    uint32_t addr = 0x780000;
+    uint32_t max_search_addr = 0x880000;
+
+    uint32_t rom_copy_start = 0xe1980000;
+    uint32_t ram_copy_start = 0;
+
+    // search for DMA src addr, to find our dst addr
+    for (; addr < max_search_addr; addr += 4)
+    {
+        if (*(uint32_t *)addr == rom_copy_start)
+        {
+            // A bunch of checks to give us higher confidence
+            // we found the right value.  So far, none of these
+            // have been required; the first hit is the correct
+            // one.  But these are cheap checks, and should avoid
+            // ever finding a random match on the 32-bit DMA addr value.
+
+            uint32_t *probe = (uint32_t *)addr;
+            // we expect to find 4 copies of the DMA src addr nearby
+            if (probe[0] != probe[1])
+                continue;
+            if (probe[0] != probe[4])
+                continue;
+            if (probe[0] != probe[5])
+                continue;
+
+            // probe[6] is expected to hold the aligned start
+            // of the dest heap address (often, 0x415a_7000).
+            // PHOTO_CMOS_ISO_START is offset by 0xb30.
+            ram_copy_start = probe[6] + 0xb30;
+            // we expect this to be Uncacheable
+            if (ram_copy_start == (uint32_t)CACHEABLE(ram_copy_start))
+                continue;
+
+            // passed all checks, stop search
+            qprintf("Found ram_copy_start, 0x%08x: 0x%08x\n",
+                    &probe[6], ram_copy_start);
+            break;
+        }
+    }
+    if (*(uint32_t *)addr != rom_copy_start || addr >= max_search_addr)
+    {
+        qprintf("Failed to find rom_copy_start!\n");
+        printf("Failed to find r_c_s!\n");
+        return 0; // failed to find target
+    }
+
+    return ram_copy_start;
+}
+
 /* callback routine for mlv_rec to add a custom DISO block after recording started (which already was specified in mlv.h in definition phase) */
 static void dual_iso_mlv_rec_cbr (uint32_t event, void *ctx, mlv_hdr_t *hdr)
 {
@@ -1123,6 +1293,24 @@ static unsigned int dual_iso_init()
 
         CMOS_ISO_BITS = 4;
         CMOS_FLAG_BITS = 0;
+        CMOS_EXPECTED_FLAG = 0;
+    }
+    else if (is_camera("6D2", "1.1.1"))
+    {
+        is_6d2 = 1;
+//        PHOTO_CMOS_ISO_START = 0xe1980b30; // array of 8 ISO change commands; doesn't change photo ISO
+//        PHOTO_CMOS_ISO_COUNT = 8;
+//        PHOTO_CMOS_ISO_SIZE  = 0x4;
+
+        // this works, but I want a less janky way of locating the array,
+        // these heap addresses are not reliable on some cams
+//        PHOTO_CMOS_ISO_START = 0x415a7b30; // array of 8 ISO change commands, ram copy
+        PHOTO_CMOS_ISO_START = get_photo_cmos_iso_start_6d2();
+        PHOTO_CMOS_ISO_COUNT = 8;
+        PHOTO_CMOS_ISO_SIZE  = 4;
+
+        CMOS_ISO_BITS = 4; // bit size of *each* ISO field
+        CMOS_FLAG_BITS = 4; // bit size of all flags
         CMOS_EXPECTED_FLAG = 0;
     }
     else if (is_camera("50D", "1.0.9"))
@@ -1366,7 +1554,6 @@ static unsigned int dual_iso_init()
         CMOS_FLAG_BITS = 2;
         CMOS_EXPECTED_FLAG = 3;
     }
-
     else if (is_camera("EOSM", "2.0.2"))
     {
         is_eosm = 1;    
