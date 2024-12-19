@@ -1,17 +1,17 @@
 #include <dryos.h>
 #include <property.h>
+#include <cfn-generic.h>
 
 // look on camera menu or review sites to get custom function numbers
 
-int get_htp() { return GetCFnData(1, 3); }
-void set_htp(int value) { SetCFnData(1, 3, value); }
+// These are not CFn on 6D2 (see 5D3 cfn.c)
+GENERIC_GET_ALO
+GENERIC_GET_HTP
+GENERIC_GET_MLU
+GENERIC_SET_MLU
 
-int get_alo() { return GetCFnData(1, 4); }
-void set_alo(int value) { SetCFnData(1, 4, value); }
-
-int get_mlu() { return GetCFnData(2, 6); }
-void set_mlu(int value) { SetCFnData(2, 6, value); }
-
+// These two are in CFn menu 3, but there's no number given
+// for each item, it's graphical.  So, I'm unsure.
 int cfn_get_af_button_assignment() { return GetCFnData(3, 1); }
 void cfn_set_af_button(int value) { SetCFnData(3, 1, value); }
 

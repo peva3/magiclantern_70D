@@ -367,6 +367,13 @@
 #define PROP_HEADPHONE_PHYSICAL_CONNECT 0x80030055
 #endif
 
+#ifdef CONFIG_6D2
+// SJE unconfirmed, copying from 6D
+#define PROP_HTP 0x8000004a
+#define PROP_MULTIPLE_EXPOSURE 0x0202000c
+#define PROP_MLU 0x80000047
+#endif
+
 #ifdef CONFIG_7D2
 #define PROP_MLU 0x80000047 // SJE FIXME check this is really the same as 6d and 5d3
 #endif

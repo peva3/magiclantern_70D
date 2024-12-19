@@ -128,7 +128,8 @@ struct prop_lv_lens
 
 SIZE_CHECK_STRUCT( prop_lv_lens, 64 );
 
-#elif defined(CONFIG_200D) || defined(CONFIG_77D)
+#elif defined(CONFIG_200D) || defined(CONFIG_77D) || defined(CONFIG_6D2)
+// possibly all D67?
 /* Structure looks exactly like 2nd half of struct on 750D (dumped on both cams)
  * focus_pos was not aligned before and was supposed to be uint16_t.
  * But the first byte is gone, so maybe it was a wrong assumption? */
