@@ -131,6 +131,62 @@ are given in section 6.
 
 ### ADTG
 
-This definitely needs a big section, it's critical to understand for raw video, FPS changes, correct LV in crop modes, etc.
+This is a custom part from Analog Devices, specialised for reading out analog image sensors.
+We don't know the exact part number, but a part that is likely somewhat similar has a datasheet here:
+[https://www.analog.com/media/en/technical-documentation/data-sheets/AD9826.pdf]()
+
+Sensor data capture and amplification are done in the analog domain, fed to an ADC and the results
+placed in RAM for use by ICU.
+
+The sensor is read by using precise, configurable timers to control how long to read
+each row, column, etc.
+
+The ADTG can be configured from the ICU, which allows the cam to select image size, ISO, etc.
+This happens by preparing a buffer with a sequence of command words, and calling a DryOS function
+to send to the ADTG.
+
+Command words are 16 or 32 bit, depending on which cam and sub-part of the ADTG is being
+controlled.
+
+ML docs sometimes talk about ADTG or CMOS "registers".  This is likely to be confusing terminology.
+To understand, you must know that the ADTG part has sub-parts that can be individually configured.
+These include, at least, a part dedicated to reading data from the CMOS sensor, an ADC, and
+various timers.  Historically, we've called out CMOS control separately, but called everything
+else "ADTG".  The "register" term is because some command words have a field for selecting
+a register internal to the ADTG.
+
+We use the ADTG for several tasks:
+- fine tuning FPS
+- selecting image capture size (this includes image displayed in LiveView, crop video)
+- dual ISO captures
+
+There have been some attempts to reduce rolling shutter, increase FPS etc - there is
+much more exploration left to be done in this area.
+
+You can use the module adtglog2 to log command data to card, in a human readable format
+that is similar across different cams.  This helps greatly when porting a feature from
+a well supported cam to a new cam.  The command formats tend to change per sensor gen,
+which is only weakly linked to Digic gen.
+
+Example command data, logged from a 6D2:
+```
+CMOS_write, time: 24461,  LR: e0302d23, buf_addr: 415a7ae8
+    data: 0d03a440 10717220 21a30100 3c120000 4476520a 50000010 60000021 72000000
+          80000008 98210ba0 a0000000 d000e9f1 e00009f1 ffffffff
+```
+Most of the content here is not understood.  The first word is partially understood,
+this commands CMOS register 0xd to sample the sensor at ISO 1600.  The last word
+signals the end of the command buffer; this is always -1 in whatever width the
+sub-part expects.  `0x0d03a110` would mean ISO 200.
+
+ML can modify behaviour of this command so that e.g. `0x0d03a040` is sent, leading
+to alternate lines being sampled at ISO 100 and 1600.
+
+Finding these commands is not too hard; start logging, then exercise the cam
+to, e.g., change ISO, and take a picture (changing a setting without using related
+functionality may not send the command).  Try two different ISOs, then check the log
+for differences.
+
+D45 cams seem to use NZR encoding.
 
 <div style="page-break-after: always; visibility: hidden"></div>
