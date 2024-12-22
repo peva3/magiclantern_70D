@@ -140,6 +140,9 @@ THUMB_FN(0xdf009338,  vsnprintf)              /* called near dmstart; references
 
 DATA_PTR(    0x100b4,  winsys_sem) // written to in InitializeScreen (see "Winsys_Wait_v"), used in RefreshVrmsSurface
 
+THUMB_FN(0xe048b0e8, _turn_off_display)
+THUMB_FN(0xe048b0d4, _turn_on_display)
+
 THUMB_FN(0xdf0031a3,  get_task_by_id) // called indirectly by task_create and functions using string "TASK Name"
 THUMB_FN(0xdf004041,  _get_task_info_by_id)
 NSTUB(    0x4f40,  dm_names) // in DebugMsg, before the 1st loop target
