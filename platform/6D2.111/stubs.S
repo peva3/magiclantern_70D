@@ -70,6 +70,18 @@ THUMB_FN(0xdf006e6c,  DryosDebugMsg)          /* lots of debug messages; format 
 /** DMA **/
 THUMB_FN(0xe01e565e,  dma_memcpy)
 
+/** EDMAC **/
+// EDmac is distinct from XDMAC, they are different controllers.
+//
+// This is a trimmed set of stubs.  More are known on D7, see 200D.
+// This is the minimal required to support raw video, using mem_to_mem_edmac_copy()
+THUMB_FN(0xe04aa70c,  CreateResLockEntry) // via xrefs to a pointer to "ResInfo"
+THUMB_FN(0xe04aa7f0,  DeleteResLockEntry)
+THUMB_FN(0xe04aa8f4,  LockEngineResources)
+THUMB_FN(0xe04aa994,  UnLockEngineResources)
+THUMB_FN(0x30900, shamem_read) // nearly always inlined, so very few refs.
+                               // Can find via "[MEM1DEV] Addr=%#x Data=%#x"
+
 /** MMU **/
 THUMB_FN(0xe0004a5a, change_mmu_tables) // Updates TTBRs and does TLB maintenance
 THUMB_FN(0xe0013b58, copy_mmu_tables) // copies from one location to another,
