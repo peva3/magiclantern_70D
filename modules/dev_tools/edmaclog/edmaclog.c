@@ -64,6 +64,7 @@ static unsigned int edmac_init()
 
     if (is_camera("70D", "1.1.2")
         || is_camera("5D3", "1.2.3")
+        || is_camera("6D2", "1.1.1")
         )
     {
         // This cam has problems using take_semaphore() in some
@@ -111,6 +112,61 @@ static unsigned int edmac_init()
                 .patch_addr = 0x35392, // StartEDMAC
                 .orig_content = {0xc9, 0x4a, 0x00, 0x21, 0xd4, 0x3a, 0x42, 0xf8},
                 .target_function_addr = (uint32_t)hook_StartEDMAC_200D,
+                .description = "Log StartEDMAC"
+            },
+        };
+        struct patch patches[COUNT(f_patches)] = {};
+        uint8_t code_hooks[8 * COUNT(f_patches)] = {};
+
+        for (int i = 0; i < COUNT(f_patches); i++)
+        {
+            if (convert_f_patch_to_patch(&f_patches[i],
+                                         &patches[i],
+                                         &code_hooks[8 * i]))
+            {
+                return -3;
+            }
+        }
+        apply_patches(patches, COUNT(f_patches));
+    }
+    if (is_camera("6D2", "1.1.1"))
+    {
+        // install 6D2 hooks
+        struct function_hook_patch f_patches[] = {
+            {
+                .patch_addr = 0xe04aa70c, // CreateResLockEntry
+                .orig_content = {0x2d, 0xe9, 0xf0, 0x47, 0x80, 0x46, 0xd8, 0x4d},
+                .target_function_addr = (uint32_t)hook_CreateResLockEntry_6D2,
+                .description = "Log CreateResLockEntry"
+            },
+            {
+                .patch_addr = 0x2e27e, // edmac_set_addr
+                .orig_content = {0x76, 0x4a, 0x21, 0xf0, 0x40, 0x41, 0x52, 0xf8},
+                .target_function_addr = (uint32_t)hook_set_addr_6D2,
+                .description = "Log SetAddr"
+            },
+            {
+                .patch_addr = 0x2e2fe, // edmac_set_size
+                .orig_content = {0xf0, 0xb5, 0x05, 0x46, 0x55, 0x4e, 0x89, 0xb0},
+                .target_function_addr = (uint32_t)hook_set_size_6D2,
+                .description = "Log SetSize"
+            },
+            {
+                .patch_addr = 0x2f294, // ConnectWriteEDMAC
+                .orig_content = {0x70, 0xb5, 0x35, 0x28, 0x0d, 0x46, 0x04, 0x46},
+                .target_function_addr = (uint32_t)hook_ConnectWriteEDMAC_6D2,
+                .description = "Log ConnectWriteEDMAC"
+            },
+            {
+                .patch_addr = 0x2f2e8, // ConnectReadEDMAC
+                .orig_content = {0x70, 0xb5, 0x35, 0x28, 0x0d, 0x46, 0x04, 0x46},
+                .target_function_addr = (uint32_t)hook_ConnectReadEDMAC_6D2,
+                .description = "Log ConnectReadEDMAC"
+            },
+            {
+                .patch_addr = 0x2e18a, // StartEDMAC
+                .orig_content = {0xc9, 0x4a, 0x00, 0x21, 0xd4, 0x3a, 0x42, 0xf8},
+                .target_function_addr = (uint32_t)hook_StartEDMAC_6D2,
                 .description = "Log StartEDMAC"
             },
         };

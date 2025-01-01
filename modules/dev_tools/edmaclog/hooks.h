@@ -37,3 +37,10 @@ void __attribute__((noreturn,noinline,naked,aligned(4)))hook_ConnectReadEDMAC_20
 void __attribute__((noreturn,noinline,naked,aligned(4)))hook_set_addr_200D(void);
 void __attribute__((noreturn,noinline,naked,aligned(4)))hook_set_size_200D(void);
 void __attribute__((noreturn,noinline,naked,aligned(4)))hook_CreateResLockEntry_200D(void);
+
+void __attribute__((noreturn,noinline,naked,aligned(4)))hook_StartEDMAC_6D2(void);
+void __attribute__((noreturn,noinline,naked,aligned(4)))hook_ConnectWriteEDMAC_6D2(void);
+void __attribute__((noreturn,noinline,naked,aligned(4)))hook_ConnectReadEDMAC_6D2(void);
+void __attribute__((noreturn,noinline,naked,aligned(4)))hook_set_addr_6D2(void);
+void __attribute__((noreturn,noinline,naked,aligned(4)))hook_set_size_6D2(void);
+void __attribute__((noreturn,noinline,naked,aligned(4)))hook_CreateResLockEntry_6D2(void);
