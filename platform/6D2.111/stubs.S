@@ -81,6 +81,14 @@ THUMB_FN(0xe04aa8f4,  LockEngineResources)
 THUMB_FN(0xe04aa994,  UnLockEngineResources)
 THUMB_FN(0x30900, shamem_read) // nearly always inlined, so very few refs.
                                // Can find via "[MEM1DEV] Addr=%#x Data=%#x"
+THUMB_FN(0xe01cd96c, create_mem_to_mem_lock_and_pwrmng_globals)
+THUMB_FN(0xe01cdb22, lock_and_wake_mem_to_mem)
+THUMB_FN(0xe01cdb46, unlock_and_sleep_mem_to_mem)
+THUMB_FN(0xe01cd9ae, delete_mem_to_mem_lock)
+THUMB_FN(0xe01cdac6, set_mem_to_mem_cbr)
+THUMB_FN(0xe01cda22, mem_to_mem_setup_copy)
+THUMB_FN(0xe01cdad8, mem_to_mem_set_src_dst_and_start)
+THUMB_FN(0xe01cdad0, set_default_mem_to_mem_cbr)
 
 /** MMU **/
 THUMB_FN(0xe04dcad2, change_mmu_tables) // Updates TTBRs and does TLB maintenance
