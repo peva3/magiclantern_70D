@@ -1,4 +1,4 @@
-#include "hooks_thumb.h"
+#include "hooks.h"
 #include "dryos.h"
 #include "log.h"
 

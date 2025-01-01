@@ -15,7 +15,7 @@
 #include "log.h"
 #include "patch_mmu.h"
 
-#include "hooks_thumb.h"
+#include "hooks.h"
 
 // D678X cams don't provide this symbol, it's for cache hack patching,
 // which they don't have.  D45 cams will override this with real code at link time.

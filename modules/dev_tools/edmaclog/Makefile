@@ -1,8 +1,8 @@
 # define the module name - make sure name is max 8 characters
 MODULE_NAME = edmaclog
 MODULE_OBJS = $(BUILD_DIR)/edmaclog.o \
-              $(BUILD_DIR)/hooks_thumb_70D.o \
-              $(BUILD_DIR)/hooks_thumb_5D3.o \
+              $(BUILD_DIR)/hooks_arm_70D.o \
+              $(BUILD_DIR)/hooks_arm_5D3.o \
               $(BUILD_DIR)/hooks_thumb_200D.o
 TOP_DIR = ../../..
 
@@ -19,9 +19,9 @@ CFLAGS_ARCHLESS = $(filter-out -march=armv7-r -march=armv7-a -march=armv5te,$(CF
 $(BUILD_DIR)/hooks_thumb_200D.o: hooks_thumb_200D.c
 	$(CC) $(CFLAGS_ARCHLESS) -mthumb -march=armv7 $(CDEPS_FLAGS) -c -o $@ $<
 
-$(BUILD_DIR)/hooks_thumb_70D.o: hooks_thumb_70D.c
+$(BUILD_DIR)/hooks_arm_70D.o: hooks_arm_70D.c
 	$(CC) $(CFLAGS) $(CDEPS_FLAGS) -c -o $@ $<
 
-$(BUILD_DIR)/hooks_thumb_5D3.o: hooks_thumb_5D3.c
+$(BUILD_DIR)/hooks_arm_5D3.o: hooks_arm_5D3.c
 	$(CC) $(CFLAGS) $(CDEPS_FLAGS) -c -o $@ $<
 
