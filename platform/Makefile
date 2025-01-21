@@ -40,6 +40,7 @@ CONFIG_QEMU     = n
 CONFIG_PIC      = n
 
 include $(TOP_DIR)/Makefile.globals
+include $(DEPS)
 
 ### This block is platform-global,
 ### but not modules-global

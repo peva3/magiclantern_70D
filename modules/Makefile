@@ -25,6 +25,7 @@ BUILD_DIR = build
 MODULES_DIR = $(TOP_DIR)/modules
 
 include $(TOP_DIR)/Makefile.globals
+include $(DEPS)
 
 CFLAGS += -march=$(MODULE_ARCH)
 
@@ -159,8 +160,6 @@ endif
 # 200D, heap tends to be 0xbb_0000 and stubs are 0xe000_0000 or 0xdf00_0000, too far.
 MODULE_CFLAGS += -I../../src/
 CFLAGS += -mlong-calls -DMODULE -DMODULE_NAME=$(MODULE_NAME) -DCONFIG_MAGICLANTERN $(MODULE_CFLAGS) -I.
-
--include $(BUILD_DIR)/$(MODULE_NAME).d
 
 $(BUILD_DIR)/module_strings.h: $(BUILD_DIR)/README.rst | $(BUILD_DIR)
 	$(PYTHON) $(MODULES_DIR)/readme2modulestrings.py > $@.tmp

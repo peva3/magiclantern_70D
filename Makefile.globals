@@ -84,6 +84,10 @@ CFLAGS += \
 
 CDEPS_FLAGS = -MP -MD
 
+# This will be empty after a clean build, with the -MMD in above
+# CFLAGS creating the files on the next build.
+DEPS = $(wildcard $(BUILD_DIR)/*.d)
+
 ifeq ($(CONFIG_QEMU),y)
     CFLAGS += -DCONFIG_QEMU
 endif
