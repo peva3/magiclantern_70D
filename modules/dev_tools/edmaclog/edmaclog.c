@@ -186,6 +186,10 @@ static unsigned int edmac_init()
     }
     else if (is_camera("70D", "1.1.2"))
     {
+            patch_hook_function(0xff2c049c, // CreateResLockEntry
+                                0xe92d47f0, // orig_instr
+                                hook_CreateResLockEntry_70D,
+                                "Log CreateResLockEntry");
             patch_hook_function(0x3817c, // StartEDMAC
                                 0xe92d47ff, // orig_instr
                                 hook_StartEDMAC_70D,

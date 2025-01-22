@@ -12,6 +12,25 @@
 //  - regs contain R0-R12 and LR
 // Use a struct so we can name things?  Nah, too easy.
 
+
+void hook_CreateResLockEntry_70D(uint32_t *regs, uint32_t *stack, uint32_t pc)
+{
+    uint32_t log_buf_size = 80;
+    char log_buf[log_buf_size];
+    snprintf(log_buf, log_buf_size, "CreateResLockEntry, LR: %x, time: %d\n",
+             regs[13], get_ms_clock());
+    send_log_data_str(log_buf);
+
+    uint32_t *pResources = (uint32_t *)regs[0];
+    uint32_t res_count = regs[1];
+
+    for (uint32_t i = 0; i < res_count; i++)
+    {
+        snprintf(log_buf, log_buf_size, "    0x%x\n", *(pResources + i));
+        send_log_data_str(log_buf);
+    }
+}
+
 void hook_StartEDMAC_70D(uint32_t *regs, uint32_t *stack, uint32_t pc)
 {
     uint32_t log_buf_size = 80;

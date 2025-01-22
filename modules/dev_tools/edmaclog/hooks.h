@@ -17,6 +17,7 @@ struct edmac_info_D4567
 
 // D45 cams use patch_hook_function(), which expects a standard
 // sig for the hook code
+void hook_CreateResLockEntry_70D(uint32_t *regs, uint32_t *stack, uint32_t pc);
 void hook_StartEDMAC_70D(uint32_t *regs, uint32_t *stack, uint32_t pc);
 void hook_ConnectWriteEDMAC_70D(uint32_t *regs, uint32_t *stack, uint32_t pc);
 void hook_ConnectReadEDMAC_70D(uint32_t *regs, uint32_t *stack, uint32_t pc);
