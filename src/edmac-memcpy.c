@@ -7,8 +7,8 @@
 
 #ifdef CONFIG_EDMAC_MEMCPY
 
-static struct semaphore * edmac_memcpy_sem = 0; /* to allow only one memcpy running at a time */
-static struct semaphore * edmac_read_done_sem = 0; /* to know when memcpy is finished */
+static struct semaphore *edmac_memcpy_sem = NULL; /* to allow only one memcpy running at a time */
+static struct semaphore *edmac_read_done_sem = NULL; /* to know when memcpy is finished */
 
 /* pick some free (check using debug menu) EDMAC channels write: 0x00-0x06, 0x10-0x16, 0x20-0x21. read: 0x08-0x0D, 0x18-0x1D,0x28-0x2B */
 #if defined(CONFIG_5D2) || defined(CONFIG_50D)
