@@ -28,6 +28,7 @@
 #define CONFIG_LIVEVIEW
 #define FEATURE_POWERSAVE_LIVEVIEW
 
+#define CONFIG_CRASH_LOG
+
 // explicitly disable stuff that don't work or may break things
-#undef CONFIG_CRASH_LOG
 #undef CONFIG_AUTOBACKUP_ROM
