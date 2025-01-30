@@ -196,7 +196,7 @@ void create_mem_to_mem_lock_and_pwrmng_globals(uint32_t src_channel, uint32_t ds
 void lock_and_wake_mem_to_mem(void);
 void unlock_and_sleep_mem_to_mem(void);
 void delete_mem_to_mem_lock(void);
-void set_mem_to_mem_cbr(void *cbr, void *param);
+void set_mem_to_mem_cbr(void *cbr, void *param); // when both dst and src channels are complete, this cbr fires
 void mem_to_mem_setup_copy(struct edmac_info *src, struct edmac_info *dst);
 void mem_to_mem_set_src_dst_and_start(void *src, void *dst);
 void set_default_mem_to_mem_cbr(void);
