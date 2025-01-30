@@ -98,6 +98,12 @@
 #define YUV422_LV_PITCH 1440
 #define LV_BOTTOM_BAR_DISPLAYED 0x0 // wrong, fake bool
 
+#define SRM_BUFFER_SIZE 0x2d20000 // print it from srm_malloc_cbr, use _srm_malloc(0x1000000) in run_test() to trigger
+#define SRM_MAX_BUF_COUNT_VIDEO_MODE 1 // 4 is okay in LV but not video, it will "NG AllocMem1"
+#define RAW_LV_EDMAC_CHANNEL_ADDR 0xd0058000 // channel 24 (index 23), via "Mem1 is Not Complete",
+                                             // it calls a function that passes hard-coded 23.
+                                             // FIXME this only works because we don't use raw_lv_edmac yet.
+#define SHAD_GAIN_REGISTER 0xd0008030 // plausible looking from ROM code, though untested
 
 // below definitely wrong, just copied from 50D
 //

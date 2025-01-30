@@ -11,6 +11,8 @@ int get_fps_register_a_default(void)
 {
 // TODO - given the changes in reading Reg A, does this still work?
 // Test if we can read anything from reg or shamem reg.
+// No way found so far...
+//    return shamem_read(FPS_REGISTER_A + 4);
 
     // Don't know a way of reading the value from cam yet,
     // may not be possible?

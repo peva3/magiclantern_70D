@@ -90,6 +90,10 @@ THUMB_FN(0xe01cda22, mem_to_mem_setup_copy)
 THUMB_FN(0xe01cdad8, mem_to_mem_set_src_dst_and_start)
 THUMB_FN(0xe01cdad0, set_default_mem_to_mem_cbr)
 
+// Terrible name.  This does several things, including releasing / de-associating
+// device 6, the Channel Switch.
+//THUMB_FN(0xe01cdb02, edmac_related_m2m_cleanup_maybe)
+
 /** MMU **/
 THUMB_FN(0xe04dcad2, change_mmu_tables) // Updates TTBRs and does TLB maintenance
 //THUMB_FN(0xe0013b58, copy_mmu_tables) // copies from one location to another,
@@ -210,6 +214,7 @@ THUMB_FN(0xe03a1c00,  LiveViewApp_handler) // DebugMsg: "StartLiveViewApp(%#x)",
 THUMB_FN(0xe07bcd3c,  LiveViewShutterApp_handler) // DebugMsg: "StartLiveViewShutterApp", address passed to CreateDialogBox
 THUMB_FN(0xe0543916,  PlayMovieGuideApp_handler) // "StartPlayMovieGuideApp"
 THUMB_FN(0xe048703c,  PlayMain_handler) // "DlgPlayMain.c PRESS_ERASE_BUTTON" - code above the string, wasn't found automatically
+THUMB_FN(0xe07d0810,  ErrCardForLVApp_handler) // "DlgLiveViewError.c DELETE_DIALOG_REQUEST"
 THUMB_FN(0xe03d5b1e,  GetCFnData) // Differs significantly from 200D
 THUMB_FN(0xe03d4c80,  SetCFnData) // There are some "SetCFnData" related strings
 

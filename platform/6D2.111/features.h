@@ -5,6 +5,10 @@
 #define FEATURE_SCREENSHOT
 //#define FEATURE_SD_AUTOTUNE // exists, but doesn't seem to improve over stock speeds
 
+// These two needed to enable mlv_lite
+#define FEATURE_PICSTYLE
+#define CONFIG_RAW_LIVEVIEW
+
 // cam doesn't expose call("TurnOnDisplay"),
 // (or TurnOffDisplay), so we must find stubs
 // and call directly

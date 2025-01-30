@@ -2614,6 +2614,7 @@ void raw_lv_request_bpp(int bpp)
     // See 200D for a safe filtered EngDrvOut() - which probably should be more
     // like property_whitelist, more global, with per cam config.
         const uint32_t PACK32_MODE = 0xd0008094; // plausible from rom, e.g. e0159eee on 200d 1.0.1,
+                                                 // e0228742 on 6D2 1.0.5,
                                                  // compare 5d3 1.2.3 ff57c7c8
         enum {
             MODE_16BIT = 0x20, // unknown, copying 14 bit for now
