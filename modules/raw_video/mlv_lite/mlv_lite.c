@@ -3542,10 +3542,12 @@ void raw_video_rec_task()
 
             if (!slots[slot_index].is_meta)
             {
-                if (frame_check_saved(slot_index) != 1)
+                int err = frame_check_saved(slot_index);
+                if (err != 1)
                 {
                     bmp_printf( FONT_MED, 30, 110, 
-                        "Data corruption at slot %d, frame %d ", slot_index, slots[slot_index].frame_number
+                        "Data corruption at slot %d, frame %d, err %d ",
+                        slot_index, slots[slot_index].frame_number, err
                     );
                     beep();
                 }
@@ -3670,10 +3672,12 @@ abort_and_check_early_stop:
         /* video frame consistency checks only for VIDF */
         if(!slots[slot_index].is_meta)
         {
-            if (frame_check_saved(slot_index) != 1)
+            int err = frame_check_saved(slot_index);
+            if (err != 1)
             {
                 bmp_printf( FONT_MED, 30, 110, 
-                    "Data corruption at slot %d, frame %d ", slot_index, slots[slot_index].frame_number
+                    "Data corruption at slot %d, frame %d, err %d ",
+                    slot_index, slots[slot_index].frame_number, err
                 );
                 beep();
             }
