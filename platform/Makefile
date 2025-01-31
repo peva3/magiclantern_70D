@@ -58,7 +58,7 @@ CFLAGS += \
     -DCURRENT_CAMERA_SIGNATURE=SIG_$(MODEL)_$(FW_VERSION) \
     -DVERSION=\"$(VERSION)\"
 
-VERSION = $(call eval_once,VERSION,Nightly.$(shell LC_TIME=EN date +'%Y%b%d').$(MODEL)$(FW_VERSION))
+VERSION = $(call eval_once,VERSION,$(shell LC_TIME=EN date +'%Y%b%d').$(MODEL)$(FW_VERSION))
 
 ZIP_DIR = build/zip
 ZIP_MODULES_DIR = $(ZIP_DIR)/ML/modules
