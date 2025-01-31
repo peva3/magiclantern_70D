@@ -58,7 +58,8 @@ CFLAGS += \
     -DCURRENT_CAMERA_SIGNATURE=SIG_$(MODEL)_$(FW_VERSION) \
     -DVERSION=\"$(VERSION)\"
 
-VERSION = $(call eval_once,VERSION,$(shell LC_TIME=EN date +'%Y%b%d').$(MODEL)$(FW_VERSION))
+BUILD_DATE = $(call eval_once,BUILD_DATE,$(shell LC_TIME=EN date +'%Y-%m-%d'))
+VERSION = $(BUILD_DATE).$(MODEL).$(FW_VERSION)
 
 ZIP_DIR = build/zip
 ZIP_MODULES_DIR = $(ZIP_DIR)/ML/modules
@@ -185,7 +186,7 @@ $(BUILD_DIR)/platform_modules_complete: $(MODULES_DIR)/$(BUILD_DIR)/default_modu
 # nothing to do.
 $(ML_PLATFORM_TARGETS): %: $(BUILD_DIR)/platform_modules_complete | $(BUILD_DIR)
 	$(MAKE) -C $(subst /$(BUILD_DIR)/cam_complete,,$*)
-	$(CP) $(subst /cam_complete,/magiclantern.zip,$*) $(BUILD_DIR)/magiclantern.$(subst /build/cam_complete,,$*).zip
+	$(CP) $(subst /cam_complete,/magiclantern.zip,$*) $(BUILD_DIR)/magiclantern.$(BUILD_DATE).$(subst /build/cam_complete,,$*).zip
 
 $(BUILD_DIR)/magiclantern.zip: zip_contents | $(BUILD_DIR)
 	cd $(BUILD_DIR)/zip; zip -z ../../$@.tmp < ../../$(SRC_DIR)/zip.txt  -r .
