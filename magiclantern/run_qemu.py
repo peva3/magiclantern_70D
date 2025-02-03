@@ -25,8 +25,8 @@ def main():
         # in platform dir for the cam.
         #
         # TODO have some way of overriding this
-        sd_file = os.path.join(cam_path, "sd.qcow2")
-        cf_file = os.path.join(cam_path, "cf.qcow2")
+        sd_file = os.path.join(cam_path, "build/sd.qcow2")
+        cf_file = os.path.join(cam_path, "build/cf.qcow2")
         if not os.path.isfile(sd_file):
             print("Couldn't find SD image file: %s" % sd_file)
             if not os.path.isfile(cf_file):
