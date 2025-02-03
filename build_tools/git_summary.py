@@ -4,13 +4,21 @@ import os
 import argparse
 import sys
 import subprocess
+import shutil
 
 
 def main():
     args = parse_args()
-    short_hash = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).strip().decode("utf8")
-    branch = subprocess.check_output(["git", "branch", "--show-current"]).strip().decode("utf8")
-    print(short_hash + " " + branch, end='')
+    if shutil.which("git"):
+        status = subprocess.run(["git", "status"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        if "not a git repository" in status.stdout.decode("utf8"):
+            print("unofficial: not a git repo", end='')
+        else:
+            short_hash = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).strip().decode("utf8")
+            branch = subprocess.check_output(["git", "branch", "--show-current"]).strip().decode("utf8")
+            print(short_hash + " " + branch, end='')
+    else:
+        print("unofficial: no git", end='')
 
 
 def parse_args():
