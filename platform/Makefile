@@ -96,7 +96,7 @@ ML_CAMS = \
     SX740.102 \
     XF605.101
 
-.PHONY: clean zip_contents $(BUILD_DIR) FORCE
+.PHONY: clean zip_contents disk_image $(BUILD_DIR) FORCE
 
 # Construct targets for the default cams
 #
@@ -157,6 +157,12 @@ $(BUILD_DIR)/default_cams_complete: $(ML_PLATFORM_TARGETS) | $(BUILD_DIR)
 # It's not run when invoking make from the platform dir directly.
 $(BUILD_DIR)/cam_complete: $(BUILD_DIR)/magiclantern.zip | $(BUILD_DIR)
 	@touch $(BUILD_DIR)/cam_complete
+
+# Target for disk images suitable for qemu-eos.  run_qemu.py
+# knows to look in the output dir for the image files.
+# Doesn't work from platform/, works for individual cams.
+disk_image: $(BUILD_DIR)/magiclantern.zip | $(BUILD_DIR)
+	../create_disk_image_from_zip.py $(BUILD_DIR)/magiclantern.zip
 
 # If we try to build with multiple cams and modules is not up to date,
 # the different cams can race to rebuild the same components.

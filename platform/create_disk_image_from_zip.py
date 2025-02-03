@@ -21,8 +21,10 @@ def main():
         os.rmdir(qemu_mount_dir)
     os.mkdir(qemu_mount_dir)
 
-    qcow_name = "sd.qcow2"
-    cf_name = "cf.qcow2"
+    # create image files in the same dir as the zip
+    target_dir = os.path.dirname(args.build_zip)
+    qcow_name = os.path.join(target_dir, "sd.qcow2")
+    cf_name = os.path.join(target_dir, "cf.qcow2")
     pid = 0
 
     # delete old disk images to ensure builds either give you
