@@ -142,7 +142,7 @@ last_str = "Description"
 help_page_num = 0
 lines_per_page = 0
 for p in txt.strip("\n").split("\n")[2:]:
-    if p.startswith("# "): # new section
+    if p.startswith(("# ", "## ")): # new section
         help_page_num += 1
         add_string(last_str, desc)
         desc = ""
