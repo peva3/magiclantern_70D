@@ -227,6 +227,7 @@ THUMB_FN(0xfe2dba32,  PlayMain_handler)                     // msg: "StartPlayMa
 THUMB_FN(0xfe4fd15a,  ShootOlcApp_handler)                  // msg: "StartShootOlcApp PushPalette(%d)"
 THUMB_FN(0xfe40a6be,  LiveViewApp_handler)                  // msg: "StartLiveViewApp(%#x)"
 //THUMB_FN(0x,  LiveViewShutterApp_handler)         // msg: "LiveViewShutterApp"
+THUMB_FN(0xfe4f25f0,  ErrCardForLVApp_handler)
 THUMB_FN(0xfe422052,  PlayMovieGuideApp_handler)            // msg: "StartPlayMovieGuideApp"
 
 // See R180 stubs.S for details.
