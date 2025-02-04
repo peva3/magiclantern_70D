@@ -216,6 +216,8 @@ DATA_PTR(       0x0,  LCD_Palette)                          // D6 has no indexed
 //THUMB_FN(0x80006c10 ConnectReadEDmac);
 //THUMB_FN(0x80006c42 RegisterEDmacCompleteCBR);
 
+THUMB_FN(0xfe6bc424, shamem_read)
+
 // App handlers
 //
 // Those can usually be found by looking at function address passed to
