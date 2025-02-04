@@ -25,6 +25,8 @@
 /* "Malloc Information" */
 #define MALLOC_STRUCT_ADDR 0x41b50                    // from get_malloc_info, helper of malloc_info
 //#define MALLOC_FREE_MEMORY (MEM(MALLOC_STRUCT + 8) - MEM(MALLOC_STRUCT + 0x1C)) // "Total Size" - "Allocated Size"
+#define SRM_MAX_BUF_COUNT_VIDEO_MODE 1
+#define SRM_BUFFER_SIZE 0x2314000
 
 /* high confidence */
 #define DRYOS_ASSERT_HANDLER 0x28d50               // from debug_assert function, hard to miss

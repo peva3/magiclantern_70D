@@ -20,7 +20,7 @@
 
 // SRM is untested, this define is to allowing building
 // without SRM_BUFFER_SIZE being found
-#define CONFIG_MEMORY_SRM_NOT_WORKING
+//#define CONFIG_MEMORY_SRM_NOT_WORKING
 
 // Cam has very few spare tasks for ML, steal more mem
 // during boot to raise the limit
