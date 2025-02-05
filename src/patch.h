@@ -43,6 +43,9 @@
 #define E_PATCH_CANNOT_MALLOC       0x1000
 #define E_PATCH_MALFORMED           0x2000
 #define E_PATCH_TOO_SMALL           0x4000
+#define E_PATCH_BAD_ADDR            0x8000
+// max E_PATCH, anything more conflicts with
+// E_UNPATCH below.
 
 #define E_UNPATCH_OK                0
 #define E_UNPATCH_NOT_PATCHED       0x10000
@@ -133,6 +136,8 @@ int patch_hook_function(uintptr_t addr, uint32_t orig_instr, patch_hook_function
 #endif // CONFIG_MMU_REMAP
 #if defined(CONFIG_DIGIC_45)
 #include "patch_cache.h"
+#elif defined(CONFIG_DIGIC_VI)
+#include "patch_d6.h"
 #endif
 
 #endif // _patch_h_

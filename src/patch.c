@@ -11,8 +11,9 @@
 #include "cache_hacks.h"
 #endif
 
-#if defined(CONFIG_MMU_REMAP) || defined(CONFIG_DIGIC_45)
-// both of these can patch.  So far, D6 cannot.
+#if defined(CONFIG_MMU_REMAP) || defined(CONFIG_DIGIC_45) || defined(CONFIG_DIGIC_VI)
+// The first two classes can patch most things.  D6 we don't have a proven method
+// for rom, but we can still patch ram.
 
 static char last_error[70];
 int num_patches = 0;
@@ -41,6 +42,7 @@ char *error_msg(int err)
     if (err & E_PATCH_CANNOT_MALLOC)        STR_APPEND(msg, "CANNOT_MALLOC,");
     if (err & E_PATCH_MALFORMED)            STR_APPEND(msg, "MALFORMED,");
     if (err & E_PATCH_TOO_SMALL)            STR_APPEND(msg, "TOO_SMALL,");
+    if (err & E_PATCH_BAD_ADDR)             STR_APPEND(msg, "BAD_ADDR,");
 
     if (err & E_UNPATCH_NOT_PATCHED)        STR_APPEND(msg, "NOT_PATCHED,");
     if (err & E_UNPATCH_OVERWRITTEN)        STR_APPEND(msg, "OVERWRITTEN,");
@@ -92,15 +94,27 @@ int apply_patches(struct patch *patches, uint32_t count)
         // we'd need a bunch of byte shifting code and I can't
         // be bothered.  Caller should always be able to read
         // old value and mask in what change they want.
+        //
+        // On D6 we can only patch ram at this time, so the
+        // >= 4 byte restriction is entirely arbitrary but avoids
+        // an even uglier define.
 #if defined(CONFIG_DIGIC_45)
         if (patches[c].size != 4)
-#elif defined(CONFIG_DIGIC_78X)
+#elif defined(CONFIG_DIGIC_678X)
         if (patches[c].size < 4)
 #endif
         {
             err = E_PATCH_UNKNOWN_ERROR;
             goto end;
         }
+
+#if defined(CONFIG_DIGIC_VI)
+        if (IS_ROM_PTR(patches[c].addr))
+        {
+            err = E_PATCH_BAD_ADDR;
+            goto end;
+        }
+#endif
 
         /* is this address already patched? refuse to patch it twice */
         for (int i = 0; i < num_patches; i++)
@@ -189,7 +203,7 @@ int apply_patches(struct patch *patches, uint32_t count)
         {
 #if defined(CONFIG_DIGIC_45)
             err = _sync_locked_caches(0);
-#elif defined(CONFIG_DIGIC_78X)
+#elif defined(CONFIG_DIGIC_678X)
             _sync_caches();
 #endif
         }
@@ -464,4 +478,4 @@ static void patch_simple_init()
 
 INIT_FUNC("patch", patch_simple_init);
 
-#endif // defined(CONFIG_MMU_REMAP) || defined(CONFIG_DIGIC_45)
+#endif // defined(CONFIG_MMU_REMAP) || defined(CONFIG_DIGIC_45) || defined(CONFIG_DIGIC_VI)
