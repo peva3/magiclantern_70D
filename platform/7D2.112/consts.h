@@ -28,6 +28,10 @@
 #define SRM_MAX_BUF_COUNT_VIDEO_MODE 1
 #define SRM_BUFFER_SIZE 0x2314000
 
+#define RAW_LV_EDMAC_CHANNEL_ADDR 0xd0004200
+#define SHAD_GAIN_REGISTER 0xd0008030 // untested on D6, just copied from D7.  Only safe if EngDrvOut
+                                      // is a nop!
+
 /* high confidence */
 #define DRYOS_ASSERT_HANDLER 0x28d50               // from debug_assert function, hard to miss
 // There's a second "debug_assert" function at fe6b7834.  It checks for an assert handler at

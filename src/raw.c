@@ -878,7 +878,7 @@ int raw_update_params_work()
     int mv640crop = mv && video_mode_resolution == 2 && video_mode_crop;
     int zoom = lv_dispsize > 1;
 
-    // FIXME SJE wtf is this terrible hack.  How about we fix the code instead of hiding errors?
+    // FIXME SJE what is this terrible hack?  Presumably much better to fix the code instead of hiding errors?
     /* silence warnings; not all cameras have all these modes */
     (void)mv640; (void)mv720; (void)mv1080; (void)mv1080crop; (void)mv640crop; (void)zoom;
 
