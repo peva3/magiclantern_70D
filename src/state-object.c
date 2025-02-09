@@ -51,11 +51,19 @@ int wait_lv_frames(int num_frames)
 {
     vsync_counter = 0;
     int count = 0;
-    int frame_duration = 1000000 / fps_get_current_x1000();
+    int fps = fps_get_current_x1000();
+    if (fps == 0)
+        return 0;
+
+    int frame_duration = 1000000 / fps;
     while (vsync_counter < num_frames)
     {
         /* handle FPS override changes during the wait */
-        frame_duration = MAX(frame_duration, 1000000 / fps_get_current_x1000());
+        fps = fps_get_current_x1000();
+        if (fps == 0)
+            return 0;
+
+        frame_duration = MAX(frame_duration, 1000000 / fps);
         msleep(20);
         count++;
         if (count > num_frames * frame_duration * 2 / 20)

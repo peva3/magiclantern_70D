@@ -3020,6 +3020,8 @@ static LVINFO_UPDATE_FUNC(fps_update)
     if (is_movie_mode())
     {
         int f = fps_get_current_x1000();
+        if (f == 0)
+            return;
         snprintf(buffer, sizeof(buffer), 
             "%2d.%03d", 
             f / 1000, f % 1000

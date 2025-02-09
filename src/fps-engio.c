@@ -502,6 +502,11 @@ void fps_override_shutter_blanking()
     int default_fps = calc_fps_x1000(fps_timer_a_orig, fps_timer_b_orig);
     int current_fps = fps_get_current_x1000();
 
+    if (default_fps == 0)
+        return;
+    if (current_fps == 0)
+        return;
+
     float frame_duration_orig = 1000.0 / default_fps;
     float frame_duration_current = 1000.0 / current_fps;
 
@@ -527,6 +532,8 @@ int get_current_shutter_reciprocal_x1000()
     /* read the FPS timer B directly from ENGIO shadow memory to have the latest value */
     int timerB = (get_fps_register_b() & 0xFFFF) + 1;
     int max = timerB;
+    if (max == 0)
+        return 0;
 
     if (blanking == max - 1)
     {
@@ -537,7 +544,10 @@ int get_current_shutter_reciprocal_x1000()
         blanking = max;
     }
 
-    float frame_duration = 1000.0 / fps_get_current_x1000();
+    int fps = fps_get_current_x1000();
+    if (fps == 0)
+        return 0;
+    float frame_duration = 1000.0 / fps;
     float shutter = frame_duration * (max - blanking) / max;
     return (int)(1.0 / shutter * 1000);
 
@@ -593,7 +603,8 @@ int get_current_shutter_reciprocal_x1000()
 #else
     //#warning FIXME: consider defining FRAME_SHUTTER_BLANKING_READ
     // fallback to APEX units
-    if (!lens_info.raw_shutter) return 0;
+    if (!lens_info.raw_shutter)
+        return 0;
     return (int) roundf(powf(2.0f, (lens_info.raw_shutter - 136) / 8.0f) * 1000.0f * 1000.0f);
 #endif
 }
@@ -609,6 +620,8 @@ int fps_get_shutter_speed_shift(int raw_shutter)
     {
         int default_fps = calc_fps_x1000(fps_timer_a_orig, fps_timer_b_orig);
         int current_fps = fps_get_current_x1000();
+        if (current_fps == 0)
+            return 0;
         return (int)roundf(8.0f * log2f((float)default_fps / (float)current_fps));
     }
     else return 0;
@@ -851,7 +864,8 @@ static void fps_setup_timerB(int fps_x1000)
 
 int fps_get_current_x1000()
 {
-    if (!lv) return 0;
+    if (!lv)
+        return 0;
     int fps_timer = (get_fps_register_b() & 0xFFFF) + 1;
     int fps_x1000 = TIMER_TO_FPS_x1000(fps_timer);
     return fps_x1000;
@@ -870,6 +884,8 @@ static MENU_UPDATE_FUNC(fps_print)
     if (fps_override)
     {
         int current_fps = fps_get_current_x1000();
+        if (current_fps == 0)
+            return;
         MENU_SET_VALUE("%d.%03d",
             current_fps/1000, current_fps%1000
         );
@@ -894,6 +910,8 @@ static MENU_UPDATE_FUNC(fps_print)
         last_inactive = t;
 
         int current_fps = fps_get_current_x1000();
+        if (current_fps == 0)
+            return;
         MENU_SET_RINFO("%d.%03d",
             current_fps/1000, current_fps%1000
         );
@@ -916,6 +934,8 @@ static MENU_UPDATE_FUNC(fps_print)
 static MENU_UPDATE_FUNC(fps_current_print)
 {
     int current_fps = fps_get_current_x1000();
+    if (current_fps == 0)
+        return;
 
     MENU_SET_VALUE(
         "%d.%03d",
@@ -983,7 +1003,10 @@ static void calc_rolling_shutter(int * line_ns, int * frame_us, int * frame_perc
 
     if (vertical_res)
     {
-        int frame_duration_us = (int)roundf(1e9 / fps_get_current_x1000());
+        int fps = fps_get_current_x1000();
+        if (fps == 0)
+            return;
+        int frame_duration_us = (int)roundf(1e9 / fps);
 
         if (frame_us) *frame_us = line_readout_time_us * vertical_res;
         if (frame_percent) *frame_percent = (int)roundf(line_readout_time_us * vertical_res * 100 / frame_duration_us);
@@ -1886,6 +1909,8 @@ static void fps_task()
         if (!fps_warned && !gui_menu_shown())
         {
             int current_fps = fps_get_current_x1000();
+            if (current_fps == 0)
+                return;
             char msg[30];
             snprintf(msg, sizeof(msg), "FPS override: %d.%03d",
                 current_fps/1000, current_fps%1000
@@ -1918,9 +1943,18 @@ TASK_CREATE("fps_task", fps_task, 0, 0x1c, 0x1000 );
 void fps_mvr_log(char* mvr_logfile_buffer)
 {
     int f = fps_get_current_x1000();
-    MVR_LOG_APPEND (
-        "FPS            : %d.%03d\n", f/1000, f%1000
-    );
+    if (f == 0)
+    {
+        MVR_LOG_APPEND (
+            "FPS            : %d.%03d\n", f/1000, 0
+        );
+    }
+    else
+    {
+        MVR_LOG_APPEND (
+            "FPS            : %d.%03d\n", f/1000, f%1000
+        );
+    }
 }
 
 // on certain events (PLAY, RECORD) we need to disable FPS override temporarily

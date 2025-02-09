@@ -1709,7 +1709,10 @@ static MENU_UPDATE_FUNC(shutter_display)
     if (is_movie_mode())
     {
         int s = get_current_shutter_reciprocal_x1000();
-        int deg = 3600 * fps_get_current_x1000() / s;
+        int fps = fps_get_current_x1000();
+        if (fps == 0)
+            return;
+        int deg = 3600 * fps / s;
         deg = (deg + 5) / 10;
         MENU_SET_VALUE(
             "%s, %d"SYM_DEGREE,

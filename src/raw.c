@@ -1183,7 +1183,13 @@ int raw_update_params_work()
         {
             /* raw dimensions changed in LiveView? return failure and wait for the next call */
             /* next valid call can be after two frames (until then, return failure) */
-            int frame_duration = 1000000 / fps_get_current_x1000();
+            int fps = fps_get_current_x1000();
+            if (fps == 0)
+            {
+                dbg_printf("LV raw div by zero avoided\n");
+                return 0;
+            }
+            int frame_duration = 1000000 / fps;
             raw_set_dirty_with_timeout(frame_duration * 2);
 
             raw_info.width = width;
