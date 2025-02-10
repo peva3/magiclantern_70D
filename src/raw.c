@@ -878,6 +878,7 @@ int raw_update_params_work()
     int mv640crop = mv && video_mode_resolution == 2 && video_mode_crop;
     int zoom = lv_dispsize > 1;
 
+    // FIXME SJE wtf is this terrible hack.  How about we fix the code instead of hiding errors?
     /* silence warnings; not all cameras have all these modes */
     (void)mv640; (void)mv720; (void)mv1080; (void)mv1080crop; (void)mv640crop; (void)zoom;
 
@@ -1241,11 +1242,9 @@ int raw_update_params_work()
     }
 
     raw_info.white_level = get_default_white_level();
-
     ASSERT(raw_info.bits_per_pixel == 14);
     int black_mean = 0, black_stdev_x100 = 0;
     int ok = autodetect_black_level(&black_mean, &black_stdev_x100);
-
     #ifdef BLACK_LEVEL
     if (ABS(black_mean - BLACK_LEVEL) < 64)
     {
@@ -1742,18 +1741,27 @@ static void autodetect_black_level_calc(int x1, int x2, int y1, int y2, int dx, 
 {
     int black = 0;
     int num = 0;
+
+    // FIXME these probably shouldn't be signed to start with,
+    // they're offsets into a buffer, but changing that is a large refactor
+    if (x1 < 0 || x2 < 0 || y1 < 0 || y2 < 0 || dx < 0 || dy < 0)
+        return;
+
     /* compute average level */
     for (int y = y1; y < y2; y += dy)
     {
         for (int x = x1; x < x2; x += dx)
         {
             int p = raw_get_pixel(x, y);
-            if (p == 0) continue;               /* bad pixel */
+            if (p == 0)
+                continue;
             black += p;
             num++;
         }
     }
 
+    if (num == 0)
+        return;
     int mean = black / num;
 
     /* compute standard deviation */
@@ -1850,44 +1858,73 @@ static int autodetect_black_level(int* black_mean, int* black_stdev_x100)
 
     if (raw_info.active_area.x1 > 50) /* use the left black bar for black calibration */
     {
+        // FIXME SJE are these magic numbers still appropriate for all cams?
+        // I assume they are the black border sizes around the sensor.
+        // If yes, turn them into a constant.  If no, make them per cam defines.
+        int x1 = 16;
+        int x2 = raw_info.active_area.x1 - 16;
+        int y1 = raw_info.active_area.y1;
+        if (y1 < 0)
+            return 0;
+        if (y1 < (INT_MAX - 43)) // ensure y2 cannot become less than y1,
+                                 // with no overflow during calcs
+            y1 += 20;
+        int y2 = raw_info.active_area.y2;
+        if (y2 < y1 + 22)
+            return 0;
+        y2 -= 20;
+        int dx = 3;
+        int dy = 16;
+
         autodetect_black_level_calc(
-            16, raw_info.active_area.x1 - 16,
-            raw_info.active_area.y1 + 20, raw_info.active_area.y2 - 20,
-            3, 16,
+            x1, x2, y1, y2, dx, dy,
             &mean1, &stdev1
         );
+
+        y1 += 2;
         autodetect_black_level_calc(
-            16, raw_info.active_area.x1 - 16,
-            raw_info.active_area.y1 + 22, raw_info.active_area.y2 - 20,
-            3, 16,
+            x1, x2, y1, y2, dx, dy,
             &mean2, &stdev2
         );
 
         /* for dual iso: increase tolerance of the cleaner exposure (there is interference from the noisier one) */
         int ref_stdev = MAX(stdev1, stdev2);
 
-        if (!black_level_check_left(mean1, ref_stdev, raw_info.active_area.y1 + 20, raw_info.active_area.y2 - 20))
+        if (!black_level_check_left(mean1, ref_stdev, y1, y2))
         {
             return 0;
         }
 
-        if (!black_level_check_left(mean2, ref_stdev, raw_info.active_area.y1 + 22, raw_info.active_area.y2 - 20))
+        if (!black_level_check_left(mean2, ref_stdev, y1 - 2, y2))
         {
             return 0;
         }
     }
     else /* use the top black bar for black calibration */
     {
+        int x1 = raw_info.active_area.x1;
+        int x2 = raw_info.active_area.x2;
+        int y1 = 4;
+        int y2 = raw_info.active_area.y1;
+        int dx = 16;
+        int dy = 4;
+        if (x1 < 0 || y2 < 11)
+            return 0;
+        if (x1 < (INT_MAX - 41))
+            x1 += 20;
+        if (x2 < x1 + 21)
+            return 0;
+        x2 -= 20;
+        y2 -= 4;
+
         autodetect_black_level_calc(
-            raw_info.active_area.x1 + 20, raw_info.active_area.x2 - 20,
-            4, raw_info.active_area.y1 - 4,
-            16, 4,
+            x1, x2, y1, y2,
+            dx, dy,
             &mean1, &stdev1
         );
         autodetect_black_level_calc(
-            raw_info.active_area.x1 + 20, raw_info.active_area.x2 - 20,
-            6, raw_info.active_area.y1 - 4,
-            16, 4,
+            x1, x2, y1 + 2, y2,
+            dx, dy,
             &mean2, &stdev2
         );
 
