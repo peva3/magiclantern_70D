@@ -336,10 +336,10 @@ null_pointer_check()
                 STR_APPEND(msg, "%8x %8x %8x %8x\n%8x %8x %8x %8x\n", *(uint32_t*)0, *(uint32_t*)4, *(uint32_t*)8, *(uint32_t*)0xc, *(uint32_t*)0x10, *(uint32_t*)0x14, *(uint32_t*)0x18, *(uint32_t*)0x1c);
 #pragma GCC diagnostic pop
 // However...  we're also suppressing possible warnings about usage of the msg array!
-// When we get to gcc 13, let's see if we can remove the above pragma.
-// EDIT: 13 did not fix it.  Bump the check to 14.
+// When we get to gcc 15, let's see if we can remove the above pragma.
+// EDIT: 14 did not fix it.  Bump the check to 15.
 #ifdef __GNUC__
-    #if __GNUC__ > 13
+    #if __GNUC__ > 14
         #error "Please check if the preceding pragma is no longer required"
     #endif
 #endif
