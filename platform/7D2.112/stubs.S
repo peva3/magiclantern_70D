@@ -233,6 +233,6 @@ THUMB_FN(0xfe422052,  PlayMovieGuideApp_handler)            // msg: "StartPlayMo
 // See R180 stubs.S for details.
 //DATA_PTR( 0x2BD60,  PlayMain_dialog)                      // in StartPlayMain(), 0x2bd54 + 0xc
 //DATA_PTR( 0x35298,  ShootOlcApp_dialog)                   // in StartShootOlcApp()
-DATA_PTR(   0x31154,  LiveViewApp_dialog)                   // in StartLiveViewApp()
+DATA_PTR(   0x310d4,  LiveViewApp_dialog)                   // in StartLiveViewApp()
 //DATA_PTR( 0x35a58,  LiveViewShutterApp_dialog)            // in StartLiveViewShutterApp(), not sure if needed
 //DATA_PTR( 0x3042c,  PlayMovieGuideApp_dialog)             // in StartPlayMovieGuideApp()
