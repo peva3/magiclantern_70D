@@ -1507,6 +1507,12 @@ void realloc_buffers()
 /* internal memory management - allocate frame slots and fullsize raw buffers
  * from memory suites already allocated from Canon with realloc_buffers
  * this routine is fast and will get called every time we refresh the raw parameters */
+// Returns 0 on failure.
+// Returns 2 if no changes required (a form of success).
+// Returns 1 for "normal" success.
+//
+// SJE no current code checks the return status.
+// We do check valid_slot_count and total_slot_count, globals updated by this function.
 static REQUIRES(settings_sem)
 int setup_buffers()
 {
@@ -1528,6 +1534,11 @@ int setup_buffers()
         /* current configuration still valid, nothing to do */
         return 2;
     }
+
+    // We expect these to get incremented when we add memory suites.
+    // See code in add_mem_suite() and add_reserved_slots()
+    total_slot_count = 0;
+    valid_slot_count = 0;
 
     if (!shoot_mem_suite && !srm_mem_suite)
     {
@@ -1578,9 +1589,6 @@ int setup_buffers()
     }
 
     /* allocate frame slots from the two memory suites */
-    total_slot_count = 0;
-    valid_slot_count = 0;
-
     int chunk_index = 0;
     chunk_index = add_mem_suite(shoot_mem_suite, chunk_index, max_frame_size, fullres_buf_size);
     printf("%d slots from shoot_malloc.\n", valid_slot_count);
@@ -3586,14 +3594,20 @@ void raw_video_rec_task()
 
             if (!slots[slot_index].is_meta)
             {
-                int err = get_frame_save_status(slot_index);
-                if (err != 1)
-                {
+                int frame_status = get_frame_save_status(slot_index);
+                if (frame_status == -1)
+                { // next frame shows signs of overflow writing this frame
                     bmp_printf( FONT_MED, 30, 110, 
                         "Data corruption at slot %d, frame %d, err %d ",
-                        slot_index, slots[slot_index].frame_number, err
+                        slot_index, slots[slot_index].frame_number, frame_status
                     );
                     beep();
+                }
+                else if (frame_status == 0)
+                { // frame not yet saved
+                    bmp_printf( FONT_MED, 30, 110,
+                        "Frame incomplete at slot %d, frame %d ", slot_index, slots[slot_index].frame_number
+                    );
                 }
                 
                 if (slots[slot_index].frame_number != last_processed_frame + 1)
@@ -3718,14 +3732,20 @@ abort_and_check_early_stop:
         /* video frame consistency checks only for VIDF */
         if(!slots[slot_index].is_meta)
         {
-            int err = get_frame_save_status(slot_index);
-            if (err != 1)
-            {
+            int frame_status = get_frame_save_status(slot_index);
+            if (frame_status == -1)
+            { // next frame shows signs of overflow writing this frame
                 bmp_printf( FONT_MED, 30, 110, 
                     "Data corruption at slot %d, frame %d, err %d ",
-                    slot_index, slots[slot_index].frame_number, err
+                    slot_index, slots[slot_index].frame_number, frame_status
                 );
                 beep();
+            }
+            else if (frame_status == 0)
+            { // frame not yet saved
+                bmp_printf( FONT_MED, 30, 110,
+                    "Frame incomplete at slot %d, frame %d ", slot_index, slots[slot_index].frame_number
+                );
             }
 
             if (slots[slot_index].frame_number != last_processed_frame + 1)
