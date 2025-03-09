@@ -2527,8 +2527,12 @@ static void frame_fake_edmac_check(int slot_index)
     *(volatile uint32_t*) after_frame = FRAME_SENTINEL;
 }
 
+// Returns:
+// 1 for success.
+// 0 for incomplete.
+// -1 for data corruption detected.
 static REQUIRES(RawRecTask)
-int frame_check_saved(int slot_index)
+int get_frame_save_status(int slot_index)
 {
     ASSERT(slots[slot_index].ptr);
     void* ptr = slots[slot_index].ptr + VIDF_HDR_SIZE;
@@ -3582,7 +3586,7 @@ void raw_video_rec_task()
 
             if (!slots[slot_index].is_meta)
             {
-                int err = frame_check_saved(slot_index);
+                int err = get_frame_save_status(slot_index);
                 if (err != 1)
                 {
                     bmp_printf( FONT_MED, 30, 110, 
@@ -3714,7 +3718,7 @@ abort_and_check_early_stop:
         /* video frame consistency checks only for VIDF */
         if(!slots[slot_index].is_meta)
         {
-            int err = frame_check_saved(slot_index);
+            int err = get_frame_save_status(slot_index);
             if (err != 1)
             {
                 bmp_printf( FONT_MED, 30, 110, 
