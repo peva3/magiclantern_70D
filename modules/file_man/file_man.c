@@ -625,16 +625,16 @@ static const char * format_date_size( unsigned size, unsigned timestamp )
     int tmpDays=days+1;              // If passed (timestamp < dayInSeconds), it will return 0, so add 1
 
     while(tmpDays>=daysInYear)       // Start adding years to 1970
-	{      
+    {      
         year++;
         if ((year)%4==0&&((year)%100!=0||(year)%400==0)) tmpDays-=daysInLYear; else tmpDays-=daysInYear;
     }
 
     int monthsInDays[12] = {-1,30,59,90,120,151,181,212,243,273,304,334};
     if (!(year)%4==0&&((year)%100!=0||(year)%400==0))  // The year is not a leap year
-	{
+    {
         monthsInDays[0] = 0;
-		monthsInDays[1] =31;
+        monthsInDays[1] =31;
     }
 
     while (month>0)
@@ -644,8 +644,8 @@ static const char * format_date_size( unsigned size, unsigned timestamp )
     }
     day=tmpDays-monthsInDays[month];                  // Setup the date
     month++;                                          // Increment by one to give the accurate month
-    if (day==0) {year--; month=12; day=31;}			  // Ugly hack but it works, eg. 1971.01.00 -> 1970.12.31
-	
+    if (day==0) {year--; month=12; day=31;}           // Ugly hack but it works, eg. 1971.01.00 -> 1970.12.31
+
     if (date_format==DATE_FORMAT_YYYY_MM_DD)          // Use the date format of the camera to format the date string
         snprintf( datestr, sizeof(datestr), "%d.%02d.%02d ", year, month, day);
     else if (date_format==DATE_FORMAT_MM_DD_YYYY)
@@ -1012,7 +1012,7 @@ static MENU_SELECT_FUNC(file_menu)
     snprintf(name, sizeof(name), "%s", fe->name);
     int size = fe->size;
     int timestamp = fe->timestamp;
-	
+
     STR_APPEND(gPath, "%s", name);
 
     clear_file_menu();
