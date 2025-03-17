@@ -603,6 +603,14 @@ struct bmp_file_t *bmp_load_ram(uint8_t *buf, uint32_t size, uint32_t compressio
         goto offsetsize_fail;
     }
 
+     if (bmp->height < 0)
+     {
+         // MS decided this would be a great idea;
+         // If height is negative the image is stored upside down,
+         // and you should negate height to get real height.
+         bmp->height = 0 - bmp->height;
+     }
+
     // Since the read was into uncacheable memory, it will
     // be very slow to access.  Copy it into a cached buffer
     // and release the uncacheable space.
@@ -619,7 +627,7 @@ struct bmp_file_t *bmp_load_ram(uint8_t *buf, uint32_t size, uint32_t compressio
         uint32_t size_needed = sizeof(struct bmp_file_t);
         uint8_t* fast_buf;
         uint32_t x = 0;
-        uint32_t y = 0;
+        int32_t y = 0;
         uint8_t* gpos;
         uint8_t count = 0;
         uint8_t color = 0;
@@ -700,6 +708,7 @@ bmp_load(
     struct bmp_file_t *ret = bmp_load_ram(buf, size, compression);
     
     fio_free( buf );
+    buf = NULL;
     
     if(ret)
     {
