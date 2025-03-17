@@ -7,6 +7,10 @@
 #include "config.h"
 #include "fio-ml.h"
 
+#if defined(MODULE)
+    #error "Module builds shouldn't use fio-ml.c directly!  Call the exports of ML!"
+#endif
+
 #define CARD_DRIVE_INIT(_letter, _type) { .drive_letter = _letter, .type = _type,  .cluster_size = 0, .free_space_raw = 0, .file_number = 0, .folder_number = 0, }
 
 static struct card_info available_cards[] = { CARD_DRIVE_INIT("A","CF"), CARD_DRIVE_INIT("B", "SD"), CARD_DRIVE_INIT("C","EXT") };
@@ -421,6 +425,47 @@ struct fio_dirent * FIO_FindFirstEx(const char * dirname, struct fio_file * file
 
     fixup_filename(new_dirname, dirname, sizeof(new_dirname));
     return _FIO_FindFirstEx(new_dirname, file);
+}
+
+// This func allows a module to get the cam to alloc space,
+// since the module doesn't know the size.
+struct fio_file *alloc_fio_file(void)
+{
+    return malloc(sizeof(struct fio_file));
+}
+
+struct file_info convert_fio_file_info(struct fio_file *fio_file)
+{
+    // Takes a DryOS file info struct pointer, returns
+    // a struct with only those fields we understand,
+    // in a manner that can be the same on all cams.
+    // Intended for modules, to hide the differences in DryOS
+    // struct on different cams.
+    struct file_info file_info;
+
+    if (fio_file == NULL)
+    {
+        file_info.mode = 0;
+        file_info.size = 0;
+        file_info.timestamp = 0;
+        file_info.name[0] = '\0';
+    }
+    else
+    {
+        file_info.mode = fio_file->mode;
+        file_info.size = fio_file->size;
+        file_info.timestamp = fio_file->timestamp;
+    #if defined(CONFIG_DIGIC_78X)
+        file_info.timestamp |= ((uint64_t)fio_file->timestamp2 << 0x20);
+    #elif defined(CONFIG_DIGIC_45) || defined(CONFIG_DIGIC_VI)
+        ;
+    #else
+        #error "New code needed to extract timestamp on this Digic version"
+    #endif
+        strncpy(file_info.name, fio_file->name, FIO_MAX_PATH_LENGTH);
+    }
+
+    return file_info;
 }
 
 int _FIO_CreateDirectory(const char * dirname);

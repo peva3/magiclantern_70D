@@ -22,12 +22,11 @@ enum file_entry_type {
     TYPE_ACTION,
 };
 
-#define MAX_PATH_LEN 0x80
 struct file_entry
 {
     struct file_entry *next;
     struct menu_entry *menu_entry;
-    char name[MAX_PATH_LEN];
+    char name[FIO_MAX_PATH_LENGTH];
     unsigned int size;
     enum file_entry_type type;
     unsigned int timestamp;
@@ -36,7 +35,7 @@ struct file_entry
 typedef struct _multi_files
 {
     struct _multi_files *next;
-    char name[MAX_PATH_LEN];
+    char name[FIO_MAX_PATH_LENGTH];
 }FILES_LIST;
 
 enum _FILER_OP {
@@ -55,7 +54,7 @@ struct filetype_handler
 };
 
 //Global values
-static char gPath[MAX_PATH_LEN];
+static char gPath[FIO_MAX_PATH_LENGTH];
 static char gStatusMsg[60];
 static unsigned int op_mode;
 
@@ -368,14 +367,15 @@ static void ScanDir(char *path)
         return;
     }
 
-    struct fio_file file;
-    struct fio_dirent *dirent = 0;
+    struct fio_file *file = alloc_fio_file();
+    struct fio_dirent *dirent = NULL;
 
-    dirent = FIO_FindFirstEx(path, &file);
+    dirent = FIO_FindFirstEx(path, file);
     if (IS_ERROR(dirent))
     {
         add_file_entry("../", TYPE_DIR, 0, 0);
         build_file_menu();
+        free(file);
         give_semaphore(scandir_sem);
         return;
     }
@@ -383,23 +383,25 @@ static void ScanDir(char *path)
     int n = 0;
     do
     {
-        if (file.name[0] == 0)
+        struct file_info file_info = convert_fio_file_info(file);
+        if (file_info.name[0] == 0)
             continue;        /* on ExFat it may return empty entries */
-        if (file.name[0] == '.')
+        if (file_info.name[0] == '.')
             continue;
         n++;
-        if (file.mode & ATTR_DIRECTORY)
+        if (file_info.mode & ATTR_DIRECTORY)
         {
-            int len = strlen(file.name);
-            snprintf(file.name + len, sizeof(file.name) - len, "/");
-            add_file_entry(file.name, TYPE_DIR, 0, 0);
+            int len = strlen(file_info.name);
+            snprintf(file_info.name + len, sizeof(file_info.name) - len, "/");
+            add_file_entry(file_info.name, TYPE_DIR, 0, 0);
         }
         else
         {
-            add_file_entry(file.name, TYPE_FILE, file.size, file.timestamp);
+            add_file_entry(file_info.name, TYPE_FILE, file_info.size, file_info.timestamp);
         }
     }
-    while(FIO_FindNextEx(dirent, &file) == 0);
+    while(FIO_FindNextEx(dirent, file) == 0);
+    free(file);
 
     if (!n)
     {
@@ -409,7 +411,7 @@ static void ScanDir(char *path)
 
     if(op_mode != FILE_OP_NONE)
     {
-        /*        char srcpath[MAX_PATH_LEN];
+        /*        char srcpath[FIO_MAX_PATH_LENGTH];
         strcpy(srcpath,gSrcFile);
         char *p = srcpath+strlen(srcpath);
         while (p > srcpath && *p != '/') p--;
@@ -486,7 +488,7 @@ static void BrowseUp()
 
     if (*p == '/') /* up one level */
     {
-        char old_dir[MAX_PATH_LEN];
+        char old_dir[FIO_MAX_PATH_LENGTH];
         snprintf(old_dir, sizeof(old_dir), p + 1);
         *(p + 1) = 0;
         ScanDir(gPath);
@@ -494,7 +496,7 @@ static void BrowseUp()
     }
     else if (cf_present && sd_present && strlen(gPath) > 0) /* two cards: show A:/ and B:/ in menu */
     {
-        char old_dir[MAX_PATH_LEN];
+        char old_dir[FIO_MAX_PATH_LENGTH];
         snprintf(old_dir, sizeof(old_dir), "%s", gPath);
         gPath[0] = 0;
         ScanDir("");
@@ -512,9 +514,9 @@ MFILE_SEM (
     /* this may take a long time - prevent powersaving from interrupting us */
     powersave_prohibit();
 
-    char fname[MAX_PATH_LEN];
-    char tmpdst[MAX_PATH_LEN];
-    char dstfile[MAX_PATH_LEN];
+    char fname[FIO_MAX_PATH_LENGTH];
+    char tmpdst[FIO_MAX_PATH_LENGTH];
+    char dstfile[FIO_MAX_PATH_LENGTH];
     size_t totallen = 0;
     FILES_LIST *mf = mfile_root;
     strcpy(tmpdst,gPath);
@@ -535,7 +537,7 @@ MFILE_SEM (
         while (p > mf->name && *p != '/') p--;
         strcpy(fname, p + 1);
         
-        snprintf(dstfile, MAX_PATH_LEN, "%s%s", tmpdst, fname);
+        snprintf(dstfile, FIO_MAX_PATH_LENGTH, "%s%s", tmpdst, fname);
 
         if(streq(mf->name, dstfile))
         {
@@ -945,14 +947,14 @@ static int mfile_get_dir_count()
     int count = 0;
     for (FILES_LIST *mf = mfile_root->next; mf; mf = mf->next)
     {
-        char dir[MAX_PATH_LEN];
+        char dir[FIO_MAX_PATH_LENGTH];
         if (!path_strip_last_item(dir, sizeof(dir), mf->name))
             continue;
         count++;
         
         for (FILES_LIST *mf2 = mf->next; mf2; mf2 = mf2->next)
         {
-            char dir2[MAX_PATH_LEN];
+            char dir2[FIO_MAX_PATH_LENGTH];
             if (!path_strip_last_item(dir2, sizeof(dir2), mf2->name))
                 continue;
             if (streq(dir, dir2))
@@ -991,7 +993,7 @@ MFILE_SEM (
 static MENU_SELECT_FUNC(select_multi)
 {
 MFILE_SEM (
-    char filename[MAX_PATH_LEN];
+    char filename[FIO_MAX_PATH_LENGTH];
     struct file_entry *fe = (struct file_entry *) priv;
     if (!fe)
         return;
@@ -1024,7 +1026,7 @@ MFILE_SEM (
             char *fe_ext = fe->name + strlen(fe->name) - strlen(Ext);
             if (streq(Ext, fe_ext))
             {
-                char path[MAX_PATH_LEN];
+                char path[FIO_MAX_PATH_LENGTH];
                 snprintf(path, sizeof(path), "%s%s", gPath, fe->name);
                 mfile_find_remove(path);
                 mfile_add_tail(path);
@@ -1042,7 +1044,7 @@ static MENU_SELECT_FUNC(file_menu)
         return;
 
     /* fe will be freed in clear_file_menu; backup things that we are going to reuse */
-    char name[MAX_PATH_LEN];
+    char name[FIO_MAX_PATH_LENGTH];
     snprintf(name, sizeof(name), "%s", fe->name);
     int size = fe->size;
     int timestamp = fe->timestamp;
@@ -1207,7 +1209,7 @@ static MENU_UPDATE_FUNC(update_file)
     MENU_SET_VALUE("");
     MENU_SET_RINFO("%s", format_date_size(fe->size, fe->timestamp));
 
-    char filename[MAX_PATH_LEN];
+    char filename[FIO_MAX_PATH_LENGTH];
     snprintf(filename, sizeof(filename), "%s%s", gPath, fe->name);
 
     MENU_SET_ICON(mfile_is_regged(filename) ? MNI_ON : MNI_OFF, 0);
@@ -1224,7 +1226,7 @@ static MENU_UPDATE_FUNC(update_file)
         if (t - last_updated > 1000)
             dirty = 1;
 
-        static char prev_filename[MAX_PATH_LEN];
+        static char prev_filename[FIO_MAX_PATH_LENGTH];
         if (!streq(prev_filename, filename))
             dirty = 1;
         snprintf(prev_filename, sizeof(prev_filename), "%s", filename);

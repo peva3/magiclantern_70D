@@ -367,34 +367,37 @@ static int luaCB_directory_children(lua_State * L)
     if(!lua_istable(L, 1)) return luaL_argerror(L, 1, "expected table");
     if(lua_getfield(L, 1, "path") != LUA_TSTRING) return luaL_error(L, "invalid directory path");
     const char * path = lua_tostring(L, -1);
-    struct fio_file file;
-    struct fio_dirent * dirent = FIO_FindFirstEx(path, &file);
+    struct fio_file *file = alloc_fio_file();
+    struct fio_dirent * dirent = FIO_FindFirstEx(path, file);
     int index = 1;
     if(!IS_ERROR(dirent))
     {
         lua_newtable(L);
         do
         {
-            if (file.mode & ATTR_DIRECTORY)
+            struct file_info file_info = convert_fio_file_info(file);
+            if (file_info.mode & ATTR_DIRECTORY)
             {
-                if (!streq(file.name, ".") && !streq(file.name, ".."))
+                if (!streq(file_info.name, ".") && !streq(file_info.name, ".."))
                 {
                     //call the directory constructor
                     lua_pushcfunction(L, luaCB_dryos_directory);
-                    lua_pushfstring(L, "%s%s/", path, file.name);
+                    lua_pushfstring(L, "%s%s/", path, file_info.name);
                     lua_call(L, 1, 1);
                     lua_seti(L, -2, index++);
                 }
             }
         }
-        while(FIO_FindNextEx(dirent, &file) == 0);
+        while(FIO_FindNextEx(dirent, file) == 0);
         FIO_FindClose(dirent);
     }
     else
     {
+        free(file);
         return luaL_error(L, "error reading directory '%s'", path);
     }
     
+    free(file);
     return 1;
 }
 
@@ -408,28 +411,31 @@ static int luaCB_directory_files(lua_State * L)
     if(!lua_istable(L, 1)) return luaL_argerror(L, 1, "expected table");
     if(lua_getfield(L, 1, "path") != LUA_TSTRING) return luaL_error(L, "invalid directory path");
     const char * path = lua_tostring(L, -1);
-    struct fio_file file;
-    struct fio_dirent * dirent = FIO_FindFirstEx(path, &file);
+    struct fio_file *file = alloc_fio_file();
+    struct fio_dirent * dirent = FIO_FindFirstEx(path, file);
     int index = 1;
     if(!IS_ERROR(dirent))
     {
         lua_newtable(L);
         do
         {
-            if (!(file.mode & ATTR_DIRECTORY))
+            struct file_info file_info = convert_fio_file_info(file);
+            if (!(file_info.mode & ATTR_DIRECTORY))
             {
-                lua_pushfstring(L, "%s%s", path, file.name);
+                lua_pushfstring(L, "%s%s", path, file_info.name);
                 lua_seti(L, -2, index++);
             }
         }
-        while(FIO_FindNextEx(dirent, &file) == 0);
+        while(FIO_FindNextEx(dirent, file) == 0);
         FIO_FindClose(dirent);
     }
     else
     {
+        free(file);
         return luaL_error(L, "error reading directory: '%s'", path);
     }
     
+    free(file);
     return 1;
 }
 

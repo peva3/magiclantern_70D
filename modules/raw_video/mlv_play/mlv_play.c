@@ -2358,12 +2358,13 @@ static void mlv_play(char *filename, FILE **chunk_files, uint32_t chunk_count)
 
 static void mlv_playlist_build_path(char *directory)
 {
-    struct fio_file file;
-    struct fio_dirent * dirent = NULL;
-    
-    dirent = FIO_FindFirstEx(directory, &file);
+    struct fio_file *file = alloc_fio_file();
+    struct fio_dirent *dirent = NULL;
+
+    dirent = FIO_FindFirstEx(directory, file);
     if(IS_ERROR(dirent))
     {
+        free(file);
         return;
     }
     
@@ -2371,15 +2372,16 @@ static void mlv_playlist_build_path(char *directory)
 
     do
     {
-        if(file.name[0] == '.')
+        struct file_info file_info = convert_fio_file_info(file);
+        if(file_info.name[0] == '.')
         {
             continue;
         }
 
-        snprintf(full_path, MAX_PATH, "%s%s", directory, file.name);
+        snprintf(full_path, MAX_PATH, "%s%s", directory, file_info.name);
         
         /* do not recurse here, but enqueue next directory */
-        if(file.mode & ATTR_DIRECTORY)
+        if(file_info.mode & ATTR_DIRECTORY)
         {
             strcat(full_path, "/");
             
@@ -2387,22 +2389,23 @@ static void mlv_playlist_build_path(char *directory)
         }
         else
         {
-            char *suffix = &file.name[strlen(file.name) - 3];
+            char *suffix = &file_info.name[strlen(file_info.name) - 3];
             
             if(!strcmp("RAW", suffix) || !strcmp("MLV", suffix))
             {
                 playlist_entry_t *entry = malloc(sizeof(playlist_entry_t));
                 
                 strncpy(entry->fullPath, full_path, sizeof(entry->fullPath));
-                entry->fileSize = file.size;
-                entry->timestamp = file.timestamp;
+                entry->fileSize = file_info.size;
+                entry->timestamp = file_info.timestamp;
                 
                 /* update playlist */
                 msg_queue_post(mlv_playlist_queue, (uint32_t) entry);
             }
         }
     }
-    while(FIO_FindNextEx(dirent, &file) == 0);
+    while(FIO_FindNextEx(dirent, file) == 0);
+    free(file);
     
     FIO_FindClose(dirent);
     free(full_path);

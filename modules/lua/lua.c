@@ -1294,40 +1294,42 @@ static void lua_load_task(int unused)
     char script_names[64][16];
     int num_scripts = 0;
 
-    struct fio_file file;
+    struct fio_file *file = alloc_fio_file();
     struct fio_dirent * dirent = 0;
 
-    dirent = FIO_FindFirstEx(SCRIPTS_DIR, &file);
+    dirent = FIO_FindFirstEx(SCRIPTS_DIR, file);
     if(!IS_ERROR(dirent))
     {
         do
         {
-            if (!(file.mode & ATTR_DIRECTORY) &&
-                 (string_ends_with(file.name, ".LUA") ||
-                  string_ends_with(file.name, ".lua")) &&
-                 file.name[0] != '.' && file.name[0] != '_'
+            struct file_info file_info = convert_fio_file_info(file);
+            if (!(file_info.mode & ATTR_DIRECTORY) &&
+                 (string_ends_with(file_info.name, ".LUA") ||
+                  string_ends_with(file_info.name, ".lua")) &&
+                 file_info.name[0] != '.' && file_info.name[0] != '_'
             )
             {
                 if (num_scripts < COUNT(script_names))
                 {
-                    if (strlen(file.name) < sizeof(script_names[0]))
+                    if (strlen(file_info.name) < sizeof(script_names[0]))
                     {
-                        strcpy(script_names[num_scripts++], file.name);
+                        strcpy(script_names[num_scripts++], file_info.name);
                     }
                     else
                     {
-                        fprintf(stderr, "[Lua] skipping %s (file name too long).\n", file.name);
+                        fprintf(stderr, "[Lua] skipping %s (file name too long).\n", file_info.name);
                     }
                 }
                 else
                 {
-                    fprintf(stderr, "[Lua] skipping %s (too many scripts).\n", file.name);
+                    fprintf(stderr, "[Lua] skipping %s (too many scripts).\n", file_info.name);
                 }
             }
         }
-        while(FIO_FindNextEx(dirent, &file) == 0);
+        while(FIO_FindNextEx(dirent, file) == 0);
         FIO_FindClose(dirent);
     }
+    free(file);
 
     char aux[sizeof(script_names[0])];
     
