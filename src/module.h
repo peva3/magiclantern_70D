@@ -173,9 +173,9 @@ typedef struct
 /* index of all loaded modules */
 typedef struct
 {
-    char name[MODULE_NAME_LENGTH+1];
-    char filename[MODULE_FILENAME_LENGTH+1];
-    char long_filename[MODULE_FILENAME_LENGTH+1];
+    char name[MODULE_NAME_LENGTH+1]; // lowercase module name, sans extension e.g. "pic_view"
+    char filename[MODULE_FILENAME_LENGTH+1]; // file name as reported by OS e.g. "PIC_VIEW.MO"
+    char long_filename[MODULE_FILENAME_LENGTH+1]; // full file path e.g. "ML/modules/PIC_VIEW.MO"
     char status[MODULE_STATUS_LENGTH+1];
     char long_status[MODULE_LONG_STATUS_LENGTH+1];
     module_info_t *info;
