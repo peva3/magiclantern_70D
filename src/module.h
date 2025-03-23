@@ -186,6 +186,7 @@ typedef struct
     int valid;
     int enabled;
     int error;
+    int visible;
 } module_entry_t;
 
 

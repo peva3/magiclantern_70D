@@ -128,6 +128,37 @@ static int module_load_symbols(TCCState *s, char *filename)
     return 0;
 }
 
+// Modules are invisible if they have a .hid file of their name,
+// in the same dir.  The build system produces these per cam.
+static int is_module_visible(char *filepath)
+{
+    if (filepath == NULL)
+        return 0;
+
+    char hid_file_path[MODULE_FILENAME_LENGTH + 2];
+    strncpy(hid_file_path, filepath, MODULE_FILENAME_LENGTH + 1);
+    hid_file_path[MODULE_FILENAME_LENGTH + 1] = '\0';
+
+    int len = strlen(hid_file_path);
+    if (hid_file_path[len - 3] != '.') // we expect end to be ".mo"
+        return 0;
+
+    // edit .mo -> .hid
+    hid_file_path[len - 2] = 'h';
+    hid_file_path[len - 1] = 'i';
+    hid_file_path[len - 0] = 'd';
+    hid_file_path[len + 1] = '\0';
+
+    // Check for existence of .hid file.  Ridiculously, we use FIO_GetFileSize()
+    // for this, even though FIO_GetFileInfo() exists, and GetFileSize()
+    // calls that internally.  But FIO_GetFileInfo() isn't a stub.
+    // SJE FIXME FIO_GetFileSize() can't possibly be reliable for this, since files
+    // can exist and be all of the sizes returned by the function.
+    if (!is_file(hid_file_path))
+        return 1;
+    return 0;
+}
+
 /* this is not perfect, as .Mo and .mO aren't detected. important? */
 static int module_valid_filename(char* filename)
 {
@@ -521,7 +552,9 @@ static void _module_load_all(uint32_t list_only)
 
     do
     {
-        if (file.mode & ATTR_DIRECTORY) continue; // is a directory
+        if (file.mode & ATTR_DIRECTORY)
+            continue; // is a directory, don't add to module list
+
         if (module_valid_filename(file.name))
         {
             char module_name[MODULE_FILENAME_LENGTH];
@@ -536,6 +569,8 @@ static void _module_load_all(uint32_t list_only)
             snprintf(module_list[module_cnt].long_filename,
                      sizeof(module_list[module_cnt].long_filename),
                      "%s%s", MODULE_PATH, file.name);
+
+            module_list[module_cnt].visible = is_module_visible(module_list[module_cnt].long_filename);
 
             uint32_t pos = 0;
             while(module_name[pos])
@@ -1560,35 +1595,36 @@ static MENU_SELECT_FUNC(module_menu_select_empty)
 /* check which modules are loaded and hide others */
 static void module_menu_update()
 {
-    int mod_number = 0;
-    struct menu_entry * entry = module_menu;
+    int i = 0;
+    struct menu_entry *entry = module_menu;
 
     while (entry)
     {
         /* only update those which display module information */
         if(entry->update == module_menu_update_entry)
         {
-            ASSERT(mod_number == (int) entry->priv);
+            ASSERT(i == (int)entry->priv);
+            module_entry_t *mod = &module_list[i];
 
-            if(module_list[mod_number].valid)
+            MENU_SET_SHIDDEN(1);
+            if (mod->visible)
             {
-                MENU_SET_SHIDDEN(0);
+                if (mod->valid)
+                {
+                    MENU_SET_SHIDDEN(0);
+                }
+                else if (strlen(mod->filename))
+                {
+                    MENU_SET_SHIDDEN(0);
+                }
             }
-            else if(strlen(module_list[mod_number].filename))
-            {
-                MENU_SET_SHIDDEN(0);
-            }
-            else
-            {
-                MENU_SET_SHIDDEN(1);
-            }
-            mod_number++;
+            i++;
         }
         entry = entry->next;
     }
 
     /* make sure we have as many menu entries as modules */
-    ASSERT(mod_number == MODULE_COUNT_MAX);
+    ASSERT(i == MODULE_COUNT_MAX);
 }
 
 /* check which modules are loaded and hide others */
