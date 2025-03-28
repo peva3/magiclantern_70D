@@ -38,6 +38,7 @@ static struct menu_entry module_menu[];
 CONFIG_INT("module.autoload", module_autoload_disabled, 0);
 CONFIG_INT("module.console", module_console_enabled, 0);
 CONFIG_INT("module.ignore_crashes", module_ignore_crashes, 0);
+CONFIG_INT("module.show_hidden", module_show_hidden, 0);
 char *module_lockfile = MODULE_PATH"LOADING.LCK";
 
 static struct msg_queue * module_mq = 0;
@@ -134,6 +135,9 @@ static int is_module_visible(char *filepath)
 {
     if (filepath == NULL)
         return 0;
+
+    if (module_show_hidden)
+        return 1;
 
     char hid_file_path[MODULE_FILENAME_LENGTH + 2];
     strncpy(hid_file_path, filepath, MODULE_FILENAME_LENGTH + 1);
@@ -2052,6 +2056,12 @@ static struct menu_entry module_debug_menu[] = {
                 .priv = &module_ignore_crashes,
                 .max = 1,
                 .help = "Load modules even after camera crashed and you took battery out.",
+            },
+            {
+                .name = "Show hidden modules",
+                .priv = &module_show_hidden,
+                .max = 1,
+                .help = "If modules have .hid files, show them anyway. Requires restart.",
             },
             MENU_EOL,
         },
