@@ -61,8 +61,12 @@ CFLAGS += \
 BUILD_DATE = $(call eval_once,BUILD_DATE,$(shell LC_TIME=EN date +'%Y-%m-%d'))
 VERSION = $(BUILD_DATE).$(MODEL).$(FW_VERSION)
 
+# Location of files to turn into zip:
 ZIP_DIR = build/zip
 ZIP_MODULES_DIR = $(ZIP_DIR)/ML/modules
+# All modules go here before placing in zip file hierarchy,
+# for any post-module-build but per-cam, pre-zip processing:
+CAM_MODULES_DIR = $(BUILD_DIR)/modules
 
 ML_CAMS = \
     100D.101 \
@@ -206,6 +210,7 @@ else
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)
 	@mkdir -p $(BUILD_DIR)/tcc
+	@mkdir -p $(BUILD_DIR)/modules
 	@mkdir -p $(BUILD_DIR)/zip/ML/cropmks
 	@mkdir -p $(BUILD_DIR)/zip/ML/data
 	@mkdir -p $(BUILD_DIR)/zip/ML/doc
@@ -241,9 +246,12 @@ $(BUILD_DIR)/$(ML_MODULES_SYM_NAME): $(BUILD_DIR)/magiclantern.sym | $(BUILD_DIR
 	$(CP) $(BUILD_DIR)/magiclantern.sym $(BUILD_DIR)/$(ML_MODULES_SYM_NAME)
 
 zip_contents:: $(BUILD_DIR)/$(ML_MODULES_SYM_NAME) \
+               modules.hidden modules.included \
                $(MODULES_DIR)/$(BUILD_DIR)/default_modules_complete | $(BUILD_DIR)
 	$(CP) $(BUILD_DIR)/$(ML_MODULES_SYM_NAME) $(ZIP_MODULES_DIR)/
-	$(CP) $(MODULES_DIR)/$(BUILD_DIR)/*.mo $(ZIP_MODULES_DIR)/
+	$(CP) $(MODULES_DIR)/$(BUILD_DIR)/*.mo $(CAM_MODULES_DIR)/
+	$(PYTHON) $(PLATFORM_DIR)/create_hid_files.py modules.hidden $(ZIP_MODULES_DIR)
+	$(PYTHON) $(PLATFORM_DIR)/copy_included_modules.py modules.included $(CAM_MODULES_DIR) $(ZIP_MODULES_DIR)
 endif
 
 # If installer/99D/ML-SETUP.FIR exists, use it, otherwise
