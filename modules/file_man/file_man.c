@@ -185,12 +185,12 @@ static struct file_entry *add_file_entry(char *txt, enum file_entry_type type, i
 {
     struct file_entry *fe = malloc(sizeof(struct file_entry));
     if (!fe)
-        return 0;
+        return NULL;
     memset(fe, 0, sizeof(struct file_entry));
     fe->menu_entry = malloc(sizeof(struct menu_entry));
     if (!fe->menu_entry) {
         free(fe);
-        return 0;
+        return NULL;
     }
     memset(fe->menu_entry, 0, sizeof(struct menu_entry));
     snprintf(fe->name, sizeof(fe->name), "%s", txt);
