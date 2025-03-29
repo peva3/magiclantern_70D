@@ -121,6 +121,9 @@ unsigned int fileman_register_type(char *ext, char *type, filetype_handler_func 
 
 static struct filetype_handler *fileman_find_filetype(char *extension)
 {
+    if (extension == NULL)
+        return NULL;
+
     for(int pos = 0; pos < fileman_filetype_registered; pos++)
     {
         if(!strcasecmp(extension, fileman_filetypes[pos].extension))
@@ -1245,13 +1248,13 @@ static MENU_UPDATE_FUNC(update_file)
             if (filetype)
                 status = filetype->handler(FILEMAN_CMD_VIEW_IN_MENU, filename, NULL);
             
-            /* custom handler doesn't know how to display the file? try the default handler */
+            /* custom handler error, or filetype NULL, try default handler */
             if (status == 0)
                 status = text_handler(FILEMAN_CMD_VIEW_IN_MENU, filename, NULL);
             
             /* error? */
             if (status <= 0)
-                bmp_printf(FONT_MED, 0, 460, "Error viewing %s (%s)", filename, filetype->type);
+                bmp_printf(FONT_MED, 0, 460, "Error viewing %s", filename);
             else
                 bmp_printf(FONT_MED, 0, 460, "%s", filename);
             
