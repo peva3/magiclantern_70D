@@ -1076,6 +1076,10 @@ static struct menu_entry mov_menus[] = {
     #endif
 };
 
+// Only create this menu if the cam has any feature that needs it
+#if defined(FEATURE_NITRATE) || defined(FEATURE_MOVIE_RESTART) \
+    || defined(FEATURE_REC_NOTIFY) || defined(FEATURE_FORCE_LIVEVIEW) \
+    || defined(FEATURE_SHUTTER_LOCK) || defined(FEATURE_MOVIE_LOGGING)
 static struct menu_entry movie_tweaks_menus[] = {
     {
         .name = "Movie Tweaks",
@@ -1144,6 +1148,19 @@ static struct menu_entry movie_tweaks_menus[] = {
     },
 };
 
+void movie_tweak_menu_init()
+{
+    menu_add( "Movie", movie_tweaks_menus, COUNT(movie_tweaks_menus) );
+}
+#else // end of any defines that want Movie Tweaks menu
+// Here we don't want Movie Tweak menu to display,
+// but we must do dummy init since this is used extern.
+void movie_tweak_menu_init()
+{
+    ;
+}
+#endif
+
 #ifdef FEATURE_EXPO_OVERRIDE
 struct menu_entry expo_override_menus[] = {
     {
@@ -1159,10 +1176,6 @@ struct menu_entry expo_override_menus[] = {
 };
 #endif
 
-void movie_tweak_menu_init()
-{
-    menu_add( "Movie", movie_tweaks_menus, COUNT(movie_tweaks_menus) );
-}
 static void movtweak_init()
 {
     menu_add("Movie", mov_menus, COUNT(mov_menus));
