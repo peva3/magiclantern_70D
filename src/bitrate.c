@@ -174,12 +174,12 @@ static void opt_set(int num, int den)
     for (i = 0; i < MOV_RES_AND_FPS_COMBINATIONS; i++) // 7 combinations of resolution / fps
     {
 #ifdef CONFIG_500D
-#define fullhd_30fps_opt_size_I fullhd_20fps_opt_size_I
-#define fullhd_30fps_gop_opt_0 fullhd_20fps_gop_opt_0
+    #define fullhd_30fps_opt_size_I fullhd_20fps_opt_size_I
+    #define fullhd_30fps_gop_opt_0 fullhd_20fps_gop_opt_0
 #endif
 
 #ifdef CONFIG_5D2
-#define fullhd_30fps_opt_size_I v1920_30fps_opt_size_I
+    #define fullhd_30fps_opt_size_I v1920_30fps_opt_size_I
 #endif
         for (j = 0; j < MOV_OPT_NUM_PARAMS; j++)
         {
@@ -199,7 +199,7 @@ static void opt_set(int num, int den)
         }
         #endif
     }
-#endif
+#endif // FEATURE_NITRATE
 }
 
 static void bitrate_set()
@@ -649,4 +649,4 @@ bitrate_task( void* unused )
 
 TASK_CREATE("bitrate_task", bitrate_task, 0, 0x1d, 0x1000 );
 
-#endif
+#endif // FEATURE_NITRATE
