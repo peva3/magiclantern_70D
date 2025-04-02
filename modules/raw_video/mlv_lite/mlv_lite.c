@@ -4298,16 +4298,18 @@ static unsigned int raw_rec_init()
        raw_video_menu[0].help = "Record RAW video. Press SET to start.";
     }
 
-    // Hide features unsupported on modern cams
-    if (get_digic_version() > 5)
-    {
-        raw_video_menu->children[10].shidden = 1;
+    int version = get_digic_version();
+    if (version > 5)
+    { // hide features unsupported on modern cams
+        raw_video_menu->children[10].shidden = 1; // Hide "Small hacks"
         small_hacks = 0;
-
+    }
+    if (version != 5)
+    { // so far, only Digic 5 has working lossless compression, hide on other cams
         if (raw_video_menu->children[2].max > 2)
         {
             raw_video_menu->children[2].max = 2; // hide lossless options, which are 3, 4, 5
-            output_format = 0; // plain 14-bit, no lossless support on D678 (yet)
+            output_format = 0; // plain 14-bit, no lossless support on D4, D678 (yet)
         }
     }
 
