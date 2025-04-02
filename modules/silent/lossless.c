@@ -66,13 +66,13 @@ static void LosslessCompleteCBR()
 /* pack two 16-bit values into a 32-bit one */
 #define PACK32(lo,hi) (((uint32_t)(lo) & 0xFFFF) | ((uint32_t)(hi) << 16))
 
-static void (*TTL_SetArgs)(int unused, void * TTL_Args, int PictureSize);
-static void (*TTL_Prepare)(void * ResLock, void * TTL_Args);
-static void (*TTL_RegisterCBR)(int id, void * cbr, void * cbr_arg);
-static void (*TTL_SetFlags)(int PictureType);
-static void (*TTL_Start)(void * TTL_Args);
-static void (*TTL_Stop)(void * TTL_Args);
-static void (*TTL_Finish)(void * ResLock, void * TTL_Args, uint32_t * output_size);
+static void (*TTL_SetArgs)(int unused, void * TTL_Args, int PictureSize) = NULL;
+static void (*TTL_Prepare)(void * ResLock, void * TTL_Args) = NULL;
+static void (*TTL_RegisterCBR)(int id, void * cbr, void * cbr_arg) = NULL;
+static void (*TTL_SetFlags)(int PictureType) = NULL;
+static void (*TTL_Start)(void * TTL_Args) = NULL;
+static void (*TTL_Stop)(void * TTL_Args) = NULL;
+static void (*TTL_Finish)(void * ResLock, void * TTL_Args, uint32_t * output_size) = NULL;
 
 /* edmac-memcpy.c */
 extern uint32_t edmac_write_chan;
