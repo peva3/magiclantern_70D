@@ -400,6 +400,7 @@ static struct menu_entry mod_menu_placeholders[] = {
     MY_MENU_ENTRY
     MY_MENU_ENTRY
 
+#ifndef CONFIG_LOW_MEM_CAM
     MY_MENU_ENTRY
     MY_MENU_ENTRY
     MY_MENU_ENTRY
@@ -432,6 +433,7 @@ static struct menu_entry mod_menu_placeholders[] = {
     MY_MENU_ENTRY
     MY_MENU_ENTRY
     MY_MENU_ENTRY
+#endif
 };
 
 void customize_menu_init()
