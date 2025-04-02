@@ -17,7 +17,7 @@
 
 // Used for copying and modifying ROM code before transferring control.
 // Look in HIJACK macros for the highest address, subtract MAIN_FIRMWARE_ADDR, align up.
-#define FIRMWARE_ENTRY_LEN 0x3000
+#define FIRMWARE_ENTRY_LEN 0x1100
 
 // Used in boot-hack.c with CONFIG_ALLOCATE_MEMORY_POOL
 #define ROM_ITASK_START 0xFF0197D8
