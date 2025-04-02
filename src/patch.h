@@ -82,8 +82,13 @@ struct patch
 // 32 in practice, so it's fine for now.  We could still make
 // these limits more intelligent, probably by moving the "too much"
 // logic out of patch.c and into patch_cache.c and patch_mmu.c
-#define MAX_PATCHES 32
-#define MAX_FUNCTION_HOOKS 32
+#ifdef CONFIG_LOW_MEM_CAM
+    #define MAX_PATCHES 16
+    #define MAX_FUNCTION_HOOKS 16
+#else
+    #define MAX_PATCHES 32
+    #define MAX_FUNCTION_HOOKS 32
+#endif
 
 extern int num_patches;
 extern struct patch patches_global[MAX_PATCHES];

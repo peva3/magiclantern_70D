@@ -408,8 +408,14 @@ static struct menu_entry patch_menu[] =
         .submenu_width = 710,
         .children =  (struct menu_entry[]) {
             // for i in range(128): print "            PATCH_ENTRY(%d)," % i
-#if MAX_PATCHES != 32
-#error "Max patches constant changed, this menu probably needs updating"
+#ifdef CONFIG_LOW_MEM_CAM
+    #if MAX_PATCHES != 16
+        #error "Max patches constant changed, this menu probably needs updating"
+    #endif
+#else
+    #if MAX_PATCHES != 32
+        #error "Max patches constant changed, this menu probably needs updating"
+    #endif
 #endif
             PATCH_ENTRY(0),
             PATCH_ENTRY(1),
@@ -427,6 +433,7 @@ static struct menu_entry patch_menu[] =
             PATCH_ENTRY(13),
             PATCH_ENTRY(14),
             PATCH_ENTRY(15),
+#ifndef CONFIG_LOW_MEM_CAM
             PATCH_ENTRY(16),
             PATCH_ENTRY(17),
             PATCH_ENTRY(18),
@@ -443,6 +450,7 @@ static struct menu_entry patch_menu[] =
             PATCH_ENTRY(29),
             PATCH_ENTRY(30),
             PATCH_ENTRY(31),
+#endif
             MENU_EOL,
         }
     }
