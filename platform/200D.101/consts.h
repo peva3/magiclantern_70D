@@ -88,7 +88,7 @@
 
 #define AUDIO_MONITORING_HEADPHONES_CONNECTED 0
 #define INFO_BTN_NAME "INFO"
-#define Q_BTN_NAME "FUNC"
+#define Q_BTN_NAME "[Av]"
 
 // Low confidence:
 #define MIN_MSLEEP 11
