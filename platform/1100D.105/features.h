@@ -20,6 +20,7 @@
 #define FEATURE_INTERMEDIATE_ISO_PHOTO_DISPLAY
 
 // disabled, because autoexec.bin gets too big and does not boot
+#undef FEATURE_JUNKIE_MENU
 #undef FEATURE_STICKY_HALFSHUTTER
 #undef FEATURE_SHOW_TASKS
 #undef FEATURE_SHOW_CPU_USAGE
