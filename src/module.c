@@ -1981,6 +1981,7 @@ static struct menu_entry module_menu[] = {
     MODULE_ENTRY(13)
     MODULE_ENTRY(14)
     MODULE_ENTRY(15)
+#ifndef CONFIG_LOW_MEM_CAM
     MODULE_ENTRY(16)
     MODULE_ENTRY(17)
     MODULE_ENTRY(18)
@@ -2029,6 +2030,7 @@ static struct menu_entry module_menu[] = {
     MODULE_ENTRY(61)
     MODULE_ENTRY(62)
     MODULE_ENTRY(63)
+#endif
 };
 
 static struct menu_entry module_debug_menu[] = {
