@@ -38,6 +38,10 @@
 #define FEATURE_SHOW_CPU_USAGE
 #define FEATURE_SHOW_GUI_EVENTS
 
+// We can't yet rely on image capture.  Cam crashes due to null pointer,
+// I think?  If it fails to AF lock, for example.
+#define CONFIG_IMAGE_CAPTURE_NOT_WORKING
+
 // Optionally sticky halfshutter.  Works but likely not required.
 //#define FEATURE_STICKY_HALFSHUTTER
 

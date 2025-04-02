@@ -4029,7 +4029,9 @@ MENU_PLACEHOLDER("Post Deflicker"),
         },
     },
     #endif
-    
+
+    // This entire menu is pointless until ML can trigger capture of images.
+    #ifndef CONFIG_IMAGE_CAPTURE_NOT_WORKING
     {
         .name = "Shoot Preferences",
         .select     = menu_open_submenu,
@@ -4098,6 +4100,7 @@ MENU_PLACEHOLDER("Post Deflicker"),
             MENU_EOL,
         },
     }
+    #endif // !CONFIG_IMAGE_CAPTURE_NOT_WORKING
 };
 
 #ifdef FEATURE_ZOOM_TRICK_5D3

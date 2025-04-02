@@ -16,3 +16,7 @@
 #define FEATURE_SHOW_SHUTTER_COUNT
 
 #define FEATURE_SCREENSHOT
+
+// We can't yet rely on image capture.  Cam crashes due to null pointer,
+// I think?  If it fails to AF lock, for example.
+#define CONFIG_IMAGE_CAPTURE_NOT_WORKING
