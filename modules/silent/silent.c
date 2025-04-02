@@ -1871,7 +1871,7 @@ static unsigned int silent_init()
     if (!lossless_init())
     {
         /* lossless DNG not available; hide from menu */
-        silent_menu[0].children[2].max = 1;
+        silent_menu[0].children[3].max = 1;
     }
 
     if (!is_camera("5D3",  "*"))
