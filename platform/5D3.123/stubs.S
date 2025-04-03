@@ -128,6 +128,7 @@ NSTUB(0xC0220000,  camera_engine)                           // HDMIDetectISR
 NSTUB(   0x24A70,  dm_names)
 NSTUB(    0x5B90,  DryosDebugMsg)
 NSTUB(    0x5EF8,  dm_set_store_level)
+NSTUB(    0x5E90,  dm_set_print_level)
 
 /** Dialog API **/
 NSTUB(0xFF456524,  dialog_redraw)
