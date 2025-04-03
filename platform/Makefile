@@ -547,6 +547,12 @@ LFLAGS = \
         -u memchr \
         -u frexpf
 
+# Force including various arithmetic funcs that used to be provided
+# via the unpleasant hack in builtin-enforcing.c.
+# This ensures they're exported for modules even when ML doesn't
+# use them.
+LFLAGS += -u __aeabi_f2ulz -u __aeabi_f2lz
+
 # Force including software division library code even on ARMv7-R, which
 # always has hardware division.  Modules need these since they're
 # built for lowest-common-denominator ARMv5.  -R magiclantern still
