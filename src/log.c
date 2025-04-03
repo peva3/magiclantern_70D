@@ -6,6 +6,8 @@
 #include "string.h"
 #include "log.h"
 
+#ifdef FEATURE_DISK_LOG
+
 // This sem guards usage of the buf_written and buf_next pointers
 static struct semaphore *log_mem_sem = NULL;
 // This sem controls disk writing
@@ -236,3 +238,5 @@ int send_log_data_str(char *s)
 {
     return send_log_data((uint8_t *)s, strlen(s));
 }
+
+#endif // FEATURE_DISK_LOG

@@ -349,11 +349,13 @@ static void ml_shutdown()
     movie_crop_hack_disable();
 #endif
     ml_shutdown_requested = 1;
-    
+
+#ifdef FEATURE_DISK_LOG
     // trigger final write for logging, disk_write_task() in log.c
     extern struct semaphore *log_disk_sem;
     if (log_disk_sem != NULL)
         give_semaphore(log_disk_sem);
+#endif
 
     restore_af_button_assignment_at_shutdown();
 #ifdef FEATURE_GPS_TWEAKS

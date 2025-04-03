@@ -64,6 +64,9 @@
 // We are able to override the MOV / MP4 29:59 limit
 #define FEATURE_OVERRIDE_MOVIE_30_MIN_LIMIT
 
+// Fast disk logging
+#define FEATURE_DISK_LOG
+
 // This works but is limited; no stack unwinding, since existing code
 // assumes ARM, not Thumb.  Alex recommends a good looking fix:
 // http://www.mcternan.me.uk/ArmStackUnwinding/

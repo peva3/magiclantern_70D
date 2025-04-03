@@ -3,6 +3,8 @@
 
 #include "dryos.h"
 
+#ifdef FEATURE_DISK_LOG
+
 // A fairly generic implementation of a circular buffer for logging,
 // which is periodically flushed to disk.
 
@@ -36,5 +38,7 @@ void disable_logging(void);
 // so that when initialised, the log won't use log_mem_sem.
 // This can, of course, lead to problems when logging.
 void disable_safe_logging(void);
+
+#endif // FEATURE_DISK_LOG
 
 #endif // _log_h_
