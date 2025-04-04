@@ -34,8 +34,9 @@
                                        //
                                        // Should probably do more work to find a value via a similar
                                        // route to other cams.
-#define DISPLAY_IS_ON (*(int *)0xc68c) // This is 2 when display is on, in Menu, LV and Play,
-                                       // 0 otherwise.
+//#define DISPLAY_IS_ON (*(int *)0xc68c) // This is 2 when display is on, in Menu, LV and Play,
+                                       // 0 otherwise.  NB: does not work for HDMI output
+#define DISPLAY_IS_ON (!(char)(MEM(0x486d))) // similar to 7D2, easy to find in gui_init_end(), e00921dc
 //#define MALLOC_STRUCT 0x6de60 // via memMap, find the referenced struct point and scroll forwards
                               // through xrefs to that location, looking at R/W patterns.
                               // That leads to ff018c5c in 50D, e0583d44 in 200D.
