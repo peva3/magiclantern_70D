@@ -122,14 +122,14 @@ static void alloc_cTable(font *f) {
     // If existing data has been allocated then we are re-using the font data
     // See if it the existing cTable data is large enough to hold the new font data
     // If not free it so new memory will be allocated
-    if ((f->cTable != 0) && (f->cTableSizeMax < (f->charCount*f->hdr.charSize))) {
-        free(f->cTable);              // free the memory
-        f->cTable = 0;                // clear pointer so new memory is allocated
+    if ((f->cTable != NULL) && (f->cTableSizeMax < (f->charCount*f->hdr.charSize))) {
+        free(f->cTable);  // free the memory
+        f->cTable = NULL; // clear pointer so new memory is allocated
         f->cTableSizeMax = 0;
     }
 
     // Allocated memory if needed
-    if (f->cTable == 0) {
+    if (f->cTable == NULL) {
         // Allocate memory from cached pool
         int size = f->charCount*f->hdr.charSize;
         f->cTable = malloc(size);
