@@ -289,7 +289,7 @@ static void FAST font_draw_char(font *rbf_font, int x, int y, char *cdata, int w
     {
         if (bg != NO_BG_ERASE)
         {
-            bmp_fill(bg, x, y, width, height);
+            bmp_fill(bg, x, y, pixel_width, height);
         }
 
         for (yy=0; yy<height; ++yy)
