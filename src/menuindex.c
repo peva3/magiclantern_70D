@@ -16,22 +16,18 @@ static MENU_UPDATE_FUNC(user_guide_display)
     MENU_SET_VALUE("");
 }
 
+#ifndef CONFIG_DIGIC_678X
+// D678X cams don't seem to have ICON_MAINDIAL,
+// as they don't have the same built-in fonts.
 static MENU_UPDATE_FUNC(set_scrollwheel_display)
 {
     if (info->can_custom_draw)
     {
         int x = bmp_string_width(MENU_FONT, entry->name) + 40;
-        #if defined(CONFIG_DIGIC_678X)
-        // SJE FIXME we can't use ICON_MAINDIAL as that's in Canon bitmap font
-        // and Digic >= 7 doesn't have it.  So I substitute a different icon.
-        // A better fix might be to make our own dial icon and add it to ico.c,
-        // then we could use the same code on all cams.
-        bfnt_draw_char(ICON_ML_MODIFIED, x, info->y - 5, COLOR_WHITE, NO_BG_ERASE);
-        #else
         bfnt_draw_char(ICON_MAINDIAL, x, info->y - 5, COLOR_WHITE, NO_BG_ERASE);
-        #endif
     }
 }
+#endif
 
 /* config.c */
 extern int _set_at_startup;
@@ -90,8 +86,13 @@ static struct menu_entry help_menus[] = {
     #endif
     {
         .select  = menu_nav_help_open,
+        #ifdef CONFIG_DIGIC_678X
+        .name    = "SET / main dial",
+        // scroll wheel / main dial icon doesn't exist on D678X, no built in fonts
+        #else
         .name    = "SET / ",
         .update  = set_scrollwheel_display,
+        #endif
         .choices = CHOICES("Edit values"),
     },
     {
