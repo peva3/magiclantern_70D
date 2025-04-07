@@ -3146,6 +3146,8 @@ dyn_menu_add_entry(struct menu *dyn_menu, struct menu_entry *entry, struct menu_
     int selected;
 
     ASSERT(dyn_entry);
+    if (dyn_entry == NULL)
+        return;
 
     next = dyn_entry->next;
     prev = dyn_entry->prev;
