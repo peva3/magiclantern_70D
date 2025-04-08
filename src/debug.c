@@ -2340,17 +2340,54 @@ static MENU_SELECT_FUNC(gui_events_toggle)
     }
 }
 
-void spy_event(struct event * event)
+void spy_event(struct event *event)
 {
-    if (gui_events_show)
+    if (!gui_events_show)
+        return;
+
+    if (event == NULL)
     {
-        printf("Event param=%8x *obj=%8x/%8x/%8x arg=%8x\n",
-            event->param,
-            event->obj ? ((int)event->obj & 0xf0000000 ? (int)event->obj : *(int*)(event->obj)) : 0,
-            event->obj ? ((int)event->obj & 0xf0000000 ? (int)event->obj : *(int*)(event->obj + 4)) : 0,
-            event->obj ? ((int)event->obj & 0xf0000000 ? (int)event->obj : *(int*)(event->obj + 8)) : 0,
-            event->arg
-        );
+        printf("Event NULL\n");
+    }
+    else
+    {
+        printf("Event param: %8x arg: %8x ", event->param, event->arg);
+        if (event->obj == NULL)
+        {
+            printf(" obj:     NULL\n");
+        }
+        else
+        {
+            if ((int)event->obj & 0xf0000000)
+            { // Old code avoids deref of these pointers.
+              // There is no comment to explain why.  Possibly because if
+              // they're an address, it would be in ROM?
+                printf(" obj: %8x\n", event->obj);
+            }
+            else
+            { // normal DryOS event
+                // Old cams expect event->obj to be a valid pointer, but
+                // it is not always on new cams.  Possibly, it wasn't always
+                // on old cams...  but they don't crash on pointer derefs
+                // to low memory locations.
+
+                if ((int)event->obj < 0x4000)
+                { // unpleasant hack, assume these are not valid pointers
+                    printf(" obj: %8x\n", event->obj);
+                }
+                else
+                {
+                    // FIXME SJE work out what these fields are,
+                    // at least enough to make them part of the event
+                    // struct and stop doing dirty offsets reads through
+                    // event->obj directly.
+                    printf("*obj: %8x, %8x, %8x\n",
+                           *(int*)(event->obj),
+                           *(int*)(event->obj + 4),
+                           *(int*)(event->obj + 8));
+                }
+            }
+        }
     }
 }
 
