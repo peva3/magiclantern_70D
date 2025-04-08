@@ -343,7 +343,7 @@ int update_bgmt_av_status(struct event * event) {
 }
 
 /** AV long/short press management code. **/
-int handle_av_short_for_menu(struct event* event) {
+static int handle_av_short_for_menu(struct event* event) {
     static int t_press   = 0;
     static int t_unpress = 0;
     unsigned int dt = 0;
@@ -384,7 +384,7 @@ int disp_pressed = 0;
 int get_disp_pressed() { return disp_pressed; }
 int disp_zoom_pressed = 0;
 
-int handle_digital_zoom_shortcut(struct event * event)
+static int handle_digital_zoom_shortcut(struct event * event)
 {
     switch(event->param) {
         case BGMT_PRESS_DISP:
