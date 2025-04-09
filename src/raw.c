@@ -1012,6 +1012,39 @@ int raw_update_params_work()
         skip_left   = zoom ? 0 : 256;
         #endif
 
+        #ifdef CONFIG_7D2
+        // I don't know where you're supposed to get these from.
+        // exiftool |grep -i border thinks 50, 84
+        // exiftool |grep -i width, and |grep -i height show "Sensor Height" to be 60 larger,
+        // 96 wider, than the crop (but it might not all be optical black?).
+        // darktable source, https://github.com/darktable-org/rawspeed/blob/develop/data/cameras.xml#L1230
+        // says:
+        // Vertical x="4" width="64"
+        // Horizontal y="24" height="8"
+        //
+        // For now, we need vaguely sane values to avoid autodetect_black_level() failing.
+        // Being in the black region should work, exact alignment may need correcting
+        // for actual raw capture.
+        skip_top    = 20;
+        skip_left   = 144;
+        #endif
+
+        #ifdef CONFIG_200D
+        // darktable source says:
+        // Vertical x="0" width="260"
+        // Horizontal y="0" height="38"
+        skip_top    = 32;
+        skip_left   = 86;
+        #endif
+
+        #ifdef CONFIG_6D2
+        // darktable source says:
+        // Vertical x="2" width="116"
+        // Horizontal y="8" height="32"
+        skip_top    = 16;
+        skip_left   = 100;
+        #endif
+
         #if defined(CONFIG_70D)
         skip_top    = 28;
         skip_left   = 144; // 146 could work, too
@@ -1258,15 +1291,23 @@ int raw_update_params_work()
         /* return failure, and make sure the black level is recomputed at next call */
         dirty = 1;
 
-        if (0)
+        #if 0
+        static int first_bad_frame = 1;
+        if (first_bad_frame)
         {
             /* for debugging: if black check fails, save the bad frame as DNG */
+            first_bad_frame = 0;
 
             /* make a copy of the raw buffer, because it's being updated while we are saving it */
             void* buf = malloc(raw_info.frame_size);
             if (buf)
             {
                 memcpy(buf, raw_info.buffer, raw_info.frame_size);
+                // On modern cams, save_dng() doesn't yet work, cause unknown.
+                // To save something there, uncomment dump_seg() line.
+                // tools/image/image_buffer_guesser/display_buf.py can be used
+                // to view and save the buffer data.
+                //dump_seg(buf, raw_info.frame_size, "raw.dmp");
                 char filename[50];
                 get_numbered_file_name("bad%02d.dng", 99, filename, sizeof(filename));
                 struct raw_info local_raw_info = raw_info;
@@ -1275,6 +1316,7 @@ int raw_update_params_work()
                 free(buf);
             }
         }
+        #endif
 
         dbg_printf("Black check error\n");
         return 0;
@@ -1369,7 +1411,8 @@ static int raw_update_params_once()
     int ans = 0;
     take_semaphore(raw_sem, 0);
     ans = raw_update_params_work();
-    if (ans) module_exec_cbr(CBR_RAW_INFO_UPDATE);
+    if (ans)
+        module_exec_cbr(CBR_RAW_INFO_UPDATE);
     give_semaphore(raw_sem);
     return ans;
 }
@@ -1856,6 +1899,11 @@ static int autodetect_black_level(int* black_mean, int* black_stdev_x100)
     int mean2 = 0;
     int stdev2 = 0;
 
+//    bmp_printf(FONT_MED, 30, 210, "a_b_l: %d, %d, %d, %d",
+//               raw_info.active_area.x1,
+//               raw_info.active_area.x2,
+//               raw_info.active_area.y1,
+//               raw_info.active_area.y2);
     if (raw_info.active_area.x1 > 50) /* use the left black bar for black calibration */
     {
         // FIXME SJE are these magic numbers still appropriate for all cams?
