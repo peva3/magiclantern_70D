@@ -863,17 +863,34 @@ lens_focus(
     return lv_focus_error ? 0 : 1;
 }
 
+// wait is max wait in seconds
 void lens_wait_readytotakepic(int wait)
 {
     int i;
     for (i = 0; i < wait * 20; i++)
     {
-        if (ml_shutdown_requested) return;
-        if (sensor_cleaning) { msleep(50); continue; }
-        if (shooting_mode == SHOOTMODE_M && lens_info.raw_shutter == 0) { msleep(50); continue; }
-        if (job_state_ready_to_take_pic() && burst_count > 0 && ((icu_uilock & 0xFF) == 0)) break;
+        if (ml_shutdown_requested)
+            return;
+        if (sensor_cleaning)
+        {
+            msleep(50);
+            continue;
+        }
+        if (shooting_mode == SHOOTMODE_M && lens_info.raw_shutter == 0)
+        {
+            // "Canon firmware was reporting shutter speed as 0 in M mode while the flash was recharging."
+            // The intent here is to wait for flash unit to charge.
+            // We handle a different case of raw_shutter == 0 in lens_init().
+            msleep(50);
+            continue;
+        }
+        if (job_state_ready_to_take_pic() && burst_count > 0 && ((icu_uilock & 0xFF) == 0))
+        {
+            break;
+        }
         msleep(50);
-        if (NOT_RECORDING) info_led_on();
+        if (NOT_RECORDING)
+            info_led_on();
     }
     if (NOT_RECORDING) info_led_off();
 }
@@ -2269,6 +2286,12 @@ crop_factor_menu_init()
 static void
 lens_init( void* unused )
 {
+    // On some cams, at least 200D, if you start in M mode, raw_shutter is 0.
+    // This can cause problems with intervalometer logic in lens_wait_readytotakepic(),
+    // which waits for too long, thinking the flash is charging.
+    // We expect PROP_SHUTTER_* to fire and update this, but it doesn't happen on 200D.
+    lens_info.raw_shutter = 100;
+
     focus_done_sem = create_named_semaphore("focus_sem", SEM_CREATE_UNLOCKED);
 #ifndef CONFIG_5DC
     menu_add("Movie Tweaks", lens_menus, COUNT(lens_menus));
