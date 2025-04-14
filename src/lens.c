@@ -2359,6 +2359,7 @@ LENS_SET_IN_PICSTYLE(saturation, -4, 4)
 LENS_SET_IN_PICSTYLE(color_tone, -4, 4)
 
 
+// half shutter
 void SW1(int v, int wait)
 {
     v = COERCE(v, 0, 1);
@@ -2368,6 +2369,7 @@ void SW1(int v, int wait)
     if (wait) msleep(wait);
 }
 
+// full shutter
 void SW2(int v, int wait)
 {
     v = COERCE(v, 0, 1);

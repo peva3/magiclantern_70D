@@ -699,7 +699,10 @@ int expo_value_rounding_ok(int raw, int is_aperture);
 void draw_ml_topbar();
 void draw_ml_bottombar();
 
+// half shutter
 void SW1(int v, int wait);
+
+// full shutter
 void SW2(int v, int wait);
 
 void iso_toggle( void * priv, int sign );
