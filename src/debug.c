@@ -264,7 +264,7 @@ void guimode_test()
             continue;
 
         NotifyBox(500, "Trying GUI mode %d...", i);
-        save_mem_to_file(NULL, 0, fn); // temporary flag to indicate that this GUI mode was tried (and probably found to be troublesome)
+        save_mem_to_file(fn, 0, fn); // temporary flag to indicate that this GUI mode was tried (and probably found to be troublesome)
         msleep(200);
 
         SetGUIRequestMode(i);
