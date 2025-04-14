@@ -108,7 +108,7 @@
     #define FLASH_MIN_EV -10
     #define COLOR_FG_NONLV 80
     #define AF_BTN_HALFSHUTTER 0
-    #define AF_BTN_STAR 2
+    #define AF_BTN_STAR 1 // via CFn menu
     // another block copied from 50D
     #define GUIMODE_WB 5
     #define GUIMODE_FOCUS_MODE 9
