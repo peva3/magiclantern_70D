@@ -91,8 +91,9 @@ void prop_add_handler (uint32_t property, void *handler)
     // SJE TODO investigate and fix all currently denied
     // properties (those known to cause problems on D678 cams)
     #ifdef CONFIG_DIGIC_678X
+    const uint32_t deny_count = sizeof(prop_handler_deny) / sizeof(*prop_handler_deny);
     for(uint32_t i = 0;
-        i < sizeof(prop_handler_deny) / sizeof(*prop_handler_deny);
+        deny_count > 0 && i < deny_count;
         i++)
     {
         if (prop_handler_deny[i] == property)
