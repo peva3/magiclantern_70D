@@ -35,7 +35,11 @@ const uint32_t prop_handler_deny[] =
 const uint32_t prop_write_allow [] =
 {
     PROP_ICU_AUTO_POWEROFF,
-    PROP_REMOTE_SW1
+
+    // Need these two for intervalometer in cont. drive mode
+    // (and presumably lots of other stuff)
+    PROP_REMOTE_SW1, // half shutter
+    PROP_REMOTE_SW2 // full shutter
 };
 
 // anything not listed above will allow reads but not writes
