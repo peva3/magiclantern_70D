@@ -264,7 +264,7 @@ void guimode_test()
             continue;
 
         NotifyBox(500, "Trying GUI mode %d...", i);
-        dump_seg(0, 0, fn); // temporary flag to indicate that this GUI mode was tried (and probably found to be troublesome)
+        save_mem_to_file(NULL, 0, fn); // temporary flag to indicate that this GUI mode was tried (and probably found to be troublesome)
         msleep(200);
 
         SetGUIRequestMode(i);
@@ -552,7 +552,7 @@ static void crash_log_step()
     if (core_dump_requested)
     {
         NotifyBox(100000, "Saving core dump, please wait...\n");
-        dump_seg((void*)core_dump_req_from, core_dump_req_from + core_dump_req_size, "COREDUMP.DAT");
+        save_mem_to_file((void*)core_dump_req_from, core_dump_req_from + core_dump_req_size, "COREDUMP.DAT");
         NotifyBox(10000, "Pls send COREDUMP.DAT to ML devs.\n");
         core_dump_requested = 0;
     }
@@ -1677,7 +1677,7 @@ static void CopyMLFilesBack_AfterFormat()
             snprintf(msg, sizeof(msg), "Restoring %s...", tmp_files[i].name);
             HijackCurrentDialogBox(FORMAT_STR_LOC, msg);
         }
-        dump_seg(tmp_files[i].buf, tmp_files[i].size, tmp_files[i].name);
+        save_mem_to_file(tmp_files[i].buf, tmp_files[i].size, tmp_files[i].name);
         int sig = compute_signature(tmp_files[i].buf, tmp_files[i].size/4);
         if (sig != tmp_files[i].sig)
         {

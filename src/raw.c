@@ -1394,7 +1394,7 @@ int raw_update_params_work()
 
     #ifdef RAW_DEBUG_DUMP
     dbg_printf("saving raw buffer...\n");
-    dump_seg(raw_info.buffer, MAX(raw_info.frame_size, 1000000), "raw.buf");
+    save_mem_to_file(raw_info.buffer, MAX(raw_info.frame_size, 1000000), "raw.buf");
     dbg_printf("saving DNG...\n");
     save_dng("raw.dng", &raw_info);
     reverse_bytes_order(raw_info.buffer, raw_info.frame_size);

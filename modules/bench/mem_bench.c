@@ -31,8 +31,8 @@ static void mem_benchmark_check(void *dst, void *src, int size, int x, int y)
         color_fg = COLOR_RED;
 
         /* save the source and destination buffers, for debugging */
-        dump_seg(src, size, "ML/LOGS/benchsrc.bin");
-        dump_seg(dst, size, "ML/LOGS/benchdst.bin");
+        save_mem_to_file(src, size, "ML/LOGS/benchsrc.bin");
+        save_mem_to_file(dst, size, "ML/LOGS/benchdst.bin");
     }
 
     bmp_printf(

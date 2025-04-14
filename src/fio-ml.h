@@ -172,7 +172,7 @@ void _find_ml_card();
 void _card_tweaks();
 
 /* dump anything from RAM to a file */
-void dump_seg(void* start, uint32_t size, char* filename);
+void save_mem_to_file(void *start, uint32_t size, char *filename);
 
 /* dump 0x10000000 bytes (256MB) from 0x10000000 * k */
 void dump_big_seg(int k, char* filename);

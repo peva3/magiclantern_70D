@@ -689,7 +689,7 @@ static void edmac_spy_dump()
 
     char log_filename[100];
     get_numbered_file_name("edmac%03d.log", 999, log_filename, sizeof(log_filename));
-    dump_seg(out, len, log_filename);
+    save_mem_to_file(out, len, log_filename);
     free(out);
 
     edmac_index = 0;

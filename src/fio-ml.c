@@ -811,18 +811,21 @@ int get_numbered_file_name(const char* pattern, int nmax, char* filename, int ma
     return -1;
 }
 
-void dump_seg(void* start, uint32_t size, char* filename)
+void save_mem_to_file(void *start, uint32_t size, char *filename)
 {
     DEBUG();
-    FILE* f = FIO_CreateFile(filename);
+    FILE *f = FIO_CreateFile(filename);
     if (f)
     {
-        FIO_WriteFile( f, start, size );
+        FIO_WriteFile(f, start, size);
         FIO_CloseFile(f);
     }
     DEBUG();
 }
 
+// This name is bad, should probably be something like
+// save_256MB_mem_to_file(), and take a start address, not
+// an index for no apparent reason.
 void dump_big_seg(int k, char* filename)
 {
     DEBUG();
