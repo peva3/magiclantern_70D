@@ -284,16 +284,6 @@ void guimode_test()
 }
 #endif
 
-void mem_to_file(char *name, uint32_t addr, uint32_t size)
-{
-    FILE *f = NULL;
-    f = FIO_CreateFile(name);
-    if (!f)
-        return;
-    FIO_WriteFile(f, (uint32_t *)addr, size);
-    FIO_CloseFile(f);
-}
-
 static void run_test()
 {
     DryosDebugMsg(0, 15, "run_test fired");
