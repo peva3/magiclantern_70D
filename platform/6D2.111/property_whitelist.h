@@ -34,6 +34,9 @@ const uint32_t prop_handler_deny[] =
 // allow writes / allow prop_request_change() for these:
 const uint32_t prop_write_allow[] =
 {
+    PROP_BUTTON_ASSIGNMENT,
+    PROP_REMOTE_SW1,
+    PROP_REMOTE_SW2
 };
 
 // anything not listed above will allow reads but not writes
