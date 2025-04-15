@@ -8,20 +8,33 @@ GENERIC_GET_HTP
 GENERIC_GET_MLU
 //GENERIC_SET_MLU
 
-// SJE FIXME need to fill in more stuff here
+#define CFN_LEN 0x54 // find this len by changing CFn and
+                     // checking in the prop handler below.
+#define AF_BUTTON_INDEX 0xa // dump the prop handler buf, perhaps in run_test(),
+                            // before and after changing button assignment.
 
-static int8_t some_cfn[0x2f];
-/*
-PROP_HANDLER(0x80010007)
+static int8_t cfn_copy[CFN_LEN] = {0};
+static int8_t cfn_initialised = 0;
+PROP_HANDLER(PROP_BUTTON_ASSIGNMENT)
 {
-    ASSERT(len == 0x2f);
-    memcpy(some_cfn, buf, 0x2f);
+    //printf("prop len: %x\n", len);
+    if (len < CFN_LEN)
+        return;
+    memcpy(cfn_copy, buf, CFN_LEN);
+    cfn_initialised = 1;
 }
-*/
 
-int cfn_get_af_button_assignment() { return some_cfn[9]; }
+int cfn_get_af_button_assignment()
+{
+    return cfn_copy[AF_BUTTON_INDEX];
+}
+
 void cfn_set_af_button(int value) 
 {  
-    some_cfn[9] = COERCE(value, 0, 2);
-//    prop_request_change(0x80010007, some_cfn, 0x2f);
+    cfn_copy[AF_BUTTON_INDEX] = COERCE(value, 0, 2);
+    if (cfn_initialised)
+    {
+        //printf("changing prop: %d\n", cfn_copy[AF_BUTTON_INDEX]);
+        prop_request_change(PROP_BUTTON_ASSIGNMENT, cfn_copy, CFN_LEN);
+    }
 }

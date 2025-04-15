@@ -24,14 +24,13 @@
 //#define FEATURE_GLOBAL_DRAW
 //#define FEATURE_CROPMARKS
 
-//#define CONFIG_PROP_REQUEST_CHANGE
+#define CONFIG_PROP_REQUEST_CHANGE
 //#define CONFIG_STATE_OBJECT_HOOKS
 //#define CONFIG_LIVEVIEW
 //#define FEATURE_POWERSAVE_LIVEVIEW
 
-// We can't yet rely on image capture.  Cam crashes due to null pointer,
-// I think?  If it fails to AF lock, for example.
-#define CONFIG_IMAGE_CAPTURE_NOT_WORKING
+//#define CONFIG_IMAGE_CAPTURE_NOT_WORKING
+#define FEATURE_INTERVALOMETER
 
 // explicitly disable stuff that don't work or may break things
 #undef CONFIG_AUTOBACKUP_ROM
