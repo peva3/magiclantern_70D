@@ -6001,8 +6001,10 @@ void select_menu_by_name(char* name, const char* entry_name)
         submenu_level = 0;
         select_menu_recursive(selected_menu, entry_name);
 
+#ifndef CONFIG_RELEASE_BUILD
         /* make sure it won't display the startup screen */
         beta_set_warned();
+#endif
 
         /* rebuild the modified settings menu */
         mod_menu_dirty = 1;
