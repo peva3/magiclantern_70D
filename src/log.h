@@ -3,7 +3,7 @@
 
 #include "dryos.h"
 
-#ifdef FEATURE_DISK_LOG
+#if defined(FEATURE_DISK_LOG) || defined(MODULE)
 
 // A fairly generic implementation of a circular buffer for logging,
 // which is periodically flushed to disk.
