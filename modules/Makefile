@@ -84,7 +84,8 @@ endif
 $(BUILD_DIR)/default_modules_complete: $(ML_MODULE_TARGETS) | $(BUILD_DIR)
 	@$(PYTHON3) mark_cross_module_deps.py $(OBJCOPY) $(ML_MODULES)
 	@$(CP) $(ML_MODULE_PATHS) $(BUILD_DIR)/
-	touch $(BUILD_DIR)/default_modules_complete
+	@touch $(BUILD_DIR)/default_modules_complete
+	@echo Modules built successfully
 
 # Individual modules should make this target their default goal.
 # It's not run when invoking make from the modules dir directly,
