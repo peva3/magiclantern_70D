@@ -116,13 +116,29 @@ create_named_semaphore(
 );
 
 // On D45 cams, passing in a NULL pointer is an error,
-// on modern cams, this is an OS assert so must be avoided.
+// but the zero page is mapped and there's no memory protection,
+// so it will work.
+// On modern cams, this is an OS assert so must be avoided.
+//
+// A timeout of 0 means wait forever.
+//
+// Triggers a DryOS assert if called in an interrupt context.
 extern int
 take_semaphore(
         struct semaphore *      semaphore,
         int                     timeout_interval
 ) ACQUIRE(semaphore) NO_THREAD_SAFETY_ANALYSIS;
 
+// This always returns fast.  Return of 0 means you took the sem,
+// otherwise, sem was locked, or, an error occured.
+//
+// Safe to call in an interrupt context.
+extern int
+take_semaphore_now(
+        struct semaphore *      semaphore
+) ACQUIRE(semaphore) NO_THREAD_SAFETY_ANALYSIS;
+
+// Safe to call in an interrupt context.
 extern int
 give_semaphore(
         struct semaphore *      semaphore
@@ -244,11 +260,44 @@ extern int iscntrl( int x );
 void str_make_lowercase(char* s);
 
 /** message queue calls **/
+// While we treat these funcs as taking a pointer to msg_queue, this is a lie.
+// In fact, these take a queue_ID (and msg_queue_create() returns an ID).
+// Since we never need to know what the ID is, or change it, this works fine.
+// I don't know if this was a deliberate choice: possibly so the compiler
+// will complain if you try to change an opaque pointer.
+//
+// I've only checked on D6 and up, there the ID is similar to task ID:
+// a uint32_t where the top half is a monotonically increasing kernel value,
+// the bottom half a "user land" ID.  Presumably this is so the kernel can detect
+// re-use of the user land half (e.g. create, delete, create: you'll get the same
+// user part, but top half will change).
+//
+// The bottom bit of the user ID can be used for error signaling.
 struct msg_queue;
+
+// Get an item from the queue.  Items are always 4 bytes wide.
+// If queue remains empty throughout the timeout period, returns non-zero.
+// Timeout of 0 means wait forever.
 extern int32_t msg_queue_receive(struct msg_queue *queue, void *buffer, uint32_t timeout);
-extern int32_t msg_queue_post(struct msg_queue * queue, uint32_t msg);
+
+// Adds an item to the queue.  No idea why we use uint32_t for msg,
+// when we use void * for msg_queue_receive() buffer param, and they're
+// refering to the same thing.  We pass pointers into the queue and retrieve them later,
+// but we also pass ints.  Doesn't seem to matter on our target architectures.
+//
+// Can return non-zero if queue is full or if error occured.  Post to a full queue
+// doesn't assert, other cases do (but remember that DryOS asserts aren't fatal).
+extern int32_t msg_queue_post(struct msg_queue *queue, uint32_t msg);
+
+// This returns the number of items currently in the queue, into "count".
+// Ret value of function itself is 0 for success.  On 200D, the non-zero paths
+// all assert, so presumably shouldn't happen.
 extern int32_t msg_queue_count(struct msg_queue *queue, uint32_t *count);
-extern struct msg_queue *msg_queue_create(char *name, uint32_t backlog);
+
+// Can return 5 for error (in general, low bit seems to signal error),
+// but DryOS rarely if ever checks this, it's assumed to always succeed.
+extern struct msg_queue *msg_queue_create(char *name, uint32_t queue_size);
+
 
 uint32_t RegisterRPCHandler (uint32_t rpc_id, uint32_t (*handler) (uint8_t *, uint32_t));
 uint32_t RequestRPC (uint32_t id, void* data, uint32_t length, uint32_t cb, uint32_t cb_parm);

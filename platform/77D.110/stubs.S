@@ -114,6 +114,7 @@ THUMB_FN(0xdf00b506,  ReleaseRecursiveLock)                 /* SystemIF::KerRLoc
 THUMB_FN(0xdf008408,  create_named_semaphore)
 THUMB_FN(0xdf00857e,  give_semaphore)                       /* SystemIF::KerSem.c   */
 THUMB_FN(0xdf008504,  take_semaphore)                       /* SystemIF::KerSem.c   */
+THUMB_FN(0xdf0084d4,  take_semaphore_now)
 
 /** GUI **/
 DATA_PTR(   0x1002c,  gui_task_list)                        // easy to find in WINSYS_CreateController, struct starts from lock

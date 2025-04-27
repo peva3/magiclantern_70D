@@ -276,6 +276,7 @@ NSTUB(0xFF1F9D18,  UnLockEngineResources)
 NSTUB(0xFF07B7C4,  create_named_semaphore)
 NSTUB(0xFF07BA0C,  give_semaphore)
 NSTUB(0xFF07B924,  take_semaphore)
+NSTUB(0xFF07B8CC,  take_semaphore_now)
 
 /** Task info **/
 NSTUB(    0x2B24,  task_max)

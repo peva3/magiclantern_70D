@@ -163,6 +163,7 @@ THUMB_FN(0xe0599506,  CreateMemoryChunk) // called from CreateMemorySuite
 
 //NSTUB(0xe04ba7e6,  GetSizeOfMemorySuite) // not needed, but I found it along the way
 THUMB_FN(0xe05a9404,  take_semaphore) // Fairly sure. Same function sig and followed by give_semaphore
+THUMB_FN(0xe05a93d4,  take_semaphore_now)
 THUMB_FN(0xe05a947e,  give_semaphore)
 THUMB_FN(0xe05a9308,  create_named_semaphore) // also see df00b114, very similar, but df008418 is closer to 50D create_named_semaphore.
                                               // Complicated by there being df00b648, which wraps 8418 with an extra assert possible,

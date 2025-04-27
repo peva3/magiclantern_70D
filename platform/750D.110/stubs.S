@@ -126,6 +126,7 @@ THUMB_FN(    0x3516,  ReleaseRecursiveLock)                 // "KernelDry/KerRLo
 /** Semaphores **/
 THUMB_FN(    0x2fbc,  create_named_semaphore)
 THUMB_FN(    0x30b2,  take_semaphore)                       // GetEndGuiInitState Take/Give
+THUMB_FN(    0x3082,  take_semaphore_now)
 THUMB_FN(    0x312a,  give_semaphore)
 
 /** GUI **/

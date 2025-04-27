@@ -283,6 +283,7 @@ NSTUB(0xFF1C8CD4,  UnLockEngineResources)
 NSTUB(0xFF06E3D4,  create_named_semaphore)                  // found by finsig
 NSTUB(0xFF06E61C,  give_semaphore)
 NSTUB(0xFF06E534,  take_semaphore)
+NSTUB(0xFF06E4DC,  take_semaphore_now)
 
 /** Task info **/
 NSTUB(    0x3234,  task_max)

@@ -242,6 +242,7 @@ NSTUB(0xFF2C0B00,  UnLockEngineResources)
 NSTUB(    0x91DC,  create_named_semaphore)
 NSTUB(    0x9428,  give_semaphore)
 NSTUB(    0x933C,  take_semaphore)
+NSTUB(    0x92E4,  take_semaphore_now)
 
 /** Task info **/
 NSTUB(   0x51358,  get_task_info_by_id)            // AJ_task_trampoline_related_p10

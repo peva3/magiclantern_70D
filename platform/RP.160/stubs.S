@@ -153,6 +153,7 @@ THUMB_FN(0xe038a882,  ReleaseRecursiveLock)                 // Last call in afte
 THUMB_FN(0xe05a5a48,  create_named_semaphore)               // Takes0 "PU0Wait" string as argument
 THUMB_FN(0xe05a5bbe,  give_semaphore)                       // called after "fcsCreateTransformCompleteCallback (%#x)" string
 THUMB_FN(0xe05a5b44,  take_semaphore)                       // function call above "TakeSemaphore(%ld)" string
+THUMB_FN(0xe05a5b14,  take_semaphore_now)
 
 /** Queue **/
 THUMB_FN(0xe0580bf4,  msg_queue_create)                     // takes "DispOpeQueue" as argument

@@ -123,6 +123,7 @@ THUMB_FN(0xe08004aa,  ReleaseRecursiveLock)                 // SystemIF::KerRLoc
 THUMB_FN(0xe0814600,  create_named_semaphore)               // SystemIF::KerSem.c, called from init task with "PU0Wait", "PU1Wait", "CCInit"... as 1st arg
 THUMB_FN(0xe0814776,  give_semaphore)                       // SystemIF::KerSem.c, follow xrefs to result of any of create_named_semaphore()
 THUMB_FN(0xe08146fc,  take_semaphore)                       // SystemIF::KerSem.c, follow xrefs like in give_semaphore()
+THUMB_FN(0xe08146cc,  take_semaphore_now)
 
 /** GUI **/
 DATA_PTR(    0x546c,  gui_main_struct)                      // via string "QueueClearFlg Clear", accessed by that function

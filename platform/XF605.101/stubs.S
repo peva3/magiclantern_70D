@@ -135,6 +135,7 @@ THUMB_FN(0x1ea1d702,  ReleaseRecursiveLock)     // SystemIF::KerRLock.c
 THUMB_FN(0x1ea22a78,  create_named_semaphore)   // SystemIF::KerSem.c, called from init task with "PU0Wait", "PU1Wait", "CCInit"... as 1st arg
 THUMB_FN(0x1ea22c26,  give_semaphore)           // SystemIF::KerSem.c, follow xrefs to result of any of create_named_semaphore()
 THUMB_FN(0x1ea22b9c,  take_semaphore)           // SystemIF::KerSem.c, follow xrefs like in give_semaphore()
+THUMB_FN(0x1ea22b64,  take_semaphore_now)
 
 /** GUI **/
 DATA_PTR(    0x5280,  gui_main_struct)  // visible in asm near task_create() for GuiMainTask

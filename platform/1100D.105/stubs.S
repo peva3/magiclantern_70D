@@ -276,6 +276,7 @@ NSTUB(0xFF1D7EF8,  UnLockEngineResources)
 NSTUB(0xFF06F40C,  create_named_semaphore)                  // might be good (dumps=1, score=81)
 NSTUB(0xFF06F654,  give_semaphore)                          // might be good (dumps=1, score=1e+02)
 NSTUB(0xFF06F56C,  take_semaphore)                          // might be good (dumps=1, score=1.5e+02)
+NSTUB(0xFF06F514,  take_semaphore_now)
 
 /** Task info **/
 NSTUB(    0x2E00,  task_max)

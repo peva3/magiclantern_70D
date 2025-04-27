@@ -112,6 +112,7 @@ THUMB_FN(0xe0508b3a,  ReleaseRecursiveLock)                 /* SystemIF::KerRLoc
 THUMB_FN(0xE0532614,  create_named_semaphore)
 THUMB_FN(0xE053278A,  give_semaphore)                       /* SystemIF::KerSem.c   */
 THUMB_FN(0xE0532710,  take_semaphore)                       /* SystemIF::KerSem.c   */
+THUMB_FN(0xE05326E0,  take_semaphore_now)
 
 
 /** GUI **/

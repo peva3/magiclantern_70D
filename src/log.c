@@ -146,9 +146,9 @@ int send_log_data(uint8_t *data, uint32_t size)
 
     if (use_sems)
     {
-        int err = take_semaphore(log_mem_sem, 200);
+        int err = take_semaphore_now(log_mem_sem);
         if (err)
-        { // timeout, no logging for you
+        { // Couldn't take sem (and maybe DryOS asserted).
             return -2;
         }
     }
