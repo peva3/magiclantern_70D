@@ -133,6 +133,7 @@ THUMB_FN(0xe0516db6,  ReleaseRecursiveLock)                 /* SystemIF::KerRLoc
 THUMB_FN(0xe054fbf0,  create_named_semaphore)
 THUMB_FN(0xE054FD66,  give_semaphore)                       /* SystemIF::KerSem.c   */
 THUMB_FN(0xE054FCEC,  take_semaphore)                       /* SystemIF::KerSem.c   */
+THUMB_FN(0xE054FCBC,  take_semaphore_now)
 
 /** GUI **/
 DATA_PTR(    0xF29C,  gui_task_list)                        // based on 200d
