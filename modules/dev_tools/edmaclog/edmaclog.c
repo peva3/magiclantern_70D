@@ -62,15 +62,6 @@ static unsigned int edmac_init()
     if (log_buf == NULL)
         return -1;
 
-    if (is_camera("70D", "1.1.2")
-        || is_camera("5D3", "1.2.3")
-        || is_camera("6D2", "1.1.1")
-        )
-    {
-        // This cam has problems using take_semaphore() in some
-        // contexts we want to log in.  Cause unknown.
-        disable_safe_logging();
-    }
     if (init_log(log_buf, MIN_LOG_BUF_SIZE, "edmac.log") < 0)
         return -2;
 
