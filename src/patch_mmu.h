@@ -12,14 +12,6 @@
 
 #include "patch.h"
 
-struct function_hook_patch
-{
-    uint32_t patch_addr; // VA to patch.
-    uint8_t orig_content[8]; // Used as a check before applying patch.
-    uint32_t target_function_addr;
-    const char *description;
-};
-
 struct mmu_L2_page_info
 {
     uint8_t *phys_mem[16]; // 16 possible 0x10000 pages of backing ram
@@ -42,19 +34,6 @@ struct mmu_config
 extern struct mmu_config global_mmu_conf; // in patch_mmu.c
 extern void change_mmu_tables(uint8_t *ttbr0, uint8_t *ttbr1, uint32_t cpu_id);
 void change_mmu_tables_wrapper(void);
-
-// Given a well formed function_hook_patch, convert to a standard patch.
-// We use function_hook_patch because it's easier for the caller to specify,
-// e.g. there's no need to compute the asm for the hook.
-//
-// patch_out must point to enough space for a patch,
-// this function populates it but does not allocate memory.
-//
-// hook_mem_out must point to at least 8 bytes of valid mem.
-// The hook asm is written here, and associated with patch_out.new_values.
-int convert_f_patch_to_patch(struct function_hook_patch *f_patch_in,
-                             struct patch *patch_out,
-                             uint8_t *hook_mem_out);
 
 int apply_patch(struct patch *patch);
 int apply_normal_patches(void);

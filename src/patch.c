@@ -237,6 +237,52 @@ int unpatch_memory(uintptr_t _addr)
     return _unpatch_memory(_addr);
 }
 
+#if defined(CONFIG_DIGIC_678X)
+// D45 cams use a different style of function hooking
+// and don't need these definitions.
+
+// Given a well formed function_hook_patch, convert to a standard patch.
+// We use function_hook_patch because it's easier for the caller to specify,
+// e.g. there's no need to compute the asm for the hook.
+//
+// patch_out must point to enough space for a patch,
+// this function populates it but does not allocate memory.
+//
+// hook_mem_out must point to at least 8 bytes of valid mem.
+// The hook asm is written here, and associated with patch_out.new_values.
+int convert_f_patch_to_patch(struct function_hook_patch *f_patch_in,
+                             struct patch *patch_out,
+                             uint8_t *hook_mem_out)
+{
+    if (f_patch_in == NULL || patch_out == NULL || hook_mem_out == NULL)
+        return -1;
+
+    // Our hook is 4 bytes for mov pc, [pc + 4], then 4 for the destination.
+    // Thumb rules around PC mean the +4 offset differs
+    // depending on where we write it in mem; PC is seen as +2
+    // if the Thumb instr is 2-aligned, +4 otherwise.
+    hook_mem_out[0] = 0xdf;
+    hook_mem_out[1] = 0xf8;
+    hook_mem_out[2] = 0x00;
+    hook_mem_out[3] = 0xf0;
+    hook_mem_out[4] = (uint8_t)(f_patch_in->target_function_addr & 0xff);
+    hook_mem_out[5] = (uint8_t)((f_patch_in->target_function_addr >> 8) & 0xff);
+    hook_mem_out[6] = (uint8_t)((f_patch_in->target_function_addr >> 16) & 0xff);
+    hook_mem_out[7] = (uint8_t)((f_patch_in->target_function_addr >> 24) & 0xff);
+    if (f_patch_in->patch_addr & 0x2)
+        hook_mem_out[2] += 2;
+
+    patch_out->addr = (uint8_t *)f_patch_in->patch_addr;
+    patch_out->old_values = (uint8_t *)f_patch_in->orig_content;
+    patch_out->new_values = hook_mem_out;
+    patch_out->size = 8;
+    patch_out->description = f_patch_in->description;
+    patch_out->is_instruction = 1;
+
+    return 0;
+}
+#endif
+
 static MENU_UPDATE_FUNC(patch_update)
 {
     int p = (int) entry->priv;

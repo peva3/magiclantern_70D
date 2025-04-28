@@ -79,6 +79,36 @@ struct patch
                             // D78X do not and ignore this field.
 };
 
+#if defined(CONFIG_DIGIC_678X) || defined(MODULE)
+// D45 cams use a different style of function hooking
+// and don't need these definitions.
+//
+// Modules need visibility because our module separation is
+// bad and needs to be redesigned.
+
+struct function_hook_patch
+{
+    uint32_t patch_addr; // VA to patch.
+    uint8_t orig_content[8]; // Used as a check before applying patch.
+    uint32_t target_function_addr;
+    const char *description;
+};
+
+// Given a well formed function_hook_patch, convert to a standard patch.
+// We use function_hook_patch because it's easier for the caller to specify,
+// e.g. there's no need to compute the asm for the hook.
+//
+// patch_out must point to enough space for a patch,
+// this function populates it but does not allocate memory.
+//
+// hook_mem_out must point to at least 8 bytes of valid mem.
+// The hook asm is written here, and associated with patch_out.new_values.
+int convert_f_patch_to_patch(struct function_hook_patch *f_patch_in,
+                             struct patch *patch_out,
+                             uint8_t *hook_mem_out);
+#endif
+
+
 // SJE TODO we're not restricted as much on number of patches
 // for MMU cams, we can completely replace all content in
 // multiple 64kB pages.  That said, we don't use anywhere near
