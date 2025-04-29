@@ -421,7 +421,7 @@ MENU_UPDATE_FUNC(input_vol_up)
 
 MENU_UPDATE_FUNC(bit_rated)
 {
-if ( (!config_loaded || config_disabled || override) && CURRENT_VALUE != 0)
+if ( (!config_loaded || config_disabled || override) && MENU_CURRENT_VALUE != 0)
 MENU_SET_ENABLED(1);
 else
 { MENU_SET_ENABLED(0);
@@ -432,7 +432,7 @@ else
 
 MENU_UPDATE_FUNC(init_qp_d)
 {
-if ( (!config_loaded || (override || config_disabled)) && CURRENT_VALUE != 0)
+if ( (!config_loaded || (override || config_disabled)) && MENU_CURRENT_VALUE != 0)
 MENU_SET_ENABLED(1);
 else
 { MENU_SET_ENABLED(0);

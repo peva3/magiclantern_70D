@@ -196,7 +196,7 @@ struct menu_entry
 
 
 #define MENU_INT(entry) (IS_ML_PTR((entry)->priv) ? *(int*)(entry)->priv : 0)
-#define CURRENT_VALUE (MENU_INT(entry))
+#define MENU_CURRENT_VALUE (MENU_INT(entry))
 
 // index into choices[] array
 #define SELECTED_INDEX(entry) (MENU_INT(entry) - (entry)->min)

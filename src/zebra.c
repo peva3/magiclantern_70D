@@ -1925,7 +1925,7 @@ clrscr_mirror( void )
 #ifdef FEATURE_ZEBRA
 static MENU_UPDATE_FUNC(zebra_draw_display)
 {
-    unsigned z = CURRENT_VALUE;
+    unsigned z = MENU_CURRENT_VALUE;
     
     int over_disabled = (zebra_level_hi > 100);
     int under_disabled = (zebra_level_lo == 0);
@@ -1980,7 +1980,7 @@ static MENU_UPDATE_FUNC(zebra_param_not_used_for_raw)
 
 static MENU_UPDATE_FUNC(zebra_level_display)
 {
-    int level = CURRENT_VALUE;
+    int level = MENU_CURRENT_VALUE;
     if (level == 0 || level > 100)
     {
         MENU_SET_VALUE("Disabled");
@@ -2004,7 +2004,7 @@ static MENU_UPDATE_FUNC(zebra_level_display)
 #ifdef FEATURE_FOCUS_PEAK
 static MENU_UPDATE_FUNC(focus_peaking_display)
 {
-    unsigned f = CURRENT_VALUE;
+    unsigned f = MENU_CURRENT_VALUE;
     if (f)
         MENU_SET_VALUE(
             "ON,%d.%d,%s%s",

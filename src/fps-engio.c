@@ -1517,7 +1517,7 @@ static void fps_criteria_change(void* priv, int delta)
 static MENU_UPDATE_FUNC(fps_wav_record_print)
 {
     MENU_SET_ENABLED(1);
-    MENU_SET_ICON(CURRENT_VALUE ? MNI_ON : MNI_DISABLE, 0);
+    MENU_SET_ICON(MENU_CURRENT_VALUE ? MNI_ON : MNI_DISABLE, 0);
 }
 
 static MENU_UPDATE_FUNC(fps_ramp_duration_update)

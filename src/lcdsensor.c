@@ -57,7 +57,7 @@ int get_lcd_sensor_shortcuts() { return lcd_sensor_shortcuts==1 || (lcd_sensor_s
 
 MENU_UPDATE_FUNC(lcd_release_display)
 {
-    int v = CURRENT_VALUE;
+    int v = MENU_CURRENT_VALUE;
     if (v) display_lcd_remote_icon(info->x-25, info->y+5);
     MENU_SET_ICON(v ? MNI_NONE : MNI_OFF, 0);
 }

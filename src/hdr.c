@@ -377,7 +377,7 @@ static MENU_UPDATE_FUNC(hdr_iso_display)
     }
 #endif
 
-    int hdr_iso = CURRENT_VALUE;
+    int hdr_iso = MENU_CURRENT_VALUE;
     int effective_iso = get_effective_hdr_iso_for_display(hdr_iso);
     int d = effective_iso - hdr_iso;
     d = d * 10 / 8;

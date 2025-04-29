@@ -464,13 +464,13 @@ static MENU_UPDATE_FUNC(timelapse_calc_display)
 
 static MENU_UPDATE_FUNC(interval_timer_display)
 {
-    int d = CURRENT_VALUE;
+    int d = MENU_CURRENT_VALUE;
     if (!d)
     {
         MENU_SET_NAME("Take pics...");
         MENU_SET_VALUE("like crazy");
     }
-    MENU_SET_ICON(MNI_PERCENT, CURRENT_VALUE * 100 / TIME_MAX_VALUE);
+    MENU_SET_ICON(MNI_PERCENT, MENU_CURRENT_VALUE * 100 / TIME_MAX_VALUE);
     MENU_SET_ENABLED(1);
 
     if (auto_power_off_time && auto_power_off_time <= d)
@@ -481,7 +481,7 @@ static MENU_UPDATE_FUNC(interval_timer_display)
 
 static MENU_UPDATE_FUNC(interval_start_after_display)
 {
-    MENU_SET_ICON(MNI_PERCENT, CURRENT_VALUE * 100 / TIME_MAX_VALUE);
+    MENU_SET_ICON(MNI_PERCENT, MENU_CURRENT_VALUE * 100 / TIME_MAX_VALUE);
     
     if (auto_power_off_time && auto_power_off_time <= interval_start_time)
         MENU_SET_WARNING(MENU_WARN_NOT_WORKING, "Check auto power off setting (currently %ds).", auto_power_off_time);
@@ -492,7 +492,7 @@ static MENU_UPDATE_FUNC(interval_start_after_display)
 
 static MENU_UPDATE_FUNC(interval_stop_after_display)
 {
-    int d = CURRENT_VALUE;
+    int d = MENU_CURRENT_VALUE;
     MENU_SET_VALUE(
         d ? "%d shots"
           : "%s",
@@ -519,7 +519,7 @@ static void(*auto_ettr_intervalometer_wait)(void) = MODULE_FUNCTION(auto_ettr_in
 
 static MENU_UPDATE_FUNC(intervalometer_display)
 {
-    if (CURRENT_VALUE)
+    if (MENU_CURRENT_VALUE)
     {
         int d = get_interval_time();
         MENU_SET_VALUE("ON, %s",

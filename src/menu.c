@@ -959,7 +959,7 @@ static void entry_draw_icon(
             break;
         }
         case IT_PERCENT:
-            //~ if (entry->min < 0) menu_draw_icon(x, y, MNI_PERCENT_PM, (CURRENT_VALUE & 0xFF) | ((entry->min & 0xFF) << 8) | ((entry->max & 0xFF) << 16), warn);
+            //~ if (entry->min < 0) menu_draw_icon(x, y, MNI_PERCENT_PM, (MENU_CURRENT_VALUE & 0xFF) | ((entry->min & 0xFF) << 8) | ((entry->max & 0xFF) << 16), warn);
             menu_draw_icon(x, y, MNI_PERCENT, SELECTED_INDEX(entry) * 100 / (NUM_CHOICES(entry)-1), warn);
             break;
 
@@ -6829,7 +6829,7 @@ int menu_get_value_from_script(const char* name, const char* entry_name)
         return INT_MIN;
     }
     
-    return CURRENT_VALUE;
+    return MENU_CURRENT_VALUE;
 }
 
 /* not thread-safe */
@@ -6934,21 +6934,21 @@ int menu_set_str_value_from_script(const char* name, const char* entry_name, cha
         }
 
         /* optional argument to allow numeric match? */
-        if (value_int != INT_MIN && IS_ML_PTR(entry->priv) && CURRENT_VALUE == value_int)
+        if (value_int != INT_MIN && IS_ML_PTR(entry->priv) && MENU_CURRENT_VALUE == value_int)
         {
             printf("menu.set('%s', '%s'): matched integer (%d, %s)\n", entry_name, value, value_int, current);
             goto ok; // also success!
         }
 
         /* boolean match with "ON" ? */
-        if (streq(value, "ON") && IS_ML_PTR(entry->priv) && CURRENT_VALUE != 0)
+        if (streq(value, "ON") && IS_ML_PTR(entry->priv) && MENU_CURRENT_VALUE != 0)
         {
             printf("menu.set('%s', '%s'): matched boolean ('%s')\n", entry_name, value, current);
             goto ok; // also success!
         }
 
         /* boolean match with "OFF" ? */
-        if (streq(value, "OFF") && IS_ML_PTR(entry->priv) && CURRENT_VALUE == 0)
+        if (streq(value, "OFF") && IS_ML_PTR(entry->priv) && MENU_CURRENT_VALUE == 0)
         {
             printf("menu.set('%s', '%s'): matched boolean ('%s')\n", entry_name, value, current);
             goto ok; // also success!

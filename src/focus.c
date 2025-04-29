@@ -341,7 +341,7 @@ static MENU_UPDATE_FUNC(dof_info_update)
 
 static MENU_UPDATE_FUNC(dof_info_coc_update)
 {
-    MENU_SET_VALUE("%d " SYM_MICRO"m", CURRENT_VALUE);
+    MENU_SET_VALUE("%d " SYM_MICRO"m", MENU_CURRENT_VALUE);
 }
 
 static void wait_notify(int seconds, char* msg)
@@ -1055,7 +1055,7 @@ TASK_CREATE( "focus_misc_task", focus_misc_task, 0, 0x1e, 0x1000 );
 #ifdef FEATURE_TRAP_FOCUS
 static MENU_UPDATE_FUNC(trap_focus_display)
 {
-    int t = CURRENT_VALUE;
+    int t = MENU_CURRENT_VALUE;
     if (!lv && !lens_info.lens_exists)
         MENU_SET_WARNING(MENU_WARN_NOT_WORKING, "Trap focus outside LiveView requires a chipped lens");
     if (t == 2 && cfn_get_af_button_assignment() != AF_BTN_HALFSHUTTER)

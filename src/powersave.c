@@ -530,7 +530,7 @@ static char* idle_time_format(int t)
 static MENU_UPDATE_FUNC(idle_display_dim_print)
 {
     MENU_SET_VALUE(
-        idle_time_format(CURRENT_VALUE)
+        idle_time_format(MENU_CURRENT_VALUE)
     );
 
     #ifdef CONFIG_AUTO_BRIGHTNESS
@@ -545,7 +545,7 @@ static MENU_UPDATE_FUNC(idle_display_dim_print)
 static MENU_UPDATE_FUNC(idle_display_feature_print)
 {
     MENU_SET_VALUE(
-        idle_time_format(CURRENT_VALUE)
+        idle_time_format(MENU_CURRENT_VALUE)
     );
 }
 

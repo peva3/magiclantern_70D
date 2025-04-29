@@ -416,7 +416,7 @@ static CONFIG_VAR_CHANGE_FUNC(dgain_on_change)
 
 static MENU_UPDATE_FUNC(audio_dgain_display)
 {
-    unsigned val = CURRENT_VALUE;
+    unsigned val = MENU_CURRENT_VALUE;
     MENU_SET_RINFO("(dB)");
     if (alc_enable)
         MENU_SET_WARNING(MENU_WARN_NOT_WORKING, "AGC is enabled.");
