@@ -593,8 +593,6 @@ static MENU_UPDATE_FUNC(motion_detect_display)
 }
 #endif
 
-int get_trap_focus() { return trap_focus; }
-
 #if defined(CONFIG_PHOTO_MODE_INFO_DISPLAY)
 static void double_buffering_start(int ytop, int height)
 {

@@ -118,9 +118,6 @@ int mlu_lock_mirror_if_needed(); /* implemented in lens.c */
 /* flash */
 void set_flash_firing(int mode);
 
-/* trap focus */
-int get_trap_focus();
-
 /* enqueue a shoot (take picture) command to shoot_task */
 void schedule_remote_shot();
 
