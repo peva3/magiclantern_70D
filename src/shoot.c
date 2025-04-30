@@ -3270,7 +3270,7 @@ static MENU_UPDATE_FUNC(mlu_display)
         )
     {
         static char msg[60];
-        snprintf(msg, sizeof(msg), "Handhedld MLU does not work with %s.",
+        snprintf(msg, sizeof(msg), "Handheld MLU does not work with %s.",
             is_hdr_bracketing_enabled() ? "HDR bracketing" :
             trap_focus ? "trap focus" :
             is_bulb_mode() ? "bulb shots" :
