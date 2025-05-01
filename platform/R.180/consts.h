@@ -174,7 +174,7 @@
 #define IMGPLAY_ZOOM_LEVEL_ADDR (0x2CBC) //wrong
 
 #define WINSYS_BMP_DIRTY_BIT_NEG MEM(0x4444+0x30) // wrong, no idea
-#define FOCUS_CONFIRMATION (*(int*)0x4444) // wrong, focusinfo looks really different 50D -> 200D
+#define FOCUS_CONFIRMATION 0 // wrong, but safe, no focus lock
 
 #define LV_BOTTOM_BAR_DISPLAYED 0x0 // wrong, fake bool
 // this block all copied from 50D, and probably wrong, though likely safe

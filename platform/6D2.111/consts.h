@@ -89,7 +89,7 @@
 // Definitely wrong / hacks / no testing at all:
 #define WINSYS_BMP_DIRTY_BIT_NEG MEM(0x56500000+0x30) // wrong, no idea (this address may be written to,
                                                       // value is chosen because it's probably safe on 200D
-#define FOCUS_CONFIRMATION (*(int*)0x4444) // wrong, focusinfo looks really different 50D -> 200D
+#define FOCUS_CONFIRMATION 0 // wrong, but safe, no focus lock
 #define YUV422_LV_BUFFER_DISPLAY_ADDR 0x0 // it expects this to be pointer to address
 #define YUV422_HD_BUFFER_DMA_ADDR 0x0 // it expects this to be shamem_read(some_DMA_ADDR)
 #define YUV422_LV_BUFFER_1 0x7f3e9600 // these three from srmGetShootMemAreaAddress()

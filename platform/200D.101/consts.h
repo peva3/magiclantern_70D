@@ -106,7 +106,7 @@
 // Definitely wrong / hacks / no testing at all:
 #define WINSYS_BMP_DIRTY_BIT_NEG MEM(0x56500000+0x30) // wrong, no idea (this address may be written to,
                                                       // value is chosen because it's probably safe on 200D
-#define FOCUS_CONFIRMATION (*(int*)0x4444) // wrong, focusinfo looks really different 50D -> 200D
+#define FOCUS_CONFIRMATION 0 // wrong, but safe, no focus lock
 
 #define DISP_VRAM_STRUCT_PTR ((unsigned int *)(*(int *)0x7b64)) // used many DISP related places, "CurrentImgAddr : %#08x"
                                                                 // is a good string as this gets us the pointers to current buffers.
