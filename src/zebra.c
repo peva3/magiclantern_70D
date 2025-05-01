@@ -418,7 +418,7 @@ int get_global_draw() // menu setting, or off if
          *    0x3 - clean overlays
          *    0x6 - OlcApp? The screen like outside LV on DSLR
          * EOSM and 5D2 already used this value in the past, and it was also "3"
-         * for clean overalys.
+         * for clean overlays.
          */
         lv_disp_mode = LV_OVERLAYS_MODE != 3;
     #endif
