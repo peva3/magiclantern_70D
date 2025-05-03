@@ -104,8 +104,8 @@
 #define GUIMODE_PICQ 6
 
 // Definitely wrong / hacks / no testing at all:
-#define WINSYS_BMP_DIRTY_BIT_NEG MEM(0x56500000+0x30) // wrong, no idea (this address may be written to,
-                                                      // value is chosen because it's probably safe on 200D
+extern int winsys_bmp_dirty_bit_neg;
+#define WINSYS_BMP_DIRTY_BIT_NEG MEM(&winsys_bmp_dirty_bit_neg) // faked via function_overrides.c
 #define FOCUS_CONFIRMATION 0 // wrong, but safe, no focus lock
 
 #define DISP_VRAM_STRUCT_PTR ((unsigned int *)(*(int *)0x7b64)) // used many DISP related places, "CurrentImgAddr : %#08x"

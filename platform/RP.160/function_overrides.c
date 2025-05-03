@@ -29,7 +29,8 @@
 #include <lens.h>
 #include <edmac.h>
 
-int _WINSYS_BMP_DIRTY_BIT_NEG = 0;
+// fake WINSYS_BMP_DIRTY_BIT_NEG
+int winsys_bmp_dirty_bit_neg = 0;
 
 /** GUI **/
 //see comments in stub.S

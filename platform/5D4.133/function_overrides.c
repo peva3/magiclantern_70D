@@ -12,6 +12,9 @@ uint32_t shamem_read(uint32_t addr)
     return 0;
 }
 
+// fake WINSYS_BMP_DIRTY_BIT_NEG
+int winsys_bmp_dirty_bit_neg = 0;
+
 void LoadCalendarFromRTC(struct tm *tm)
 {
     // differs from D78, one arg is missing

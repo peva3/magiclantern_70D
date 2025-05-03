@@ -31,6 +31,9 @@
 
 extern int uart_printf(const char * fmt, ...);
 
+// fake WINSYS_BMP_DIRTY_BIT_NEG
+int winsys_bmp_dirty_bit_neg = 0;
+
 void LoadCalendarFromRTC(struct tm *tm)
 {
     // differs from D78, one arg is missing

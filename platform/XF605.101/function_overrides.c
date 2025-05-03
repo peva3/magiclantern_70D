@@ -97,6 +97,9 @@ void GUI_Control(int bgmt_code, int obj, int arg, int unknown){
     gui_enqueue_message(0, bgmt_code, obj, arg);
 }
 
+// fake WINSYS_BMP_DIRTY_BIT_NEG
+int winsys_bmp_dirty_bit_neg = 0;
+
 void LoadCalendarFromRTC(struct tm *tm)
 {
     _LoadCalendarFromRTC(tm, 0, 0, 16);
