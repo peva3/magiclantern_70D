@@ -115,10 +115,13 @@ bootflag_write_bootblock( void )
     int ml_on_cf = (get_ml_card()->drive_letter[0] == 'A');
     extern struct cf_device ** cf_device_ptr[];
     struct cf_device * const dev = (struct cf_device *) (ml_on_cf ? cf_device_ptr[0][4] : sd_device[1]);
-#elif defined(CONFIG_R) || defined(CONFIG_200D) || defined(CONFIG_6D2)
+#elif defined(CONFIG_R) || defined(CONFIG_200D) || defined(CONFIG_6D2) || defined(CONFIG_750D)
     // These only have one device struct.  Struct is 4 u32s,
     // first two are function pointers.  Check the "second" device
     // doesn't use the first two fields as function pointers.
+    //
+    // The func using "pStgDev = NULL" is a good place to find the base pointer,
+    // and check if the code refs base[0] or base[1].
     struct cf_device * const dev = (struct cf_device *) sd_device[0];
 #else
     struct cf_device * const dev = (struct cf_device *) sd_device[1];
