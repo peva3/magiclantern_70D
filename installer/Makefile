@@ -65,8 +65,11 @@ ML_CAMS = \
     60D.111 \
     650D.104 \
     6D.116 \
+    6D2.111 \
     700D.115 \
     70D.112 \
+    750D.110 \
+    7D2.112 \
     EOSM.202
 
 .PHONY: clean $(BUILD_DIR) FORCE
