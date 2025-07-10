@@ -248,6 +248,8 @@ THUMB_FN(0xdf0070c5,  dm_set_store_level) // called by "dmstore"
 THUMB_FN(0xdf00707d,  dm_set_print_level)
 THUMB_FN(0xdf00325d,  task_trampoline)
 
+THUMB_FN(0xe044726a, _get_fps_register_a)
+THUMB_FN(0xe04471de, _get_fps_register_b)
 
 //////
 // SJE stuff that's not required but can be useful
