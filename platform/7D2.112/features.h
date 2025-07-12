@@ -30,6 +30,8 @@
 //#define CONFIG_IMAGE_CAPTURE_NOT_WORKING
 #define FEATURE_INTERVALOMETER
 
+#define CONFIG_CRASH_LOG
+
 // explicitly disable stuff that don't work or may break things
 #undef CONFIG_AUTOBACKUP_ROM
 #undef CONFIG_ADDITIONAL_VERSION
