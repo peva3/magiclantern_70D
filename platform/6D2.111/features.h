@@ -14,10 +14,10 @@
 // but shutter_count doesn't seem to change
 #define FEATURE_SHOW_SHUTTER_COUNT
 
-//#define FEATURE_DONT_CLICK_ME
-
 #define CONFIG_SGI_HANDLERS
 #define CONFIG_MMU_REMAP
+
+#define FEATURE_GLOBAL_DRAW
 
 #define CONFIG_PROP_REQUEST_CHANGE
 
