@@ -48,6 +48,9 @@ def main():
         print("Top 4 guesses for %s, w*h: %s" % (b["desc"], b["top_4"]))
 
     bufs = [b for b in bufs if b["top_4"]]
+    if not bufs:
+        print("No guesses, giving up")
+        exit(0)
 
     # Allow user to select between decodings and w*h guesses
     # with wasd
