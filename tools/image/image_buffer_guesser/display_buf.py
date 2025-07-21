@@ -86,7 +86,7 @@ def main():
                     buf_i = len(bufs) - 1
             elif key == 'd':
                 dims_i += 1
-                if dims_i == len(b["top_4"]) - 1:
+                if dims_i == len(b["top_4"]):
                     dims_i = 0
             elif key == 'a':
                 dims_i -= 1
