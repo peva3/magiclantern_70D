@@ -40,7 +40,7 @@ def main():
              "desc": "16bpp YUV",
              "bgr_func": functools.partial(bgr_from_yuv, buf_8)},
             {"top_4": best_bayer[:4],
-             "desc": "42bpp Bayer",
+             "desc": "14bpp Bayer",
              "bgr_func": functools.partial(bgr_from_bayer, buf_16)},
             ]
 
