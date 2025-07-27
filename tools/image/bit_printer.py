@@ -14,6 +14,9 @@ def main():
 
     bits = "".join(format(b, "08b") for b in data)
 
+    bits = bits.replace("0", ".")
+    bits = bits.replace("1", "|")
+
     split = args.split
     out_bits = []
     if split > 0:
@@ -26,7 +29,7 @@ def main():
     for line in out_bits:
         if group_width:
             groups = [line[i:i + group_width] for i in range(0, len(line), group_width)]
-            line = " ".join(groups)
+            line = "   ".join(groups)
         print(line)
 
 
