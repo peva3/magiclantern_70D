@@ -14,6 +14,8 @@
 #include <edmac.h>
 #include "fps-engio_per_cam.h"
 
+//#include "log.h"
+
 struct chs_entry
 {
     uint8_t head;
@@ -135,31 +137,57 @@ void UnregisterEDmacPopCBR(int channel)
     return;
 }
 
+/*
+static int do_init_log(void)
+{
+    static uint8_t *log_buf = NULL;
+    log_buf = malloc(MIN_LOG_BUF_SIZE);
+    if (log_buf == NULL)
+        return -1;
+
+    if (init_log(log_buf, MIN_LOG_BUF_SIZE, "engdrv.log") < 0)
+        return -2;
+
+    return 0;
+}
+*/
+
 void _EngDrvOut(uint32_t reg, uint32_t value)
 {
+// Logging helped show that on 200D _EngDrvOut() is always,
+// or perhaps nearly always, inlined.  Thus we can't hook
+// and log it, neither can we wrap the call, since there are no
+// calls.  Hence we must re-implement ourselves, so main ML
+// code can call this, instead of DryOS function.
 
-// Some experimental code for fps-engio logging.
-// Note that inner __EngDrvOut sig has changed
-// (or I have the wrong stub)
-/*
-    uint32_t y_offset = 100;
-    if (reg == FPS_REGISTER_A)
-        y_offset += 0;
-    if (reg == FPS_REGISTER_B)
-        y_offset += 20;
-    if (reg == FPS_REGISTER_CONFIRM_CHANGES)
-        y_offset += 40;
+// There is now a 3 param EngDrvOut variant, that appears to save
+// the value to normal shadow mem, the MMIO, and a third place chosen by the caller,
+// which might be a global.  Maybe they wanted a convenient way for subsystems
+// to track the last value they set, not the last value anything set?
+// Otherwise, why not just read back shadow mem?
 
-    if (reg == FPS_REGISTER_A
-        || reg == FPS_REGISTER_B
-        || reg == FPS_REGISTER_CONFIRM_CHANGES)
+//    static uint32_t log_initialised = 0;
+//    if (!log_initialised)
+//    {
+//        int res = do_init_log();
+//        printf("init log res: %d\n", res);
+//        log_initialised = 1;
+//        send_log_data_str("First _EngDrvOut call occured\n");
+//    }
+//    #define log_buf_size 0x80
+//    char log_buf[log_buf_size];
+//    snprintf(log_buf, log_buf_size, "reg, val, orig_val: %x, %x, %x\n",
+//             reg, value, shamem_read(reg));
+//    send_log_data_str(log_buf);
+
+    if (reg == 0xd0008094)
     {
-//        uint32_t unused;
-        void __EngDrvOut(uint32_t *out, uint32_t reg, uint32_t value);
-//        __EngDrvOut(&unused, reg, value);
-        bmp_printf(FONT_MED, 100, y_offset, "e_d_o: %x, %x", reg, value);
+        // only allow writes to what we think is PACK32_MODE, used in raw.c.
+        extern uint32_t get_shamem_base_addr(void);
+        uint32_t shamem_base_addr = get_shamem_base_addr();
+        *(uint32_t *)(shamem_base_addr + (reg & 0xfffff)) = value;
+        *(uint32_t *)reg = value;
     }
-*/
     return;
 }
 

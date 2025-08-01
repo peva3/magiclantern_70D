@@ -88,6 +88,7 @@ THUMB_FN(0xe04b3920,  LockEngineResources)
 // Wrong, left for reference:
 //THUMB_FN(0xe04b3b59,  LockEngineResources) // Down a bit from CreateResLockEntry, start v similar but end is different.
 THUMB_FN(0xe04b39c0,  UnLockEngineResources)
+THUMB_FN(0x37b36, get_shamem_base_addr)
 THUMB_FN(0x37b08, shamem_read) // nearly always inlined on 200D, so very few refs.  Can find via
                                // "[MEM1DEV] Addr=%#x Data=%#x", haven't checked if this is reliable on other D7
 THUMB_FN(0xe00c0484,  mem_to_mem_edmac_copy)
@@ -112,9 +113,10 @@ THUMB_FN(0xe032a8c8, get_sensor_accumh) // old name: FPS_REGISTER_A
 //THUMB_FN(0x36904, edmac_related_16_register_irq_something)
 
 /** Engio **/
-//NSTUB(0x37aa4, __EngDrvOut) // func sig has changed, it's now void func(void *, void *, int val)
-                            // Looks like 1st arg is caller chosen storage, 2nd arg is MMIO addr.
-                            // Func stores val to both addresses, *and* shamem.
+//NSTUB(0x37aa4, __EngDrvOut) // This is not EngDrvOut(), but a separate variant.  This one is:
+                              // void func(void *, void *, int val)
+                              // Looks like 1st arg is caller chosen storage, 2nd arg is MMIO addr.
+                              // Func stores val to both of those addresses, and shadow mem.
 //NSTUB(0xe06323e0, __engio_write) // Needs more verifying.  If this is correct, it no longer
                            // writes to shamem, which might be annoying.
 

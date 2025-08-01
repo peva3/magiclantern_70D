@@ -1944,7 +1944,22 @@ int handle_tricky_canon_calls(struct event *event)
 void EngDrvOut(uint32_t reg, uint32_t value)
 {
     if (ml_shutdown_requested) return;
+#if defined(CONFIG_200D)
+    // 200D doesn't seem to do this check.  Compare ConnectWriteEDmac() on 70D,
+    // where it calls into ff2bc3cc(), passing some channel info ptr.  That func
+    // only returns the val if the LCLK bit is set.
+    //
+    // On 200D, no check.  And EngDrvOut() is inlined.
+
+    // I've left the default for unknown cams to do the read from 0xc040_0008.
+    // The c000_0000 region is still mapped, so it should still be safe.
+    // And if they do need the read to have 2 bit set, no write occurs if
+    // the device is missing (probably?).
+
+    // Most likely, all D678X cams don't want this read.
+#else // Digic 45 (3?)
     if (!(MEM(0xC0400008) & 0x2)) return; // this routine requires LCLK enabled
+#endif
     _EngDrvOut(reg, value);
 }
 

@@ -2597,16 +2597,32 @@ void raw_lv_request_bpp(int bpp)
     /* raw bit depth setup is done from PACK32_MODE register (mask 0x131) */
     #if defined(CONFIG_DIGIC_45)
         const uint32_t PACK32_MODE = 0xC0F08094;
+        enum {
+            // SJE I don't see these values getting written on 70D.
+            // Concrete values used are 0x20 and 0x120.  There's a variable value one that I haven't traced.
+            // Similar on 5D3 123, where I see 0x120 and (variable | 0x20).
+            // Possibly this is "highest bit wins" and 0x30 is redundant, equal to 0x20?
+            MODE_16BIT = 0x130,
+            MODE_14BIT = 0x030,
+            MODE_12BIT = 0x010,
+            MODE_10BIT = 0x000,
+        };
     #elif defined(CONFIG_200D)
         const uint32_t PACK32_MODE = 0xd0008094; // plausible from rom, e.g. e0159eee on 200d 1.0.1,
                                                  // compare 5d3 1.2.3 ff57c7c8
+        enum {
+            MODE_16BIT = 0x20, // unknown, copying 14 bit for now
+            MODE_14BIT = 0x20, // probably 14-bit, it's the default value
+            MODE_12BIT = 0x10, // current guess for 12 bit - seems to grab good data every other frame...
+            MODE_10BIT =  0x0, // seems to get 10 bit, but like 12, only every other frame is good
+//            MODE_12BIT = 0x8, // possibly 15 bit?  More likely 10 but different number of planes.
+//            MODE_12BIT = 0x10, // 24 bit, two planes?  Or 12 bit, 4 plane?
+//            MODE_12BIT = 0x18, // 12 bit, 4 planes?
+//            MODE_12BIT = 0x200, // possibly 14 bpp bayer?
+//            MODE_12BIT = 0x300, // likely 8 or 16.  Alternates high and low values, could fit bayer or UYUV etc
+//            MODE_12BIT = 0x2000, // possibly 24 bit?
+        };
     #endif
-    enum {
-        MODE_16BIT = 0x130,
-        MODE_14BIT = 0x030,
-        MODE_12BIT = 0x010,
-        MODE_10BIT = 0x000,
-    };
     const uint32_t modes[] = { MODE_10BIT, MODE_12BIT, MODE_14BIT, MODE_16BIT};
 
     int bpp_index = COERCE((bpp-10)/2, 0, COUNT(modes));
