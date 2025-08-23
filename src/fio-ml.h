@@ -139,10 +139,14 @@ struct fio_file *alloc_fio_file(void);
 struct file_info convert_fio_file_info(struct fio_file *);
 
 // file IO
+// SJE: the DryOS functions in FIO family don't use FILE *.  We made a mistake a long time ago
+// and now it's painful to correct.  Where FILE * is used, it's a handle.  But we treat it
+// as an opaque pointer.  This can lead to problems where 0 is involved.  That's a valid handle,
+// but an invalid pointer (and we often assume NULL == 0, which is another issue...).
 extern FILE* FIO_OpenFile( const char* filename, unsigned mode );
 extern int FIO_ReadFile( FILE* stream, void* ptr, size_t count );
 extern int FIO_WriteFile( FILE* stream, const void* ptr, size_t count );
-extern void FIO_CloseFile( FILE* stream );
+extern void FIO_CloseFile( FILE* stream ); // does not invalidate stream after closing
 
 /* Returns 0 for success */
 extern int FIO_GetFileSize( const char * filename, uint32_t * size );
@@ -159,7 +163,9 @@ extern uint32_t FIO_GetFileSize_direct(const char * filename);   /* todo: use ju
 /* note: seeking past the end of a file does not work on all cameras */
 extern int64_t FIO_SeekSkipFile( FILE* stream, int64_t position, int whence );
 
-/* ML wrappers */
+// ML file API.  Do not assume these are simple wrappers
+// for the DryOS API.  E.g. our FIO_CreateFile() returns a pointer,
+// not a handle, and returns NULL on failure, not a negative int.
 extern FILE* FIO_CreateFile( const char* name );
 extern FILE* FIO_CreateFileOrAppend( const char* name );
 extern int FIO_CopyFile(const char * src, const char * dst);

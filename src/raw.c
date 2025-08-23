@@ -2445,7 +2445,8 @@ static void raw_lv_enable()
 
 #ifndef CONFIG_EDMAC_RAW_SLURP
 #ifdef CONFIG_DIGIC_VIII
-    // sets output to RAW, default is YUV
+    // On D8, lv_save_raw saves as YUV by default.
+    // lv_set_mm configs this, here we select RAW.
     call("lv_set_mm", 1);
     // This is not needed (for now?) seems to set where in processing path the data is sourced.
     // Defaults to 0, SAP::HEAD
