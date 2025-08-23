@@ -274,6 +274,7 @@ THUMB_FN(0xdf00b1d9,  msg_queue_receive) // "SystemIF::KerQueue.c" useful for fi
 // Second guess for msg_queue_post, I think this is right, if you look
 // at the function it calls, the checks inside that are a closer match.
 THUMB_FN(0xdf00b337,  msg_queue_post)
+//THUMB_FN(0xdf00b2b4,  msg_queue_post_with_timeout)
 
 THUMB_FN(0xdf00b36d,  msg_queue_count) // Fairly hard to find.  Often used near DispLockStop, which is easy to find
                                        // and not used often.
