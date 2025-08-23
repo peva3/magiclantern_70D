@@ -26,6 +26,7 @@ static uint32_t buf_size = 0;
 static FILE *log_fp = NULL;
 
 static uint32_t is_log_enabled = 1;
+static uint32_t stop_logging = 0;
 
 void enable_logging(void)
 {
@@ -37,10 +38,19 @@ void disable_logging(void)
     is_log_enabled = 0;
 }
 
+// Stops all logging until cam is restarted.
+// Flushes log to disk.
+void stop_log(void)
+{
+    stop_logging = 1;
+    give_semaphore(log_disk_sem);
+}
+
 // periodically writes buffer to disk
 static void disk_write_task(void *unused)
 {
-    while(!ml_shutdown_requested)
+    while(!ml_shutdown_requested
+          && !stop_logging)
     {
         take_semaphore(log_disk_sem, 0);
         // something woke us up, write out data
@@ -68,8 +78,8 @@ static void disk_write_task(void *unused)
         buf_written = next;
         give_semaphore(log_mem_sem);
     }
-    // ML is shutting down, close file.  There should be no more
-    // data to write out, it's just happened above.
+    // ML is shutting down, or log stop + flush requested; close file.
+    // There should be no more data to write out, it's just happened above.
     FIO_CloseFile(log_fp);
 }
 

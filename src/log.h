@@ -15,6 +15,10 @@
 // (allows use on different stages of ports, and different run time contexts)
 int init_log(uint8_t *buf, uint32_t size, char *filename);
 
+// Stops all logging until cam is restarted.
+// Flushes log to disk.
+void stop_log(void);
+
 // Send some data to be written to disk.
 // This is thread safe and blocking re copying
 // the data into the central logging buffer.
