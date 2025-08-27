@@ -34,7 +34,7 @@ THUMB_FN(0xe05aa59c,  bzero32)                /* zeros out a data structure */
 THUMB_FN(0xe02e04bc,  create_init_task)       /* low-level DryOS initialization */
 THUMB_FN(0xe0040236,  init_task)              /* USER_MEM size checking, dmSetup, termDriverInit, stdlibSetup etc */
 THUMB_FN(0xe05a91b0,  dcache_clean)           /* loop with MCR p15 c7,c10,1; DSB */
-THUMB_FN(0xe000baf0,  dcache_clean_multicore) /* loop writing to c11007b0, called after dcache_clean by copy_mmu_tables() */
+THUMB_FN(0xe0077d70,  dcache_clean_multicore) /* loop writing to c11007b0, called after dcache_clean by copy_mmu_tables() */
 THUMB_FN(0xe05a9284,  icache_invalidate)      /* loop with MCR p15 c7,c5,1; c7,c1,6; c7,c1,0; ISB */
 
 /** Tasks **/
@@ -216,9 +216,7 @@ THUMB_FN(0xe051950a,  SRM_AllocateMemoryResourceFor1stJob) // "hJobMemorySuite" 
 THUMB_FN(0xe051b930,  SRM_FreeMemoryResourceFor1stJob) // find refs to "pMessage", there are several similar looking functions using it,
                                                        // this is my best guess - this one has pPriorMessage and sets offset 8
                                                        // in the struct to 0, offset 0x10 to param1
-ARM32_FN(0xe00176fc,  memcpy_dryos) // useful in early contexts when we don't have
-                                    // dietlibc or newlib, and can't use stdio memcpy64 because
-                                    // that wants ML assert handling initialised.
+THUMB_FN(0xe027ac9c,  memcpy_dryos) // See 200D stubs for long comment on finding a good memcpy.
 THUMB_FN(0xe059c254, _prop_cleanup) // "./Multicast/PropertyMgr.c" check funcs that ref this string
 THUMB_FN(0xe05a8dd0,  CreateRecursiveLock) // via "KerRLock.c", CRL() calls a function that regs this string, not many do
 THUMB_FN(0xe0589ef4,  AcquireRecursiveLock)
@@ -262,7 +260,7 @@ THUMB_FN(0xe00de668, XCM_SetColorMatrixType);
 
 // These are not strictly required, although recent dev work has added dependencies;
 // these likely should be removed before a "real" release
-THUMB_FN(0xe0006612, early_printf)
+//THUMB_FN(0xe0006612, early_printf)
 THUMB_FN(0xe05952d0, uart_printf)
 #NSTUB(0xdf008c7c, uart_printf) // Thunked equivalent of the above.  Note, ARM, not Thumb.
                                // Both seem to work the same.
@@ -284,12 +282,10 @@ THUMB_FN(0xe05952d0, uart_printf)
 //THUMB_FN(0xe021ded9, WinSys_AllocateMemory)
 //THUMB_FN(0xe021df7d, WinSys_FreeMemory)
 
-THUMB_FN(0xe0004a26, change_mmu_tables) // Updates TTBRs and does TLB maintenance
-THUMB_FN(0xe000b9de, copy_mmu_tables) // copies from one location to another,
+THUMB_FN(0xe0583666, change_mmu_tables) // Updates TTBRs and does TLB maintenance
+//THUMB_FN(0xe000b9de, copy_mmu_tables) // copies from one location to another,
                                       // fixing up addresses held in table start,
                                       // and doing cache maintenance
-THUMB_FN(0xe000baf0, mmu_table_routine2) // Some kind of CPU<->CPU comms?
-                                         // Uses c11007b0 and c1100730
 
 // SJE not yet sure how this one works on 850D,
 // looks quite different or I'm reading it wrong
