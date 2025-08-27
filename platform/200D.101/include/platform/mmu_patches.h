@@ -38,7 +38,6 @@ struct patch normal_data_patches[] =
 */
 };
 
-extern void early_printf(char *fmt, ...);
 void __attribute__((noreturn,noinline,naked,aligned(4)))hook_multishot_dma_copy(void)
 {
     asm(
@@ -174,80 +173,6 @@ void __attribute__((noreturn,noinline,naked,aligned(4)))hook_vfx_mem_to_mem(void
 
         // jump back to vfx_mem_to_mem
         "ldr pc, =0xe00c1f4d\n"
-    );
-}
-
-extern void early_printf(char *fmt, ...);
-extern void *memcpy_dryos(void *dst, const void *src, uint32_t count);
-void __attribute__((noreturn,noinline,naked,aligned(4)))hook_mpu_send(void)
-{
-    asm(
-        "push { r0-r11, lr }\n"
-    );
-
-    char *msg;
-    uint32_t size;
-    asm __volatile__ (
-        "mov r2, r0\n"
-        "mov r3, r1\n"
-        "mov %0, r2\n"
-        "mov %1, r3\n" : "=&r"(msg), "=&r"(size)
-    );
-
-    early_printf("\nmpu_send: ");
-    for (uint32_t i=0; i<size; i++)
-    {
-        early_printf("%02x ", msg[i]);
-    }
-    early_printf("\n");
-
-    asm(
-        "pop { r0-r11, lr }\n"
-
-        // do overwritten instructions
-        "push       { r4, r5, r6, r7, r8, lr  }\n"
-        "cmp        r1,#0xff\n"
-        "mov        r6,r1\n"
-
-        // jump back
-        "ldr pc, =0xe01c765f\n"
-    );
-}
-
-void __attribute__((noreturn,noinline,naked,aligned(4)))hook_mpu_recv(void)
-{
-    asm(
-        "push { r0-r11, lr }\n"
-    );
-
-    char *msg;
-    uint32_t size;
-    asm __volatile__ (
-        "mov r2, r0\n"
-        "mov r3, r1\n"
-        "mov %0, r2\n"
-        "mov %1, r3\n" : "=&r"(msg), "=&r"(size)
-    );
-
-    early_printf("\nmpu_recv: ");
-    for (uint32_t i=0; i<size; i++)
-    {
-        early_printf("%02x ", msg[i]);
-    }
-    early_printf("\n");
-
-    asm(
-        "pop { r0-r11, lr }\n"
-
-        // do overwritten instructions
-        "push       { r2, r3, r4, r5, r6, r7, r8, lr  }\n"
-        "mov        r4,r0\n"
-        // Actually this, but we'll use a constant to avoid PC relative instruction
-        //ldr        r5,[PTR_PTR_FUN_e056314c+1_e0563548] = 00004bd8
-        "mov        r5, 0x4bd8\n"
-
-        // jump back
-        "ldr pc, =0xe0563157\n"
     );
 }
 
