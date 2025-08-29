@@ -340,9 +340,8 @@ void* edmac_copy_rectangle_cbr_start(void *dst, void *src,
     // This does several things, including releasing device 6, the Channel Switch.
     // Asserts if called from an interrupt context, since it calls
     // edmac_release_channel() and that checks "interrupt_level > 0".
-// FIXME we need this call but I commented it out for now because
-// the name is too terrible
-//    edmac_related_m2m_cleanup_maybe();
+    cleanup_mem_to_mem();
+
     unlock_and_sleep_mem_to_mem();
     set_default_mem_to_mem_cbr();
     delete_mem_to_mem_lock();

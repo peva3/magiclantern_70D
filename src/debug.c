@@ -467,7 +467,7 @@ static void run_test()
     //  mem_to_mem_set_src_dst_and_start(src + 0x62700,dst);
     //  wait_for_any_event_flags(DAT_00025594,1,0); // waits for flags set by cbr
     //  unset_event_flag_bits(DAT_00025594,1);
-    //  edmac_related_m2m_cleanup_maybe();
+    //  cleanup_mem_to_mem();
     //  unlock_and_sleep_mem_to_mem();
     //  set_default_mem_to_mem_cbr();
     //  delete_mem_to_mem_lock();
@@ -567,7 +567,7 @@ static void run_test()
     //  mem_to_mem_set_src_dst_and_start(src + 0x62700,dst);
     //  wait_for_any_event_flags(DAT_00025594,1,0); // waits for flags set by cbr
     //  unset_event_flag_bits(DAT_00025594,1);
-    //  edmac_related_m2m_cleanup_maybe();
+    //  cleanup_mem_to_mem();
     //  unlock_and_sleep_mem_to_mem();
     //  set_default_mem_to_mem_cbr();
     //  delete_mem_to_mem_lock();
@@ -674,8 +674,8 @@ static void run_test()
     give_semaphore(m2m_sem);
     printf("Copy complete\n");
 
-    // This does several things, including releasing device 6, the Channel Switch.
-    edmac_related_m2m_cleanup_maybe();
+    // This does several things, including releasing device 6
+    cleanup_mem_to_mem();
 
     unlock_and_sleep_mem_to_mem();
     set_default_mem_to_mem_cbr();
