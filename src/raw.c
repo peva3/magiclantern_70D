@@ -2608,7 +2608,11 @@ void raw_lv_request_bpp(int bpp)
             MODE_12BIT = 0x010,
             MODE_10BIT = 0x000,
         };
-    #elif defined(CONFIG_200D)
+    #elif defined(CONFIG_200D) | defined(CONFIG_6D2) | defined(CONFIG_7D2)
+    // FIXME currently doesn't do anything for 6D2 or 7D2 since
+    // EngDrvOut() is a nop there.  Some definition of the enum is required to build.
+    // See 200D for a safe filtered EngDrvOut() - which probably should be more
+    // like property_whitelist, more global, with per cam config.
         const uint32_t PACK32_MODE = 0xd0008094; // plausible from rom, e.g. e0159eee on 200d 1.0.1,
                                                  // compare 5d3 1.2.3 ff57c7c8
         enum {
