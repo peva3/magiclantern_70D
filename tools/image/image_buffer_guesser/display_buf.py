@@ -71,17 +71,21 @@ def main():
         cv2.imshow("frame", bgr)
 
         # wasd keys control what is displayed,
-        # anything else exits
+        # anything else exits.  WS change image type,
+        # AD change guess within type.
         key = chr(cv2.waitKey(0) & 0xff)
         if key not in ['w', 'a', 's', 'd']:
             exit(0)
         else:
+            # change image type
             if key == 'w':
                 buf_i += 1
+                dims_i = 0
                 if buf_i == len(bufs):
                     buf_i = 0
             elif key == 's':
                 buf_i -= 1
+                dims_i = 0
                 if buf_i < 0:
                     buf_i = len(bufs) - 1
             elif key == 'd':
