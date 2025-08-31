@@ -36,6 +36,7 @@ THUMB_FN(0xE00400FC,  cstart)                               /* calls bzero32 and
 THUMB_FN(0xE0578D64,  bzero32)                              /* zeros out a data structure */
 THUMB_FN(0xE0143CFC,  create_init_task)                     /* low-level DryOS initialization */
 THUMB_FN(0xE05777D0,  dcache_clean)                         /* loop with MCR p15 c7,c10,1; DSB */
+THUMB_FN(0xe00ea6f4,  dcache_clean_multicore)               /* loop writing to c11007b0, called after dcache_clean by copy_mmu_tables() */
 THUMB_FN(0xE05778A4,  icache_invalidate)                    /* loop with MCR p15 c7,c5,1; c7,c1,6; c7,c1,0; ISB */
 THUMB_FN(0xE0040224,  init_task)                            /* USER_MEM size checking, dmSetup, termDriverInit, stdlibSetup etc */
 
@@ -44,6 +45,7 @@ DATA_PTR(    0x1010,  current_interrupt)                    /* from interrupt ha
 DATA_PTR(    0x1028,  current_task)                         /* from task_create; pointer to the current task structure */
 THUMB_FN(0xE05598FA,  msleep)                               /* argument is always multiple of 10 */
 THUMB_FN(0xE0545EE2,  task_create)                          /* used to start TaskMain, GuiMainTask etc */
+THUMB_FN(0xe0546106,  task_create_ex)                       /* as task_create, but allows selecting CPU for task*/
 NSTUB( 0x40CC, task_max)
 
 /** File I/O **/
@@ -79,6 +81,35 @@ THUMB_FN(0xE0732BDE,  SetHPTimerNextTick)                   /* same "worker" fun
 THUMB_FN(0xE0732B7E,  SetHPTimerAfterNow)                   /* from error message */
 THUMB_FN(0xE054CF14,  SetTimerAfter)                        /* from error message */
 THUMB_FN(0xE054CFCA,  CancelTimer)                          /* CancelRefreshTimer, CancelPlayTimer */
+
+/** Interrupts **/
+THUMB_FN(0xe0121128,  send_software_interrupt) // int 10 is used by DryOS to sleep/wake cpu1
+
+THUMB_FN(0xdf002c32, _request_RPC) // allows CPU0 or CPU1 to pass a func pointer and param
+                                   // to the other for RPC.
+                                   // Passing a NULL func pointer, will suspend the other
+                                   // CPU until it becomes non-NULL.
+                                   // DryOS seems to use this to deliberately sleep a CPU
+                                   // in some exceptional cases (e.g. asserts).
+                                   //
+                                   // Do not call this directly, because if you do,
+                                   // and you forget to call clear_RPC_request(),
+                                   // the target CPU will repeatedly call the func pointer
+                                   // as fast as possible, forever.
+                                   // Instead use request_RPC().
+
+THUMB_FN(0xdf002c52,  clear_RPC_request) // reset the request to prevent calling
+                                         // the function forever
+
+// MMU related, required by CONFIG_MMU features
+THUMB_FN(0xe05772d6, change_mmu_tables) // Updates TTBRs and does TLB maintenance
+//THUMB_FN(0xe001eca4, copy_mmu_tables) // copies from one location to another,
+                                      // fixing up addresses held in table start,
+                                      // and doing cache maintenance
+
+// slightly MMU related, used by CONFIG_MMU_REMAP
+THUMB_FN(0xe065e998, memcpy_dryos) // See 200D stubs for long comment on finding a good memcpy.
+
 
 /** Memory allocation **/
 THUMB_FN(0xE055B094, _AllocateMemory)
