@@ -21,6 +21,7 @@ static uint32_t sd_setup_mode_reg = 0xFFFFFFFF;
 static uint32_t sd_set_function = 0;
 
 static uint32_t uhs_regs[] = {0xC0400600, 0xC0400604, /*C0400608, C040060C*/ 0xC0400610, 0xC0400614, 0xC0400618, 0xC0400624, 0xC0400628, 0xC040061C, 0xC0400620}; /* register addresses */
+
 static uint32_t sdr50_700D[] = {0x3, 0x3, 0x4, 0x1D000301, 0x0, 0x201, 0x201, 0x100, 0x4};                                                                        /* SDR50 values from 700D (96MHz) */
 static uint32_t sdr_160MHz1[] = {0x3, 0x2, 0x1, 0x1D000001, 0x0, 0x201, 0x201, 0x100, 0x1};                                                                       /* Found by trial and error, little bit faster than second (original) 160 MHz */
 static uint32_t sdr_160MHz2[] = {0x2, 0x3, 0x1, 0x1D000001, 0x0, 0x100, 0x100, 0x100, 0x1};                                                                       /* overclocked values: 160MHz = 96*(4+1)/(2?+1) (found by brute-forcing) */
@@ -35,15 +36,15 @@ static CONFIG_INT("sd.sd_overclock", sd_overclock, 0);
 static CONFIG_INT("sd.sd_access_mode", access_mode, 1);
 
 /* CID info hook, should work on all DIGIC 5 models */
-unsigned int MID;
-unsigned int OID;
-unsigned int PNM_1;
-unsigned int PNM_2;
-unsigned int PRV;
-unsigned int PSN_1;
-unsigned int PSN_2;
-unsigned int MDT;
-unsigned int CRC;
+uint32_t MID;
+uint32_t OID;
+uint32_t PNM_1;
+uint32_t PNM_2;
+uint32_t PRV;
+uint32_t PSN_1;
+uint32_t PSN_2;
+uint32_t MDT;
+uint32_t CRC;
 static void GetCID(uint32_t *regs, uint32_t *stack, uint32_t pc)
 {
     MID = regs[5] >> 0x18;
@@ -98,11 +99,10 @@ static void sd_set_function_log(uint32_t *regs, uint32_t *stack, uint32_t pc)
     }
 }
 
-// Replacement for the legacy patch_instruction().
-static inline int patch_instruction32(uintptr_t addr,
-                                      uint32_t old_val,
-                                      uint32_t new_val,
-                                      const char *desc)
+static int patch_instruction32(uintptr_t addr,
+                               uint32_t old_val,
+                               uint32_t new_val,
+                               const char *desc)
 {
     struct patch p = {
         .addr = (uint8_t *)addr,
@@ -220,7 +220,7 @@ static void sd_overclock_task()
 
         /* Patch sdReadBlk and sdWriteBlk Now! for pausing SD reads/writes operations  */
         /* Also, will use hybrid clock speed when 192 MHz or 240 MHz are selected      */
-        /* Hyprid clock speed or "The Magic Trick" was explanied here:
+        /* Hybrid clock speed or "The Magic Trick" was explained here:
            https://www.magiclantern.fm/forum/index.php?topic=26634.msg240128#msg240128 */
         patch_hook_function(sd_read_clock, MEM(sd_read_clock), ReadClock5D3, "R_Clock");
         patch_hook_function(sd_write_clock, MEM(sd_write_clock), WriteClock5D3, "W_Clock");
@@ -308,7 +308,9 @@ static void sd_overclock_task()
         /* CID hook isn't needed anymore */
         unpatch_memory(CID_hook);
 
-        patch_instruction32(GPIO_cmp, 0xe3540001, 0xe3540008, "GPIO_cmp"); // Patch cmp instruction to avoid loading default GPIO registers values
+        // Patch cmp instruction to avoid loading default GPIO registers values
+        patch_instruction32(GPIO_cmp, 0xe3540001, 0xe3540008, "GPIO_cmp");
+
         patch_hook_function(GPIO, MEM(GPIO), GPIO_registers, "GPIO");    // Set our GPIO values
         SD_ReConfiguration();
         GPIO_patch_on = 1;
@@ -357,7 +359,9 @@ static void sd_overclock_task()
         /* CID hook isn't needed anymore */
         unpatch_memory(CID_hook);
 
-        patch_instruction32(GPIO_cmp, 0xe3550001, 0xe3550008, "GPIO_cmp"); // Patch cmp instruction to avoid loading default GPIO registers values
+        // Patch cmp instruction to avoid loading default GPIO registers values
+        patch_instruction32(GPIO_cmp, 0xe3550001, 0xe3550008, "GPIO_cmp");
+
         patch_hook_function(GPIO, MEM(GPIO), GPIO_registers, "GPIO");    // Set our GPIO values
         SD_ReConfiguration();
         GPIO_patch_on = 1;
@@ -641,8 +645,8 @@ static unsigned int sd_uhs_init()
         static const char *sd_choices_5d3[] = {"OFF", "160MHz", "192MHz (H)", "240MHz (H)"};
         static const char sd_choices_help2_5d3[] = "\n"
                                                    " \n"
-                                                   "(H): Hyprid clock speed. Will use 192MHz for Write, 160MHz for Read.\n"
-                                                   "(H): Hyprid clock speed. Will use 240MHz for Write, 160MHz for Read.\n";
+                                                   "(H): Hybrid clock speed. Will use 192MHz for Write, 160MHz for Read.\n"
+                                                   "(H): Hybrid clock speed. Will use 240MHz for Write, 160MHz for Read.\n";
         sd_uhs_menu[0].choices = sd_choices_5d3;
         sd_uhs_menu[0].help2 = sd_choices_help2_5d3;
     }
@@ -653,7 +657,7 @@ static unsigned int sd_uhs_init()
         static const char sd_choices_help2_others[] = "\n"
                                                       " \n"
                                                       " \n"
-                                                      "(H): Hyprid clock speed. Will use 240MHz for Write, 192MHz for Read.\n";
+                                                      "(H): Hybrid clock speed. Will use 240MHz for Write, 192MHz for Read.\n";
         sd_uhs_menu[0].choices = sd_choices_others;
         sd_uhs_menu[0].help2 = sd_choices_help2_others;
     }

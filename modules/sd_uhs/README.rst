@@ -1,7 +1,14 @@
 SD overclocking
 ===============
 
-Playing Russian Roulette with your data.
+Change SD UHS access speeds, partly via accessing the SD device directly,
+partly via patching ROM used for normal DryOS configuration of the device.
+
+This is not well understood, mostly empirically determined.  There is
+definite risk.  Field tests suggest it is not very risky in practice;
+very few reports of damaged cards, some reports of lost data.  Problems
+are more likely to occur at higher speeds.  Some cards tolerate higher
+speeds much better than others.
 
 :Author: a1ex, Danne, theBilalFkahouri
 :License: GPL
