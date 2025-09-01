@@ -164,7 +164,7 @@ Installing Magic Lantern on other cards
 
 * If you use **SD/SDHC/CF** cards, you may simply **repeat Step 2** on every card you would like to use Magic Lantern.
 
-* If you use **SDXC** cards, or if you prefer to skip the firmware update step and prepare all your cards from the PC, you may copy ML files on your card and make it bootable with a special utility: `EOSCard <http://pel.hu/down/EOScard.exe>`_ for Windows, `MacBoot <http://www.zenoshrdlu.com/macboot/macboot.html>`_ for Mac, or `make_bootable.sh <http://groups.google.com/group/ml-devel/browse_thread/thread/1161d4e6e93232de/41a65807171f71a0>`_ for Mac/Linux in command line.
+* If you use **SDXC** cards, or if you prefer to skip the firmware update step and prepare all your cards from the PC, you may copy ML files on your card and make it bootable with a special utility: `EOSCard <http://pel.hu/down/EOScard.exe>`_ for Windows, `MacBoot <http://www.zenoshrdlu.com/macboot/macboot.html>`_ for Mac, or `edit_card_flags.py` from tools/card-flags for Mac/Linux in command line.
 
 Updating Magic Lantern
 ======================
