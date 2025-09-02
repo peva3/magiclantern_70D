@@ -273,7 +273,16 @@ static struct mem_allocator allocators[] = {
     },
 #endif
 
-    /* must be completely free when navigating Canon menus, so only use it as a last resort */
+    // Canon expects this memory pool to be completely empty when it starts some operations.
+    // If it isn't, the camera can lock completely, Err 70, or crash.
+    // An example operation is image editing.  Go to image review, press Q (Q/Set on some cams),
+    // select Creative Filters.  Trying to apply filters will trigger the problem,
+    // even if only a single small alloc is held by ML.  Confirmed on 60D, 70D and 200D.
+    //
+    // Two distinct assert messages were seen on 60D, the important strings being:
+    // ASSERT: pMessage->pAddress == (PVOID)COMPOSITION_WORK_TOP_ADDRESS( (UINT32)this->pMemMgrAddress )
+    // and:
+    // ASSERT: GetCurrentState( hStateObject ) == ST_NORMAL_SRM
     {
         .name = "shoot_malloc",
         .malloc = _shoot_malloc,
