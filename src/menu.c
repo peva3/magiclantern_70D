@@ -2960,8 +2960,10 @@ skip_name:
             print_help_line(help_color, 10, MENU_HELP_Y_POS, help1);
         }
 
-        char* help2 = 0;
-        if (help1 != info->help)
+        char* help2 = NULL;
+        if (info->help != NULL
+            && info->help[0] != '\0'
+            && help1 != info->help)
         {
             /* help1 already used for something else?
              * put overriden help (via MENU_SET_HELP) here */
