@@ -578,8 +578,8 @@ static struct menu_entry sd_uhs_menu[] =
                     .priv = &access_mode,
                     .max = 1,
                     .choices = CHOICES("SDR50", "SDR104"),
-                    .help = "SDR104 mode is required for higher frequencies than 100 MHz. It's ON by",
-                    .help2 = "default. However some SD cards prefer SDR50 for high frequencies.",
+                    .help = "SDR104 mode may be required for >100 MHz. It's ON by default",
+                    .help2 = "However some SD cards prefer SDR50 for high frequencies.",
                 },
                 {
                     .name = "Show CID info",
