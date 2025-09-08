@@ -388,7 +388,11 @@ static void sd_overclock_task()
         }
     }
 
-    else
+    else if ((is_camera("6D", "1.1.6"))
+                || (is_camera("70D", "1.1.2"))
+                || (is_camera("650D", "1.0.4"))
+                || (is_camera("700D", "1.1.5"))
+            )
     {
         overclock_task_in_progress = 1;
 
@@ -438,6 +442,10 @@ static void sd_overclock_task()
             unpatch_memory(sd_read_clock);
             unpatch_memory(sd_write_clock);
         }
+    }
+
+    else
+    {  //unsupported cam
     }
 }
 
