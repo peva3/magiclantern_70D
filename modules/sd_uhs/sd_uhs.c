@@ -575,18 +575,22 @@ static struct menu_entry sd_uhs_menu[] =
 {
     {
         .name = "SD Overclock",
-        .priv = &sd_overclock,
-        .update = sd_uhs_update,
-        .max = 3,
-        .choices = CHOICES("OFF", "160MHz", "192MHz", "240MHz"),
-        .help = "Choose a preset then restart the camera.",
+        .select = menu_open_submenu,
         .children = (struct menu_entry[]){
+            {
+                .priv = &sd_overclock,
+                .update = sd_uhs_update,
+                .max = 3,
+                .help = "Choose an option, restart the camera to apply.",
+                .name = "SD Frequency",
+                .choices = CHOICES("OFF", "160MHz", "192MHz", "240MHz"),
+            },
             {
                 .name = "Access Mode",
                 .priv = &access_mode,
                 .max = 1,
                 .choices = CHOICES("SDR50", "SDR104"),
-                .help = "SDR104 mode may be required for >100 MHz. It's ON by default",
+                .help = "SDR104 mode may be required for >100 MHz. It's ON by default.",
                 .help2 = "However some SD cards prefer SDR50 for high frequencies.",
             },
             {
