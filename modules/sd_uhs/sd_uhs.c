@@ -670,7 +670,7 @@ static unsigned int sd_uhs_init()
         sd_uhs_menu[0].help2 = sd_choices_help2_others;
     }
 
-    menu_add("Debug", sd_uhs_menu, COUNT(sd_uhs_menu));
+    menu_add("Prefs", sd_uhs_menu, COUNT(sd_uhs_menu));
 
     if (is_camera("5D3", "1.1.3"))
     {
