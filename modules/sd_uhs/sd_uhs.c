@@ -564,78 +564,78 @@ static MENU_UPDATE_FUNC(CRC_display)
 }
 
 static struct menu_entry sd_uhs_menu[] =
+{
     {
-        {
-            .name = "SD Overclock",
-            .priv = &sd_overclock,
-            .update = sd_uhs_update,
-            .max = 3,
-            .choices = CHOICES("OFF", "160MHz", "192MHz", "240MHz"),
-            .help = "Choose a preset then restart the camera.",
-            .children = (struct menu_entry[]){
-                {
-                    .name = "Access Mode",
-                    .priv = &access_mode,
-                    .max = 1,
-                    .choices = CHOICES("SDR50", "SDR104"),
-                    .help = "SDR104 mode may be required for >100 MHz. It's ON by default",
-                    .help2 = "However some SD cards prefer SDR50 for high frequencies.",
-                },
-                {
-                    .name = "Show CID info",
-                    .select = menu_open_submenu,
-                    .help = "Read the contents of CID register.",
-                    .help2 = "CID register contains some information about an SD card.",
-                    .icon_type = IT_ACTION,
-                    .children = (struct menu_entry[]){
-                        {
-                            .name = "MID:",
-                            .update = MID_display,
-                            .help = "Manufacturer ID.",
-                            .icon_type = IT_ALWAYS_ON,
-                        },
-                        {
-                            .name = "OID:",
-                            .update = OID_display,
-                            .help = "OEM/Application ID.",
-                            .icon_type = IT_ALWAYS_ON,
-                        },
-                        {
-                            .name = "PNM:",
-                            .update = PNM_display,
-                            .help = "Product Name.",
-                            .icon_type = IT_ALWAYS_ON,
-                        },
-                        {
-                            .name = "PRV:",
-                            .update = PRV_display,
-                            .help = "Product Revision.",
-                            .icon_type = IT_ALWAYS_ON,
-                        },
-                        {
-                            .name = "PSN:",
-                            .update = PSN_display,
-                            .help = "Serial Number.",
-                            .icon_type = IT_ALWAYS_ON,
-                        },
-                        {
-                            .name = "MDT:",
-                            .update = MDT_display,
-                            .help = "Manufacture Date Code.",
-                            .icon_type = IT_ALWAYS_ON,
-                        },
-                        {
-                            .name = "CRC:",
-                            .update = CRC_display,
-                            .help = "CRC7 checksum.",
-                            .icon_type = IT_ALWAYS_ON,
-                        },
-                        MENU_EOL,
-                    },
-                },
-                MENU_EOL,
+        .name = "SD Overclock",
+        .priv = &sd_overclock,
+        .update = sd_uhs_update,
+        .max = 3,
+        .choices = CHOICES("OFF", "160MHz", "192MHz", "240MHz"),
+        .help = "Choose a preset then restart the camera.",
+        .children = (struct menu_entry[]){
+            {
+                .name = "Access Mode",
+                .priv = &access_mode,
+                .max = 1,
+                .choices = CHOICES("SDR50", "SDR104"),
+                .help = "SDR104 mode may be required for >100 MHz. It's ON by default",
+                .help2 = "However some SD cards prefer SDR50 for high frequencies.",
             },
+            {
+                .name = "Show CID info",
+                .select = menu_open_submenu,
+                .help = "Read the contents of CID register.",
+                .help2 = "CID register contains some information about an SD card.",
+                .icon_type = IT_ACTION,
+                .children = (struct menu_entry[]){
+                    {
+                        .name = "MID:",
+                        .update = MID_display,
+                        .help = "Manufacturer ID.",
+                        .icon_type = IT_ALWAYS_ON,
+                    },
+                    {
+                        .name = "OID:",
+                        .update = OID_display,
+                        .help = "OEM/Application ID.",
+                        .icon_type = IT_ALWAYS_ON,
+                    },
+                    {
+                        .name = "PNM:",
+                        .update = PNM_display,
+                        .help = "Product Name.",
+                        .icon_type = IT_ALWAYS_ON,
+                    },
+                    {
+                        .name = "PRV:",
+                        .update = PRV_display,
+                        .help = "Product Revision.",
+                        .icon_type = IT_ALWAYS_ON,
+                    },
+                    {
+                        .name = "PSN:",
+                        .update = PSN_display,
+                        .help = "Serial Number.",
+                        .icon_type = IT_ALWAYS_ON,
+                    },
+                    {
+                        .name = "MDT:",
+                        .update = MDT_display,
+                        .help = "Manufacture Date Code.",
+                        .icon_type = IT_ALWAYS_ON,
+                    },
+                    {
+                        .name = "CRC:",
+                        .update = CRC_display,
+                        .help = "CRC7 checksum.",
+                        .icon_type = IT_ALWAYS_ON,
+                    },
+                    MENU_EOL,
+                },
+            },
+            MENU_EOL,
         },
+    },
 };
 
 static unsigned int sd_uhs_init()
