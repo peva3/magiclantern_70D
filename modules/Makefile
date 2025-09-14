@@ -52,8 +52,8 @@ ML_MODULES = \
     adv_int \
     crop_rec \
     dev_tools/edmac \
-    yolo \
-    sd_uhs
+    sd_uhs \
+    yolo
 
 .PHONY: clean $(BUILD_DIR)
 
