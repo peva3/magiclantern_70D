@@ -34,6 +34,7 @@
 #define FEATURE_INTERVALOMETER
 
 #define CONFIG_CRASH_LOG
+#define FEATURE_DISK_LOG
 
 // explicitly disable stuff that don't work or may break things
 #undef CONFIG_AUTOBACKUP_ROM
