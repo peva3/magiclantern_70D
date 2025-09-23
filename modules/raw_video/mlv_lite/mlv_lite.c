@@ -680,6 +680,12 @@ void update_resolution_params()
 
     /* res X */
     res_x = MIN(resolution_presets_x[resolution_index_x] + res_x_fine, max_res_x);
+    if (is_camera("7D2", "1.1.2"))
+    {
+        // We don't know how to do EDMAC rect copies yet on this cam.
+        // We use a fast memcpy variant, but are limited to full width copies.
+        res_x = max_res_x;
+    }
 
     /* res Y */
     int num = aspect_ratio_presets_num[aspect_ratio_index];
@@ -1086,6 +1092,12 @@ static MENU_UPDATE_FUNC(resolution_update)
     if (crop_factor) MENU_SET_RINFO("%s%d.%02dx", FMT_FIXEDPOINT2( crop_factor ));
 
     int selected_x = resolution_presets_x[resolution_index_x] + res_x_fine;
+    if (is_camera("7D2", "1.1.2"))
+    {
+        // We don't know how to do EDMAC rect copies yet on this cam.
+        // We use a fast memcpy variant, but are limited to full width copies.
+        selected_x = raw_info.pitch * 8 / BPP;
+    }
     
     if (selected_x > max_res_x)
     {

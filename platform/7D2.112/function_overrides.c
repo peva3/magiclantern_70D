@@ -179,6 +179,12 @@ unsigned int UnLockEngineResources(struct LockEntry *lockEntry)
     return 0;
 }
 
+void *dma_memcpy(void *dest, void *srce, size_t n)
+{
+    extern void *_memcpy_fast(int channel, void *dst, void *src, size_t count);
+    uint32_t dma_channel = 0; // untested if this is safe in all contexts on 7D2
+    return _memcpy_fast(dma_channel, dest, srce, n);
+}
 
 // SJE FIXME large hackish crap:
 // Fake funcs for the edmac funcs required by mlv_lite.c
@@ -208,100 +214,35 @@ void* edmac_copy_rectangle_cbr_start(void *dst, void *src,
     if ((src == NULL) || (dst == NULL))
     {
         ASSERT(0);
+        // This returns without clearing edmac_active via cbr_w(),
+        // so recording will stall.  Which is fine because it's noticeable
+        // and you should never pass null ptrs in.
         return NULL;
     }
 
-    // Old code doesn't explain why it checks this, my guess is
-    // because DMA transfers don't invalidate CPU cache, since
-    // they're outside of the CPU.
-    ASSERT(dst == UNCACHEABLE(dst));
+    // For 7D2, we copy with a DMA func with sig close to memcpy().
+    // Digic 6 cams seem to use this instead of dma_memcpy(), which they do have,
+    // but it's not initialised correctly so you can't use it.
+    //
+    // This can't do a clever rect crop, so we need more checks on call params.
+    //
+    // We do this because we don't have full control of EDMAC from ICU,
+    // Digic 6 cams do EDMAC ops from Omar.  Omar presumably can do it,
+    // (and maybe we can trigger it from ICU), but so far we don't know how.
 
-    /* clean the cache before reading from regular (cacheable) memory */
-    /* see FIO_WriteFile for more info */
-    if (src == CACHEABLE(src))
-    {
-        sync_caches();
-    }
+    // These imply mlv_lite should have raw_info.pitch == (res_x * BPP/8)
+    if (src_width != dst_width || dst_width != w)
+        return NULL;
 
-// SJE FIXME
-// here we want some checks so that we only try to copy on full regions,
-// not cropped, and then we want to dma_memcpy() the whole block.
+    // These imply mlv_lite should have skip_x == 0
+    if (src_x != 0 || dst_x != 0)
+        return NULL;
 
-#if 0
-    /* create a memory suite from a already existing (continuous) memory block with given size. */
-    // SJE: no idea what "memory suite" is supposed to mean here
-    uint32_t src_adjusted = ((uint32_t)src & 0x1FFFFFFF) + src_x + src_y * src_width;
-    uint32_t dst_adjusted = ((uint32_t)dst & 0x1FFFFFFF) + dst_x + dst_y * dst_width;
+    dma_memcpy(dst + (dst_y * dst_width),
+               src + (src_y * src_width),
+               w * h);
 
-    // these struct defs should probably move to edmac.h,
-    // or maybe edmac-memcpy.h
-    struct m2m_edmac_dst_src_info {
-        struct edmac_info *src_region; // not actually tested which region is dst or src,
-        struct edmac_info *dst_region; // assuming it's the same order as following src + dst args
-        uint8_t *src;
-        uint8_t *dst;
-    };
-
-    struct m2m_channel_res_info {
-        uint32_t *resIds;
-        uint32_t resIdCount;
-        uint32_t channel_1;
-        uint32_t channel_2;
-    };
-
-    struct m2m_copy_info {
-        struct m2m_edmac_dst_src_info *edmac_regions;
-        struct m2m_channel_res_info *res_info; // not a great name
-    };
-
-    struct edmac_info src_region = {
-        .off1b = src_width - w,
-        .xb = w,
-        .yb = h - 1,
-    };
-
-    struct edmac_info dst_region = {
-        .off1b = 0,
-        .xb = w,
-        .yb = h - 1,
-    };
-
-    struct m2m_edmac_dst_src_info m2m_edmac_dst_src_info = {
-        .src_region = &src_region,
-        .dst_region = &dst_region,
-        .src = (uint8_t *)src_adjusted,
-        .dst = (uint8_t *)dst_adjusted
-    };
-
-    uint32_t resIds[1] = {0x00000080}; // "magic" value.  Probably this is any
-                                       // device ID not in the block, so it fails to find,
-                                       // but m2m_copy continues anyway.  Need to confirm.
-
-    struct m2m_channel_res_info m2m_channel_res_info = {
-        .resIds = resIds,
-        .resIdCount = 1,
-// These are the defaults, but they seem to clash with LV usage,
-// and m2m_copy hangs until LV is closed.
-//        .channel_1 = 43,
-//        .channel_2 = 17
-// These were found by logging for channels that never got used
-// (no ram address set in shamem region)
-// while using cam, switching to video mode and recording:
-        .channel_1 = 48,
-        .channel_2 = 19
-    };
-
-    struct m2m_copy_info m2m_copy_info = {
-        .edmac_regions = &m2m_edmac_dst_src_info,
-        .res_info = &m2m_channel_res_info
-    };
-
-    // cross fingers and trigger copy
-    extern void mem_to_mem_edmac_copy(struct m2m_copy_info *);
-    // If channels, or resLock above is wrong, then the following hangs
-    mem_to_mem_edmac_copy(&m2m_copy_info);
-    cbr_w(NULL); // clears edmac_active, we have no CBR to do this
-#endif
+    cbr_w(NULL); // clears edmac_active in mlv_lite
     return dst;
 }
 

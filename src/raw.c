@@ -1026,7 +1026,7 @@ int raw_update_params_work()
         // Being in the black region should work, exact alignment may need correcting
         // for actual raw capture.
         skip_top    = 20;
-        skip_left   = 144;
+        skip_left   = 0; // we can't crop properly yet, so this must be 0
         #endif
 
         #ifdef CONFIG_200D

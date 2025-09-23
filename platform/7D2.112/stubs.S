@@ -210,8 +210,10 @@ DATA_PTR(       0x0,  LCD_Palette)                          // D6 has no indexed
 
 // DMA
 // dma_memcpy() doesn't work on this cam, it hits the "Nothing DMA ch now!" case,
-// perhaps this system isn't initialised?
+// perhaps this system isn't initialised?  You can use it if you do MMIO directly
+// with the backing DMA controller, but it's not that fast, about 52MB/s
 //THUMB_FN(0xfe3b921c,  dma_memcpy) // BLTDMA
+//THUMB_FN(0x146c,      register_interrupt) // not only used for DMA, but our only use of it
 //
 // These all exist...  but on Omar:
 //THUMB_FN(0x8000626a EngDrvOut);
@@ -224,6 +226,18 @@ DATA_PTR(       0x0,  LCD_Palette)                          // D6 has no indexed
 //THUMB_FN(0x80006bfe ConnectWriteEDmac);
 //THUMB_FN(0x80006c10 ConnectReadEDmac);
 //THUMB_FN(0x80006c42 RegisterEDmacCompleteCBR);
+
+// There are some EDMAC related funcs on Master after all:
+//THUMB_FN(0xfe255c98, _EngDrvOut) // not sure how useful this is, do ICU and Omar use the same area?
+
+// This is quite fast, about 190MB/s.  Possibly EDMAC backed?
+// It doesn't have the normal memcpy() func sig, so we wrap it in function_overrides.c,
+// pretending it's dma_memcpy().
+THUMB_FN(0xfe0ff03e, _memcpy_fast);
+
+// This one takes an array of (dst, src, len) structs, and a count.
+// Doesn't seem to be any faster even if you have multiple sections in the array.
+//THUMB_FN(0xfe0ff0e8, memcpy_fast_multiple);
 
 // This is inside the rom block copied to Omar,
 // possibly it is bad to call it from ICU...
