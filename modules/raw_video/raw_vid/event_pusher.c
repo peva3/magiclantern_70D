@@ -384,10 +384,21 @@ static unsigned int FAST raw_vid_vsync_cbr(unsigned int unused)
     event->orig_frame_width = raw_info.pitch;
 
     // TODO allow choosing offset and crop?
-    event->x = 200; // x offset within the frame, for cropping
-    event->y = 100; // y as above
-    event->w = 640; // our crop width
-    event->h = 480; // our crop height
+
+    if (is_camera("7D2", "1.1.2"))
+    {
+        event->x = 0; // No rect crop capability on 7D2 yet so we can't offset in this axis
+        event->y = 160; // We can skip the top black border (or further)
+        event->w = raw_info.width; // full width test for 7D2, which can't rect crop
+        event->h = 480; // our crop height
+    }
+    else
+    {
+        event->x = 200; // x offset within the frame, for cropping
+        event->y = 100; // y as above
+        event->w = 640; // our crop width
+        event->h = 480; // our crop height
+    }
 
     int32_t frame_size = event->w * event->h * BPP/8;
     event->size = frame_size;
