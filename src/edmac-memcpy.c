@@ -125,6 +125,14 @@ void* edmac_copy_rectangle_cbr_start(void* dst, void* src,
                                      int w, int h,
                                      void (*cbr_r)(void*), void (*cbr_w)(void*), void *cbr_ctx)
 {
+    // "src_width" is width of the frame including dark areas, borders etc.
+    // "w" is the width of the region to copy out, e.g. if stripping the borders.
+    //
+    // Why three widths?  Because the dst buffer can also conceptually be rectangular,
+    // with the copy region a smaller rectangle within it.  Presumably Canon want this
+    // for e.g. copying from a buffer with border to another, different sized buffer
+    // that also has a border.
+
     /* dmaFlags: 16 (DIGIC 5) or 4 (DIGIC 4) bytes per transfer
      * in order to successfully stop the EDMAC transfer,
      * w * h must be mod number of bytes per transfer
@@ -151,10 +159,9 @@ void* edmac_copy_rectangle_cbr_start(void* dst, void* src,
 
     take_semaphore(edmac_memcpy_sem, 0);
 
-    /* create a memory suite from a already existing (continuous) memory block with given size. */
     uint32_t src_adjusted = ((uint32_t)src & 0x1FFFFFFF) + src_x + src_y * src_width;
     uint32_t dst_adjusted = ((uint32_t)dst & 0x1FFFFFFF) + dst_x + dst_y * dst_width;
-    
+
     /* only read channel will emit a callback when reading from memory is done. write channels would just continue */
     RegisterEDmacCompleteCBR(edmac_read_chan, cbr_r, cbr_ctx);
     RegisterEDmacAbortCBR(edmac_read_chan, cbr_r, cbr_ctx);
