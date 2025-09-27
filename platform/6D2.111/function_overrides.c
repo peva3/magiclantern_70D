@@ -209,10 +209,15 @@ void* edmac_copy_rectangle_cbr_start(void *dst, void *src,
         sync_caches();
     }
 
-    /* create a memory suite from a already existing (continuous) memory block with given size. */
-    // SJE: no idea what "memory suite" is supposed to mean here
-    void *src_adjusted = (void *)(((uint32_t)src & 0x1FFFFFFF) + src_x + src_y * src_width);
-    void *dst_adjusted = (void *)(((uint32_t)dst & 0x1FFFFFFF) + dst_x + dst_y * dst_width);
+// Somebody wanted to do this.  Nobody knows why.
+// Perhaps trying to guard against overflow into the cache bits?
+// But the effect is to remove the uncache bit that we did
+// an assert check for just above!
+//
+//    void *src_adjusted = (void *)(((uint32_t)src & 0x1FFFFFFF) + src_x + src_y * src_width);
+//    void *dst_adjusted = (void *)(((uint32_t)dst & 0x1FFFFFFF) + dst_x + dst_y * dst_width);
+    void *src_adjusted = (void *)(((uint32_t)src) + src_x + src_y * src_width);
+    void *dst_adjusted = (void *)(((uint32_t)dst) + dst_x + dst_y * dst_width);
 
     // TODO if / when we unify EDMAC memcpy API across cam gens, this will need work.
     // edmac-memcpy.c expects to use edmac_memcpy_sem global.
@@ -231,11 +236,12 @@ void* edmac_copy_rectangle_cbr_start(void *dst, void *src,
 
     // Not sure this is essential, but these are the devices locked
     // by code in 6D2 rom.
+    // This seems to trigger "edmac timeout" from mlv_lite
 //    uint32_t resIDs[3] = {0x00320021,
 //                          0x00320007,
 //                          0x00320035}; // via static analysis, e.g. e0147f64
 
-// fake "magic" values, works on 200D.  On 6D2 however, not reliable, see below.
+// fake "magic" values, see notes in 200D.
     uint32_t resIDs[1] = {0x00000080};
 
     // channels found via edmaclog module, exercising cam, finding ones that
@@ -256,15 +262,12 @@ void* edmac_copy_rectangle_cbr_start(void *dst, void *src,
 
 // This one can, sometimes, work in video mode and record sensor data to MLV.
 // It seems unreliable though, mostly the cam hard reboots.
-    create_mem_to_mem_lock_and_pwrmng_globals(0x21, 0x13, resIDs, 1);
+    create_mem_to_mem_lock_and_pwrmng_globals(0x21, 0x13, resIDs, COUNT(resIDs));
 
 // These work okay with "magic" res lock in LV, but not video mode:
 //    create_mem_to_mem_lock_and_pwrmng_globals(0x31, 0x10, resIDs, 1);
 // Channel too high for edmac, as expected:
 //    create_mem_to_mem_lock_and_pwrmng_globals(0x35, 0x1a, resIDs, 1);
-
-// cbr never triggers?
-//    create_mem_to_mem_lock_and_pwrmng_globals(0x21, 0x13, resIDs, 3);
 
 // defaults:
 // Works okay outside of LV, with 3 resIDs.
@@ -316,12 +319,10 @@ void* edmac_copy_rectangle_cbr_start(void *dst, void *src,
         .yb = h - 1,
     };
 
-//    DryosDebugMsg(0, 15, "pre m2m_setup");
     mem_to_mem_setup_copy(&src_region, &dst_region);
 
     // start the copy, which on completion should trigger
     // our cbr, releasing our sem
-//    DryosDebugMsg(0, 15, "pre m2m_start");
     mem_to_mem_set_src_dst_and_start(src_adjusted, dst_adjusted);
 
     // sem should be freed by edmac_copy_rectangle_adv_cleanup()
@@ -335,7 +336,6 @@ void* edmac_copy_rectangle_cbr_start(void *dst, void *src,
         // This will break all future EDMAC copy usage,
         // since we aren't releasing edmac_copy_sem
     }
-//    DryosDebugMsg(0, 15, "cbr_start took mem2mem_sem");
 
     // This does several things, including releasing device 6, the Channel Switch.
     // Asserts if called from an interrupt context, since it calls
@@ -346,7 +346,6 @@ void* edmac_copy_rectangle_cbr_start(void *dst, void *src,
     set_default_mem_to_mem_cbr();
     delete_mem_to_mem_lock();
 
-//    DryosDebugMsg(0, 15, "cbr_start giving edmac_copy_sem");
     give_semaphore(edmac_copy_sem);
     return dst;
 }

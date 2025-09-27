@@ -28,10 +28,6 @@
 // enable state objects hooks
 #define CONFIG_STATE_OBJECT_HOOKS
 
-// SRM is untested, this define is to allowing building
-// without SRM_BUFFER_SIZE being found
-#define CONFIG_MEMORY_SRM_NOT_WORKING
-
 #define CONFIG_MALLOC_STRUCT_V2
 
 #define CONFIG_TASK_STRUCT_V2_SMP
