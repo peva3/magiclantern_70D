@@ -348,7 +348,10 @@ static int movie_elapsed_time_01s = 0;   // seconds since starting the current m
 
 void time_indicator_show()
 {
-    if (!get_global_draw()) return;
+    if (!get_global_draw())
+        return;
+    if (movie_elapsed_time_01s == 0)
+        return;
 
     lvinfo_display(1,0); //force it to update, else stays frozen until other item updates eg. fps
    
