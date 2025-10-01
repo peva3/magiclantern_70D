@@ -64,6 +64,7 @@ CFLAGS = -Os -D__ARM__ \
     -Wdouble-promotion \
     -Winline \
     -Wundef \
+    -Wnull-dereference \
     -Wno-unused-parameter \
     -Wno-unused-function \
     -Wno-format \

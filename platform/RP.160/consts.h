@@ -134,7 +134,7 @@
 extern int _WINSYS_BMP_DIRTY_BIT_NEG;
 
 #define WINSYS_BMP_DIRTY_BIT_NEG MEM(&_WINSYS_BMP_DIRTY_BIT_NEG) // WINSYS_BMP_DIRTY_BIT_NEG MEM(0x4444+0x30) // wrong, no idea
-#define FOCUS_CONFIRMATION (*(int*)0) // FOCUS_CONFIRMATION (*(int*)0x4444) // wrong, focusinfo looks really different 50D -> 200D
+#define FOCUS_CONFIRMATION (*(int *)MAIN_FIRMWARE_ADDR) // wrong, but known safe to read from
 #define LV_BOTTOM_BAR_DISPLAYED 0x0 // wrong, fake bool
 // this block all copied from 50D, and probably wrong, though likely safe
 #define FASTEST_SHUTTER_SPEED_RAW 160

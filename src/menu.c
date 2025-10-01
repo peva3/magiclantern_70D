@@ -5019,22 +5019,26 @@ static struct menu * get_selected_toplevel_menu()
 }
 
 // argument is optional; 0 = top-level menus; otherwise, any menu can be used
-static struct menu_entry * get_selected_menu_entry(struct menu * menu)
+static struct menu_entry *get_selected_menu_entry(struct menu *menu)
 {
-    if (!menu)
+    if (menu == NULL)
     {
         /* find the currently selected top-level menu */
         menu = menus;
-        for( ; menu ; menu = menu->next )
-            if( menu->selected )
+        for (; menu != NULL; menu = menu->next)
+            if (menu->selected)
                 break;
     }
-    for (struct menu_entry * entry = menu->children; entry; entry = entry->next)
+
+    if (menu == NULL)
+        return NULL;
+
+    for (struct menu_entry *entry = menu->children; entry != NULL; entry = entry->next)
     {
-        if( entry->selected )
+        if (entry->selected)
             return entry;
     }
-    return 0;
+    return NULL;
 }
 
 static struct menu * get_current_submenu()
@@ -5890,12 +5894,15 @@ int is_menu_entry_selected(char* menu_name, char* entry_name)
     return 0;
 }
 
-int is_menu_selected(char* name)
+int is_menu_selected(char *name)
 {
-    struct menu * menu = menus;
-    for( ; menu ; menu = menu->next )
-        if( menu->selected )
+    struct menu *menu = menus;
+    for (; menu != NULL; menu = menu->next)
+        if (menu->selected)
             break;
+    if (menu == NULL)
+        return -1;
+
     return streq(menu->name, name);
 }
 
