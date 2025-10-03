@@ -3,8 +3,12 @@
 
 #undef RAW_VID_LOG
 //#define RAW_VID_LOG 1
+
 #ifdef RAW_VID_LOG
-#include "log.h"
+    #include "log.h"
+    #define SEND_LOG_DATA_STR(s) send_log_data_str(s)
+#else
+    #define SEND_LOG_DATA_STR(s) ;
 #endif
 
 // While we do send an event for every frame pushed,

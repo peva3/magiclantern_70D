@@ -1,10 +1,6 @@
 #include "module.h"
 #include "dryos.h"
 
-#ifdef RAW_VID_LOG
-#include "log.h"
-#endif
-
 #include "raw.h"
 #include "edmac-memcpy.h"
 
@@ -45,9 +41,7 @@ static void alloc_crop_bufs(struct crop_buf crop_bufs[])
     if (crop_bufs[0]._buf != NULL
         || crop_bufs[1]._buf != NULL)
     {
-        #ifdef RAW_VID_LOG
-        send_log_data_str("ERROR: non-null _buf in alloc_crop_bufs()\n");
-        #endif
+        SEND_LOG_DATA_STR("ERROR: non-null _buf in alloc_crop_bufs()\n");
         return;
     }
     
@@ -76,24 +70,18 @@ static void alloc_crop_bufs(struct crop_buf crop_bufs[])
 
     if (buf_size < MIN_CROP_BUF_SIZE)
     {
-        #ifdef RAW_VID_LOG
-        send_log_data_str("Couldn't find good crop bufs\n");
-        #endif
+        SEND_LOG_DATA_STR("Couldn't find good crop bufs\n");
         // These should both already be null, but it's a big memory leak
         // if we get it wrong!
         if (buf0 != NULL)
         {
-            #ifdef RAW_VID_LOG
-            send_log_data_str("ERROR: buf0 unexpectedly NULL\n");
-            #endif
+            SEND_LOG_DATA_STR("ERROR: buf0 unexpectedly NULL\n");
             fio_free(buf0);
             buf0 = NULL;
         }
         if (buf1 != NULL)
         {
-            #ifdef RAW_VID_LOG
-            send_log_data_str("ERROR: buf1 unexpectedly NULL\n");
-            #endif
+            SEND_LOG_DATA_STR("ERROR: buf1 unexpectedly NULL\n");
             fio_free(buf1);
             buf1 = NULL;
         }
@@ -158,9 +146,7 @@ static void write_buf_to_disk(struct crop_buf *crop_buf)
 
     if (crop_buf == NULL)
     {
-        #ifdef RAW_VID_LOG
-        send_log_data_str("ERROR: buf struct for disk write was NULL\n");
-        #endif
+        SEND_LOG_DATA_STR("ERROR: buf struct for disk write was NULL\n");
         return;
     }
 
@@ -169,9 +155,7 @@ static void write_buf_to_disk(struct crop_buf *crop_buf)
         || crop_buf->cur == NULL
         || crop_buf->end == NULL)
     {
-        #ifdef RAW_VID_LOG
-        send_log_data_str("ERROR: some buf member for disk write was NULL\n");
-        #endif
+        SEND_LOG_DATA_STR("ERROR: some buf member for disk write was NULL\n");
         return;
     }
     
@@ -186,9 +170,7 @@ static void write_buf_to_disk(struct crop_buf *crop_buf)
     // the write.
     if (raw_vid_fp == NULL)
     {
-        #ifdef RAW_VID_LOG
-        send_log_data_str("ERROR: raw_vid_fp was NULL before write\n");
-        #endif
+        SEND_LOG_DATA_STR("ERROR: raw_vid_fp was NULL before write\n");
         return;
     }
 
@@ -225,9 +207,7 @@ static void worker(void)
 
         if (event == NULL)
         { // shouldn't happen, we only post valid events
-            #ifdef RAW_VID_LOG
-            send_log_data_str("ERROR: worker, event was NULL\n");
-            #endif
+            SEND_LOG_DATA_STR("ERROR: worker, event was NULL\n");
             continue;
         }
 
@@ -236,25 +216,19 @@ static void worker(void)
         case IMAGE_DATA:
             if (recording_state != ACTIVE)
             {
-                #ifdef RAW_VID_LOG
-                send_log_data_str("ERROR: trying to process frame while recording not ACTIVE\n");
-                #endif
+                SEND_LOG_DATA_STR("ERROR: trying to process frame while recording not ACTIVE\n");
                 break;
             }
 
             if (event->src == NULL)
             {
-                #ifdef RAW_VID_LOG
-                send_log_data_str("ERROR: event->src was NULL\n");
-                #endif
+                SEND_LOG_DATA_STR("ERROR: event->src was NULL\n");
                 break;
             }
 
             if (raw_vid_fp == NULL)
             {
-                #ifdef RAW_VID_LOG
-                send_log_data_str("ERROR: fp was NULL at attempt to write\n");
-                #endif
+                SEND_LOG_DATA_STR("ERROR: fp was NULL at attempt to write\n");
                 break;
             }
 
@@ -266,9 +240,7 @@ static void worker(void)
 
             if (event->size > crop_buf->end - crop_buf->start)
             {
-                #ifdef RAW_VID_LOG
-                send_log_data_str("ERROR: event size too large for crop buf\n");
-                #endif
+                SEND_LOG_DATA_STR("ERROR: event size too large for crop buf\n");
                 break;
             }
 
@@ -282,9 +254,7 @@ static void worker(void)
             if (crop_buf == NULL)
             {
                 // FIXME we should stop here
-                #ifdef RAW_VID_LOG
-                send_log_data_str("ERROR: crop_buf was NULL at dst check\n");
-                #endif
+                SEND_LOG_DATA_STR("ERROR: crop_buf was NULL at dst check\n");
                 break;
             }
 
@@ -292,9 +262,7 @@ static void worker(void)
             if (event->size > crop_buf->end - crop_buf->cur)
             { // Then the prior IMAGE_DATA was the last that fit in this buffer,
               // we must swap.  And we can trigger flush to disk of prior in use buffer.
-                #ifdef RAW_VID_LOG
-                send_log_data_str("Swapping bufs\n");
-                #endif
+                SEND_LOG_DATA_STR("Swapping bufs\n");
                 
                 flush_src = crop_buf; // this triggers later flush to disk
 
@@ -307,9 +275,7 @@ static void worker(void)
                 {
                     // raw_write() can reset these, presumably we're writing too fast
                     // so it's not finished.
-                    #ifdef RAW_VID_LOG
-                    send_log_data_str("After buf swap, buf was in use; not written out\n");
-                    #endif
+                    SEND_LOG_DATA_STR("After buf swap, buf was in use; not written out\n");
                     crop_buf = NULL; // Hack, prevents next IMAGE_DATA doing anything,
                                      // really we should flush the remaining?
                     break; // FIXME we should stop as well
@@ -324,9 +290,7 @@ static void worker(void)
                 // If this happens, it means we're not managing to save a frame
                 // before the next vsync event in event_pusher.c tries to capture one.
 
-                #ifdef RAW_VID_LOG
-                send_log_data_str("ERROR: worker couldn't take edmac_sem\n");
-                #endif
+                SEND_LOG_DATA_STR("ERROR: worker couldn't take edmac_sem\n");
                 // FIXME this break means we're choosing to drop frames
                 // rather than stop recording, I think just stopping is better.
                 // Maybe re-imp the option from mlv_lite.
@@ -362,9 +326,7 @@ static void worker(void)
             break;
 
         case COMMAND_START:
-            #ifdef RAW_VID_LOG
-            send_log_data_str("Worker got start request.\n");
-            #endif
+            SEND_LOG_DATA_STR("Worker got start request.\n");
             if (recording_state == INACTIVE)
             {
                 // Get mem to buffer our cropped frames.  We do this because 
@@ -377,18 +339,14 @@ static void worker(void)
                 // been sent.
                 if (crop_buf != NULL)
                 {
-                    #ifdef RAW_VID_LOG
-                    send_log_data_str("ERROR: crop_buf not null on COMMAND_START\n");
-                    #endif
+                    SEND_LOG_DATA_STR("ERROR: crop_buf not null on COMMAND_START\n");
                     break;
                 }
                 alloc_crop_bufs(crop_bufs);
                 if (crop_bufs[0].start == NULL
                     || crop_bufs[1].start == NULL)
                 {
-                    #ifdef RAW_VID_LOG
-                    send_log_data_str("ERROR: could not obtain crop bufs, cannot start\n");
-                    #endif
+                    SEND_LOG_DATA_STR("ERROR: could not obtain crop bufs, cannot start\n");
                     break;
                 }
                 #ifdef RAW_VID_LOG
@@ -405,9 +363,7 @@ static void worker(void)
                 // Get new save file
                 if (raw_vid_fp != NULL)
                 {
-                    #ifdef RAW_VID_LOG
-                    send_log_data_str("ERROR: Worker tried to init save file but already in use\n");
-                    #endif
+                    SEND_LOG_DATA_STR("ERROR: Worker tried to init save file but already in use\n");
                     break;
                 }
 
@@ -416,16 +372,12 @@ static void worker(void)
                     raw_vid_fp = FIO_CreateFile(mlv_name);
                     if (raw_vid_fp == NULL)
                     {
-                        #ifdef RAW_VID_LOG
-                        send_log_data_str("Worker couldn't create mlv file\n");
-                        #endif
+                        SEND_LOG_DATA_STR("Worker couldn't create mlv file\n");
                     }
                 }
                 else
                 {
-                    #ifdef RAW_VID_LOG
-                    send_log_data_str("ERROR: Worker couldn't get mlv file name\n");
-                    #endif
+                    SEND_LOG_DATA_STR("ERROR: Worker couldn't get mlv file name\n");
                     break;
                 }
 
@@ -438,9 +390,7 @@ static void worker(void)
             break;
 
         case COMMAND_STOP:
-            #ifdef RAW_VID_LOG
-            send_log_data_str("Worker got stop request.\n");
-            #endif
+            SEND_LOG_DATA_STR("Worker got stop request.\n");
             // FIXME how to stop is more complicated than this,
             // need to flush, reset some pointers, block new start
             // until finished.
@@ -460,9 +410,7 @@ static void worker(void)
                 }
                 else
                 {
-                    #ifdef RAW_VID_LOG
-                    send_log_data_str("ERROR: unexpected fp state in worker\n");
-                    #endif
+                    SEND_LOG_DATA_STR("ERROR: unexpected fp state in worker\n");
                 }
 
                 #ifdef RAW_VID_LOG
@@ -493,9 +441,7 @@ static void worker(void)
                 }
 
                 recording_state = INACTIVE;
-                #ifdef RAW_VID_LOG
-                send_log_data_str("Recording is inactive\n");
-                #endif
+                SEND_LOG_DATA_STR("Recording is inactive\n");
             }
             break;
 
@@ -503,9 +449,7 @@ static void worker(void)
         case PREPARING:
             // These types should never be sent.  We will need to fix the cause.
             // But we still want to release the event storage.
-            #ifdef RAW_VID_LOG
-            send_log_data_str("ERROR: unexpected event type\n");
-            #endif
+            SEND_LOG_DATA_STR("ERROR: unexpected event type\n");
             break;
         }
 
@@ -515,9 +459,7 @@ static void worker(void)
 
         // no sleep needed, queue receive with timeout 0 is blocking.
     }
-    #ifdef RAW_VID_LOG
-    send_log_data_str("Raw video worker stopping.\n");
-    #endif
+    SEND_LOG_DATA_STR("Raw video worker stopping.\n");
 }
 
 void init_worker(struct msg_queue *q)
@@ -526,9 +468,7 @@ void init_worker(struct msg_queue *q)
     edmac_sem = create_named_semaphore("edmac_raw_worker", SEM_CREATE_UNLOCKED);
     if (edmac_sem == NULL)
     {
-        #ifdef RAW_VID_LOG
-        send_log_data_str("ERROR: worker could not create edmac sem\n");
-        #endif
+        SEND_LOG_DATA_STR("ERROR: worker could not create edmac sem\n");
         return;
     }
     task_create("raw_v_worker", WORKER_PRIO, 0x800, worker, NULL);

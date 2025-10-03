@@ -62,9 +62,7 @@ struct raw_vid_event *get_empty_event(void)
     int err = take_semaphore(events_sem, 2000);
     if (err)
     {
-        #ifdef RAW_VID_LOG
-        send_log_data_str("ERROR: get_next_event() sem timeout\n");
-        #endif
+        SEND_LOG_DATA_STR("ERROR: get_next_event() sem timeout\n");
         task_create("stop_com", WORKER_PRIO + 1, 0x800, send_stop_command, NULL);
         return NULL;
     }
@@ -145,9 +143,7 @@ void init_event_pusher(struct msg_queue *q)
 static void send_stop_command(void)
 {
     prevent_recording = 1;
-    #ifdef RAW_VID_LOG
-    send_log_data_str("Sending stop command to worker\n");
-    #endif
+    SEND_LOG_DATA_STR("Sending stop command to worker\n");
 
     const int max_tries = 10;
     int tries = 0;
@@ -162,9 +158,7 @@ static void send_stop_command(void)
     }
     if (tries == max_tries)
     {
-        #ifdef RAW_VID_LOG
-        send_log_data_str("ERROR: could not get event for stop command\n");
-        #endif
+        SEND_LOG_DATA_STR("ERROR: could not get event for stop command\n");
         return;
     }
 
@@ -182,9 +176,7 @@ static void send_stop_command(void)
     }
     if (tries == max_tries)
     {
-        #ifdef RAW_VID_LOG
-        send_log_data_str("ERROR: could not post stop command event\n");
-        #endif
+        SEND_LOG_DATA_STR("ERROR: could not post stop command event\n");
     }
 }
 
@@ -224,9 +216,7 @@ static unsigned int raw_vid_keypress_cbr(unsigned int key)
 
     if (rec_key_pressed)
     {
-        #ifdef RAW_VID_LOG
-        send_log_data_str("REC key pressed.\n");
-        #endif
+        SEND_LOG_DATA_STR("REC key pressed.\n");
 
         if (event_q == NULL)
         {
@@ -237,9 +227,7 @@ static unsigned int raw_vid_keypress_cbr(unsigned int key)
         if (recording_state == ACTIVE)
         {
             // We wish to stop recording.
-            #ifdef RAW_VID_LOG
-            send_log_data_str("Sending stop com due to rec keypress.\n");
-            #endif
+            SEND_LOG_DATA_STR("Sending stop com due to rec keypress.\n");
             // task_create to avoid blocking in key handling cbr:
             task_create("stop_com", WORKER_PRIO + 1, 0x800, send_stop_command, NULL);
         }
@@ -325,9 +313,7 @@ static unsigned int FAST raw_vid_vsync_cbr(unsigned int unused)
     count++;
     if (count == 1)
     { // per recording-session setup
-        #ifdef RAW_VID_LOG
-        send_log_data_str("Video starting.\n");
-        #endif
+        SEND_LOG_DATA_STR("Video starting.\n");
 
         // We lie a little to increase height, we want to slightly over-allocate.
         // Old code does this, not quite sure why, perhaps DMA block size related?
@@ -336,9 +322,7 @@ static unsigned int FAST raw_vid_vsync_cbr(unsigned int unused)
 
         if (capture_frames[0] == NULL)
         {
-            #ifdef RAW_VID_LOG
-            send_log_data_str("Could not alloc capture_frames[0]\n");
-            #endif
+            SEND_LOG_DATA_STR("Could not alloc capture_frames[0]\n");
 
             // This is likely unrecoverable, stop recording
             task_create("stop_com", WORKER_PRIO + 1, 0x800, send_stop_command, NULL);
@@ -347,9 +331,7 @@ static unsigned int FAST raw_vid_vsync_cbr(unsigned int unused)
         capture_frames[1] = fio_malloc(lv_raw_size);
         if (capture_frames[1] == NULL)
         {
-            #ifdef RAW_VID_LOG
-            send_log_data_str("Could not alloc capture_frames[1]\n");
-            #endif
+            SEND_LOG_DATA_STR("Could not alloc capture_frames[1]\n");
             fio_free(capture_frames[0]);
             capture_frames[0] = NULL;
 
@@ -370,9 +352,7 @@ static unsigned int FAST raw_vid_vsync_cbr(unsigned int unused)
         // TODO classic MLV supports user choosing stop or skip frames,
         // logic for skipping frames would go in here, perhaps some loop with a sleep,
         // waiting for queue space to be available.
-        #ifdef RAW_VID_LOG
-        send_log_data_str("All events are non-empty, stopping\n");
-        #endif
+        SEND_LOG_DATA_STR("All events are non-empty, stopping\n");
 
         task_create("stop_com", WORKER_PRIO + 1, 0x800, send_stop_command, NULL);
         return 0;
