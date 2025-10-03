@@ -1,5 +1,5 @@
 # define the module name - make sure name is max 8 characters
-MODULE_NAME = raw_vidX
+MODULE_NAME = raw_vidx
 MODULE_OBJS = $(BUILD_DIR)/raw_vid.o \
               $(BUILD_DIR)/worker.o \
               $(BUILD_DIR)/event_pusher.o
