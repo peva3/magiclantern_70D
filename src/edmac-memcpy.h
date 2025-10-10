@@ -4,6 +4,14 @@
 #include "sys/types.h"
 #include "stdint.h"
 
+// This value is chosen so that it is higher than the known requirement
+// for buffer start alignment on any cam.
+// E.g. 5d3 1.2.3 overallocates by 0x80 in _alloc_dma_memory(), 0x17f9c,
+// and returns aligned to 0x40.
+#define EDMAC_ALIGNMENT 0x80
+// Arguably, this should be in edmac.h, but so far it's only used with
+// edmac memcpy funcs.
+
 void* edmac_memcpy(void* dst, void* src, size_t length);
 void* edmac_memset(void* dst, int value, size_t length);
 uint32_t edmac_find_divider(size_t length, size_t transfer_size);
