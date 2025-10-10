@@ -164,6 +164,11 @@ extern uint32_t shamem_read(uint32_t addr);
 #define ALIGN32SUP(x) ((__typeof__(x))(((uint32_t)(x) + 3) & ~3))
 #define ALIGN64SUP(x) ((__typeof__(x))(((uint32_t)(x) + 7) & ~7))
 
+// align a value up to an arbitrary other value,
+// e.g. ALIGN_UP(0xf, 0x10) == 0x10
+#define __ALIGN_MASK(x,mask)    (((x)+(mask))&~(mask))
+#define ALIGN_UP(x,a)              __ALIGN_MASK(x,(typeof(x))(a)-1)
+
 /* memcpy/memset */
 extern void *memset(void *ptr, int value, size_t num);
 extern void *memcpy(void *, const void *, size_t);
