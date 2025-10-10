@@ -214,6 +214,7 @@ struct raw_info {
     int32_t color_matrix1[18];      // DNG Color Matrix
     int32_t dynamic_range;          // EV x100, from analyzing black level and noise (very close to DxO)
 };
+SIZE_CHECK_STRUCT(raw_info, 0xa0);
 
 /* raw image info "raw_info_t" used for file IO on host pc tools */
 #if INTPTR_MAX != INT32_MAX
