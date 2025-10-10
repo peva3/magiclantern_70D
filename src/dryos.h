@@ -166,7 +166,10 @@ struct tm {
         int     tm_yday;        /* days since January 1 [0-365] */
         int     tm_isdst;       /* Daylight Savings Time flag */
         long    tm_gmtoff;      /* offset from CUT in seconds */
-        char    *tm_zone;       /* timezone abbreviation */
+// The following field doesn't exist in DryOS.  We assumed they used
+// the standard struct which has it, but their 'tm' is size 0x28
+// and is missing this final field.
+        // char    *tm_zone;       /* timezone abbreviation */
 };
 
 #if defined(CONFIG_DIGIC_78X) || defined(CONFIG_5D4) // probably DryOS ver based really?
