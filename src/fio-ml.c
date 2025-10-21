@@ -655,6 +655,9 @@ int FIO_ReadFile( FILE* stream, void* ptr, size_t count )
     return _FIO_ReadFile(stream, ptr, count);
 }
 
+// Data written may not read back until the file has been closed and re-opened.
+// DryOS has a FIO_Flush() function that we don't expose via stubs on most cams,
+// even that doesn't let you read back data without the close and open.
 int FIO_WriteFile( FILE* stream, const void* ptr, size_t count )
 {
     /* we often assumed that the FIO routines will somehow care for buffers being still in cache.
