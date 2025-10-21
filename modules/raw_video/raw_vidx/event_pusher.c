@@ -239,6 +239,9 @@ static unsigned int raw_vid_keypress_cbr(unsigned int key)
             {
                 event->creation_time = get_ms_clock();
                 event->type = COMMAND_START;
+                // FIXME we should take these from menu config when we have that
+                event->w = 640; // our crop width
+                event->h = 480; // our crop height
                 msg_queue_post(event_q, (uint32_t)event);
             }
             // If we were trying to start recording and there was an earlier

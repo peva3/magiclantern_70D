@@ -18,7 +18,7 @@ enum recording_state get_recording_state(void);
 // size attempted, we reduce from their until success.
 // Pick a nice round value; this is the aligned size, not underlying size.
 #define INITIAL_CROP_BUF_SIZE (16 * 1024 * 1024)
-#define CROP_BUF_ALIGN 0x1000
+#define CROP_BUF_ALIGN 0x1000 // aligned for when FIO_Write() reads from here (best alignment untested)
 #define MIN_CROP_BUF_SIZE (4 * 1024 * 1024)
 #define CROP_BUF_STEP_SIZE (1 * 1024 * 1024)
 

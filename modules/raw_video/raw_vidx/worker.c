@@ -3,10 +3,12 @@
 
 #include "raw.h"
 #include "edmac-memcpy.h"
+#include "fps.h"
 
 #include "raw_vid.h"
 #include "raw_vid_worker.h"
 #include "raw_vid_event_pusher.h"
+#include "mlv_3.h"
 
 static struct msg_queue *event_q = NULL;
 static FILE *raw_vid_fp = NULL;
@@ -15,6 +17,17 @@ static FILE *raw_vid_fp = NULL;
 static struct semaphore *edmac_sem = NULL;
 
 static enum recording_state recording_state = INACTIVE;
+
+static struct mlv_session session = {
+    .fps = 0,
+    .res_x = 0,
+    .res_y = 0,
+    .crop_offset_x = 0, // FIXME we want these correct so mlvapp can do FPM stuff, etc
+    .crop_offset_y = 0,
+    .pan_offset_x = 0,
+    .pan_offset_y = 0,
+    .image_data_alignment = EDMAC_ALIGNMENT
+};
 
 enum recording_state get_recording_state(void)
 {
@@ -199,9 +212,22 @@ static void worker(void)
 
     struct crop_buf crop_bufs[2] = {NULL};
     struct crop_buf *crop_buf = NULL;
+    uint32_t video_frame_count = 0;
+
+    char *header_buf = NULL; // space for MLV file header
+    const uint32_t header_buf_size = 1024; // wants to be big enough for combined headers,
+                                           // this file shouldn't know their size, it's okay to just guess.
+    uint32_t header_size = 0; // MLV lib returns real size here
+    header_buf = malloc(header_buf_size);
+    if (header_buf == NULL)
+    {
+        SEND_LOG_DATA_STR("ERROR: couldn't malloc for header_buf\n");
+        return; // worker task dies; raw video recording becomes impossible
+    }
 
     TASK_LOOP
     {
+        int err = -1;
         struct raw_vid_event *event = NULL;
         msg_queue_receive(event_q, &event, 0);
 
@@ -238,9 +264,21 @@ static void worker(void)
             send_log_data_str(log_buf);
             #endif
 
+            if (crop_buf == NULL)
+            {
+                // FIXME we should stop here
+                SEND_LOG_DATA_STR("ERROR: crop_buf was NULL at dst check\n");
+                break;
+            }
+
             if (event->size > crop_buf->end - crop_buf->start)
             {
-                SEND_LOG_DATA_STR("ERROR: event size too large for crop buf\n");
+                // For simplicity, alloc_crop_bufs() ensures the bufs are equal size.
+                // Thus if we hit this, we can't ever save the data, there is no point
+                // swapping bufs.  We must give up.
+                // FIXME we don't yet handle stopping except via user pressing Rec 2nd time
+                // (when added we need to audit for other places).
+                SEND_LOG_DATA_STR("ERROR: event size too large for empty crop buf\n");
                 break;
             }
 
@@ -249,19 +287,15 @@ static void worker(void)
             // src to dst.  We accumulate frames into a larger buffer
             // before triggering flush to disk.
 
-            // Find valid dst
             char *dst = NULL;
-            if (crop_buf == NULL)
-            {
-                // FIXME we should stop here
-                SEND_LOG_DATA_STR("ERROR: crop_buf was NULL at dst check\n");
-                break;
-            }
-
             struct crop_buf *flush_src = NULL;
-            if (event->size > crop_buf->end - crop_buf->cur)
-            { // Then the prior IMAGE_DATA was the last that fit in this buffer,
-              // we must swap.  And we can trigger flush to disk of prior in use buffer.
+            // write the header of a vidf block, which returns us an aligned
+            // location to write the image data.
+            dst = write_video_frame_header(event->size, crop_buf->cur, crop_buf->end);
+            if (dst == NULL)
+            {
+                // The prior IMAGE_DATA was the last that fit in this buffer,
+                // we must swap.  And we can trigger flush to disk of prior in use buffer.
                 SEND_LOG_DATA_STR("Swapping bufs\n");
                 
                 flush_src = crop_buf; // this triggers later flush to disk
@@ -280,11 +314,21 @@ static void worker(void)
                                      // really we should flush the remaining?
                     break; // FIXME we should stop as well
                 }
-            }
-            dst = crop_buf->cur;
-            crop_buf->cur += event->size;
 
-            int err = take_semaphore_now(edmac_sem);
+                dst = write_video_frame_header(event->size, crop_buf->cur, crop_buf->end);
+                if (dst == NULL)
+                {
+                    SEND_LOG_DATA_STR("ERROR: couldn't fit image in either buffer\n");
+                    break;
+                }
+            }
+            #ifdef RAW_VID_LOG
+            session_data_size += (dst - crop_buf->cur + event->size);
+            #endif
+            crop_buf->cur = dst + event->size; // cur after image data, which is not yet written
+            video_frame_count++;
+
+            err = take_semaphore_now(edmac_sem);
             if (err)
             {
                 // If this happens, it means we're not managing to save a frame
@@ -299,9 +343,6 @@ static void worker(void)
 
             // here we know the copy rect from the prior IMAGE_DATA has completed,
             // as we have edmac_sem, so we can safely flush if one of the buffers was full.
-            #ifdef RAW_VID_LOG
-            session_data_size += event->size;
-            #endif
             if (flush_src != NULL)
             {
                 task_create("raw_write", WORKER_PRIO - 1, 0x800,
@@ -314,6 +355,19 @@ static void worker(void)
                      event->w, event->h, line_size * event->h);
             send_log_data_str(log_buf);
             #endif
+
+            // FIXME:
+            // We should stop using edmac_copy() directly.
+            // - Not all cams have it.
+            // - It has alignment requirements we can hide by having a small
+            //   unaligned copy with normal memcpy at the start,
+            //   simplifying MLV file format (and removing need to align buffers!).
+            // - This high-level code shouldn't care *how* copies occur,
+            //   only that they do.
+            //
+            // The extra cost for doing a memcpy() to align should be tiny,
+            // alignment requirement is 0x10 on Digic 5.
+
             edmac_copy_rectangle_cbr_start(
                 (void*)dst, event->src,
                 raw_info.pitch, (event->x + 7)/8*BPP, event->y/2*2,
@@ -327,6 +381,12 @@ static void worker(void)
 
         case COMMAND_START:
             SEND_LOG_DATA_STR("Worker got start request.\n");
+            if (event->w == 0 || event->h == 0)
+            {
+                SEND_LOG_DATA_STR("ERROR: start request with 0 area\n");
+                break;
+            }
+
             if (recording_state == INACTIVE)
             {
                 // Get mem to buffer our cropped frames.  We do this because 
@@ -373,6 +433,7 @@ static void worker(void)
                     if (raw_vid_fp == NULL)
                     {
                         SEND_LOG_DATA_STR("Worker couldn't create mlv file\n");
+                        break;
                     }
                 }
                 else
@@ -380,6 +441,30 @@ static void worker(void)
                     SEND_LOG_DATA_STR("ERROR: Worker couldn't get mlv file name\n");
                     break;
                 }
+
+                // FIXME from here onwards we want to cleanup the file if we error.
+                // Really, we need to revisit error conditions in all states,
+                // and ensure we handle correctly (e.g. flushing pending data).
+
+                session.fps = fps_get_current_x1000();
+                session.res_x = event->w;
+                session.res_y = event->h;
+
+                err = start_mlv_session(&session);
+                if (err)
+                {
+                    SEND_LOG_DATA_STR("ERROR: failed to start mlv session\n");
+                    break;
+                }
+
+                // write standard header blocks
+                header_size = write_file_headers(header_buf, header_buf + header_buf_size);
+                if (header_size == 0)
+                {
+                    SEND_LOG_DATA_STR("ERROR: failed to write mlv headers\n");
+                    break;
+                }
+                FIO_WriteFile(raw_vid_fp, header_buf, header_size);
 
                 #ifdef RAW_VID_LOG
                 send_log_data_str("Recording is active\n");
@@ -402,16 +487,6 @@ static void worker(void)
                 raw_lv_release();
                 // TODO mlv_lite does restore_bit_depth(), we
                 // don't mess with this yet.
-
-                if (raw_vid_fp != NULL)
-                {
-                    FIO_CloseFile(raw_vid_fp);
-                    raw_vid_fp = NULL;
-                }
-                else
-                {
-                    SEND_LOG_DATA_STR("ERROR: unexpected fp state in worker\n");
-                }
 
                 #ifdef RAW_VID_LOG
                 snprintf(log_buf, buf_size, "session time, data written: %d, %d\n",
@@ -440,6 +515,31 @@ static void worker(void)
                     crop_bufs[1].end = NULL;
                 }
 
+                if (raw_vid_fp != NULL)
+                {
+                    // TODO flush pending data
+
+                    // update with the final video frame count
+                    err = update_video_frame_count(video_frame_count, header_buf, header_buf + header_size);
+                    if (err)
+                    {
+                        SEND_LOG_DATA_STR("ERROR: couldn't update video frame count\n");
+                        break;
+                    }
+
+                    // write back; file is now complete
+                    FIO_SeekSkipFile(raw_vid_fp, 0, SEEK_SET);
+                    FIO_WriteFile(raw_vid_fp, header_buf, header_size);
+
+                    FIO_CloseFile(raw_vid_fp);
+                    raw_vid_fp = NULL;
+                }
+                else
+                {
+                    SEND_LOG_DATA_STR("ERROR: unexpected fp state in worker\n");
+                }
+
+                stop_mlv_session();
                 recording_state = INACTIVE;
                 SEND_LOG_DATA_STR("Recording is inactive\n");
             }
@@ -459,6 +559,8 @@ static void worker(void)
 
         // no sleep needed, queue receive with timeout 0 is blocking.
     }
+
+    free(header_buf);
     SEND_LOG_DATA_STR("Raw video worker stopping.\n");
 }
 
@@ -471,6 +573,6 @@ void init_worker(struct msg_queue *q)
         SEND_LOG_DATA_STR("ERROR: worker could not create edmac sem\n");
         return;
     }
-    task_create("raw_v_worker", WORKER_PRIO, 0x800, worker, NULL);
+    task_create("raw_v_worker", WORKER_PRIO, 0x1000, worker, NULL);
     allow_recording();
 }
