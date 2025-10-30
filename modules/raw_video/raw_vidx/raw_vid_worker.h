@@ -6,13 +6,15 @@
 void init_worker(struct msg_queue *q);
 enum recording_state get_recording_state(void);
 
-// Priority for the main task, which performs writes
-// of frame data to disk.  This is a compromise.  Lower values
-// are higher priority.  Too high priority and the GUI becomes
-// very laggy.  Too low and it limits effective write bandwidth.
-// 0x11 maxes out 200D autotuned SD speed, without GUI lag.
-// Untested on other cams.
+// Priority for the worker tasks.  WORKER_PRIO controls the queue monitor.
+// WORKER_WRITE_PRIO only the task that flushes data to disk.
+// This is a compromise.  Lower values are higher priority.
+// Too high priority and the GUI becomes very laggy.
+// Too low and it limits effective write bandwidth.
+// These specific values were empirically determined on 200D and are
+// unlikely to work well on all cams.  More testing is needed.
 #define WORKER_PRIO 0x11
+#define WORKER_WRITE_PRIO 0x9
 
 // Used to get space for our local buffers.  This is the initial
 // size attempted, we reduce from their until success.

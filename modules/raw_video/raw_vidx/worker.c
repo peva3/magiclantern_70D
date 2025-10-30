@@ -172,12 +172,6 @@ static void write_buf_to_disk(struct crop_buf *crop_buf)
         return;
     }
     
-    #ifdef RAW_VID_LOG
-    snprintf(log_buf, buf_size, "About to write out, addr, size: 0x%x, %d\n",
-             crop_buf->start, crop_buf->cur - crop_buf->start);
-    send_log_data_str(log_buf);
-    #endif
-
     // FIXME we probably want a sem to remove the potential
     // for COMMAND_STOP to close this handle before we start
     // the write.
@@ -187,7 +181,24 @@ static void write_buf_to_disk(struct crop_buf *crop_buf)
         return;
     }
 
+    #ifdef RAW_VID_LOG
+    uint32_t start_time = get_ms_clock();
+    #endif
     FIO_WriteFile(raw_vid_fp, crop_buf->start, crop_buf->cur - crop_buf->start);
+    #ifdef RAW_VID_LOG
+    uint32_t end_time = get_ms_clock();
+    uint32_t data_rate_x100 = (uint32_t)((float)(crop_buf->cur - crop_buf->start) / 1024 / 1024
+                              * 1000 * 100 / (end_time - start_time));
+
+// FIXME this sometimes lags out and we stall.  I can think of two obvious things to try.
+// One: stop creating this func in a task every flush, keep it resident and use sems.
+// Two: use more buffers, this averages out the required write data rate.
+
+    snprintf(log_buf, buf_size, "Buf flush data rate, MB/s: %d.%02d\n",
+             data_rate_x100 / 100,
+             data_rate_x100 % 100);
+    send_log_data_str(log_buf);
+    #endif
 
     // reset buf so it's good to use again
     crop_buf->cur = crop_buf->start;
@@ -296,7 +307,10 @@ static void worker(void)
             {
                 // The prior IMAGE_DATA was the last that fit in this buffer,
                 // we must swap.  And we can trigger flush to disk of prior in use buffer.
-                SEND_LOG_DATA_STR("Swapping bufs\n");
+                #ifdef RAW_VID_LOG
+                snprintf(log_buf, buf_size, "Swapping bufs, time: %d\n", get_ms_clock());
+                send_log_data_str(log_buf);
+                #endif
                 
                 flush_src = crop_buf; // this triggers later flush to disk
 
@@ -345,7 +359,7 @@ static void worker(void)
             // as we have edmac_sem, so we can safely flush if one of the buffers was full.
             if (flush_src != NULL)
             {
-                task_create("raw_write", WORKER_PRIO - 1, 0x800,
+                task_create("raw_write", WORKER_WRITE_PRIO, 0x800,
                             write_buf_to_disk, flush_src);
             }
 
