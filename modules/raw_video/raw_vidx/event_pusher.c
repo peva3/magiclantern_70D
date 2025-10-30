@@ -19,6 +19,27 @@
     #error "RAW_VID_Q_LEN too short"
 #endif
 
+// This is about 56MB/s at 24fps
+//#define MLV_3_CROP_WIDTH 1600
+//#define MLV_3_CROP_HEIGHT 900
+
+// This is 64.3MB/s at 24fps
+#define MLV_3_CROP_WIDTH 1792
+#define MLV_3_CROP_HEIGHT 896
+
+// This is 67.8MB/s at 24fps
+//#define MLV_3_CROP_WIDTH 1888
+//#define MLV_3_CROP_HEIGHT 896
+
+// This is 70.2MB/s at 24fps
+//#define MLV_3_CROP_WIDTH 2048
+//#define MLV_3_CROP_HEIGHT 856
+
+// This is 73.5MB/s at 24fps
+// (and nice round numbers)
+//#define MLV_3_CROP_WIDTH 2048
+//#define MLV_3_CROP_HEIGHT 896
+
 static struct msg_queue *event_q = NULL;
 
 // We post these events to the msg queue.  Since we push a pointer,
@@ -240,8 +261,8 @@ static unsigned int raw_vid_keypress_cbr(unsigned int key)
                 event->creation_time = get_ms_clock();
                 event->type = COMMAND_START;
                 // FIXME we should take these from menu config when we have that
-                event->w = 640; // our crop width
-                event->h = 480; // our crop height
+                event->w = MLV_3_CROP_WIDTH;
+                event->h = MLV_3_CROP_HEIGHT;
                 msg_queue_post(event_q, (uint32_t)event);
             }
             // If we were trying to start recording and there was an earlier
@@ -369,8 +390,8 @@ static unsigned int FAST raw_vid_vsync_cbr(unsigned int unused)
     // TODO allow choosing offset and crop?
     event->x = 200; // x offset within the frame, for cropping
     event->y = 100; // y as above
-    event->w = 640; // our crop width
-    event->h = 480; // our crop height
+    event->w = MLV_3_CROP_WIDTH;
+    event->h = MLV_3_CROP_HEIGHT;
 
     int32_t frame_size = event->w * event->h * BPP/8;
     event->size = frame_size;
