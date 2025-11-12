@@ -97,8 +97,10 @@ ifeq ($(FATAL_ASSERTS),y)
     CFLAGS += -DFATAL_ASSERTS
 endif
 
-# Allow devs to make warnings break builds
-ifeq ($(FATAL_WARNINGS),y)
+# Allow devs to make warnings non-fatal
+ifeq ($(FATAL_WARNINGS),n)
+    #
+else
     CFLAGS += -Werror
 endif
 
