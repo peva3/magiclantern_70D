@@ -91,7 +91,7 @@ struct picstyle_settings_prop_struct
         int32_t     color_tone; // -4..4
         uint32_t    off_0x10;   // 0xDEADBEEF, unused
         uint32_t    off_0x14;   // 0xDEADBEEF, unused
-} __attribute__((aligned,packed));
+} __attribute__((aligned(4),packed));
 
 SIZE_CHECK_STRUCT( picstyle_settings_prop_struct, 0x18 );
 #elif NUM_PICSTYLE_SLIDERS == 6
@@ -105,7 +105,7 @@ struct picstyle_settings_prop_struct
         uint32_t    off_0x14;   // 0xDEADBEEF, unused
         uint32_t    sharpness_fineness;   // 1..5
         uint32_t    sharpness_threshold;  // 1..5
-} __attribute__((aligned,packed));
+} __attribute__((aligned(4),packed));
 
 SIZE_CHECK_STRUCT( picstyle_settings_prop_struct, 0x20 );
 #endif
