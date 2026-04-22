@@ -374,8 +374,8 @@
 
 #endif
 
-// verified with prop spy
-#ifdef CONFIG_70D
+// verified with prop spy (shared between 70D and 6D)
+#if defined(CONFIG_70D) || defined(CONFIG_6D)
 #define PROP_HI_ISO_NR 0x80000049
 #define PROP_HTP 0x8000004a
 #define PROP_MULTIPLE_EXPOSURE 0x0202000c
@@ -383,12 +383,8 @@
 #define PROP_MLU 0x80000047
 #endif
 
-#ifdef CONFIG_6D //May work for others.
-#define PROP_HI_ISO_NR 0x80000049 //Len 4, 4 is multishot
-#define PROP_HTP 0x8000004a
-#define PROP_MULTIPLE_EXPOSURE 0x0202000c
-#define PROP_MULTIPLE_EXPOSURE_SETTING 0x8000003F
-#define PROP_MLU 0x80000047
+#ifdef CONFIG_6D // 6D-only properties
+#define PROP_AFFRAME_ENABLE_SETTING 0x8003004F //LV I think
 #define PROP_AFFRAME_ENABLE_SETTING 0x8003004F //LV I think
 #define PROP_BT_DEVICE_CONNECT 0x2070008
 #define PROP_AF_METHOD_SELECT_FOCUS_AREA 0x80000046

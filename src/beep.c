@@ -1094,24 +1094,6 @@ static struct menu_entry beep_menus[] = {
 };
 
 
-#if 0 // wtf is that?! start recording at startup?!
-#ifdef CONFIG_600D
-void Load_ASIFDMAADC(){
-    uint8_t* buf1 = (uint8_t*)wav_buf[0];
-    uint8_t* buf2 = (uint8_t*)wav_buf[1];
-    if (!buf1) return;
-    if (!buf2) return;
-
-    audio_recording = 0;
-    SetSamplingRate(48000, 1);
-    MEM(0xC092011C) = 4; // SetASIFADCModeSingleINT16
-
-    wav_ibuf = 0;
-    StartASIFDMAADC(buf1, WAV_BUF_SIZE, buf2, WAV_BUF_SIZE, asif_rec_continue_cbr, 0);
-}
-#endif
-#endif
-
 static void beep_init()
 {
 #ifdef FEATURE_WAV_RECORDING
@@ -1129,10 +1111,6 @@ static void beep_init()
 #ifdef FEATURE_WAV_RECORDING
     find_next_wav(0,1);
 #endif
-
-//~ #ifdef CONFIG_600D
-    //~ Load_ASIFDMAADC();
-//~ #endif
 
     (void)audio_recording_start_time;
 }

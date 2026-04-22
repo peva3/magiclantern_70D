@@ -927,7 +927,7 @@ int handle_trap_focus(struct event * event)
 // focus confirmation bars in magic Zoom wouldn't work. See also:
 // http://www.magiclantern.fm/forum/index.php?topic=14309.msg147257#msg147257
 // we also need to disable the focus misc task to cleanup debugmsg logs
-#if !defined(CONFIG_70D)
+#ifdef CONFIG_LV_FOCUS_INFO
 static int focus_graph_dirty = 0;
 #if defined(FEATURE_TRAP_FOCUS) || defined(FEATURE_MAGIC_ZOOM)
 

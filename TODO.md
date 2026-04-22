@@ -421,6 +421,53 @@ This document outlines the development sprints for implementing the future work 
 
 ---
 
+## Sprint 11 — Code Cleanup & Safe Enables (Weeks 37-38)
+
+### Status: IN PROGRESS
+
+**Goal:** Clean up dead code, consolidate duplicated patterns, enable safe features from other DIGIC V cameras.
+
+- [x] **S11.1** Remove dead `#if 0` blocks
+  - zebra.c:4103-4108 (debug cropmark code)
+  - beep.c:1097 (dead recording-at-startup code)
+  - flexinfo.c:2197+ (kept - needed for positioning constants)
+
+- [x] **S11.2** Remove useless commented-out configs from internals.h
+  - CONFIG_BLUE_LED (line 31) - 70D has no blue LED
+  - CONFIG_LCD_SENSOR (line 34) - no hardware sensor
+  - CONFIG_DMA_MEMCPY (lines 99-102) - superseded by EDMAC memcpy
+
+- [x] **S11.3** Merge 70D with 6D/5D3 EDMAC channel case
+  - edmac-memcpy.c:30-37 - identical read/write channels (0x19/0x11)
+  - Reduces code duplication
+
+- [x] **S11.4** Consolidate shared 70D/6D property definitions
+  - property.h:378-400 - identical PROP_HI_ISO_NR, PROP_HTP, PROP_MLU, etc.
+  - Merge into single `#if defined(CONFIG_70D) || defined(CONFIG_6D)` block
+
+- [x] **S11.5** Replace `#if !defined(CONFIG_70D)` with capability flags
+  - focus.c:930-1054 - use `#ifdef CONFIG_LV_FOCUS_INFO` instead
+  - Makes code more maintainable and consistent
+
+- [x] **S11.6** Document commented-out register defines in consts.h
+  - FRAME_SHUTTER_BLANKING (lines 263-267) - add why disabled
+  - ISO_ADJUSTMENT_ACTIVE (line 87) - removed (never verified)
+  - BULB_EXPOSURE_CORRECTION (line 229) - marked as unverified
+
+- [ ] **S11.7** Enable FEATURE_UNMOUNT_SD_CARD
+  - SKIPPED: Requires FSUunMountDevice stub not available on 70D (5D3 only)
+
+- [x] **S11.8** Enable CONFIG_LVAPP_HACK_DEBUGMSG
+  - 5D3/6D have it - hides Canon bottom bar via DebugMsg hook
+  - May help with FlexInfo flickering issue
+
+- [ ] **S11.9** Replace hardcoded camera lists with config flags
+  - shoot.c:6141-6142 - audio remote shot camera list
+  - audio-common.c:499, 533 - repeated camera lists
+  - Create CONFIG_AUDIO_RELEASE_SHOT flag
+
+---
+
 ## Long-Term Architecture (Ongoing)
 
 These tasks span multiple sprints:

@@ -4100,13 +4100,6 @@ livev_hipriority_task( void* unused )
                 continue;
             }
         }
-        #if 0
-        draw_cropmark_area(); // just for debugging
-        struct vram_info * lv = get_yuv422_vram();
-        struct vram_info * hd = get_yuv422_hd_vram();
-        bmp_printf(FONT_MED, 100, 100, "ext:%d%d%d \nlv:%x %dx%d \nhd:%x %dx%d ", EXT_MONITOR_RCA, ext_monitor_hdmi, hdmi_code, lv->vram, lv->width, lv->height, hd->vram, hd->width, hd->height);
-        #endif
-
         #ifdef CONFIG_RAW_LIVEVIEW
         int raw_needed = 0;
 

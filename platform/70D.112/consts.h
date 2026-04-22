@@ -84,7 +84,7 @@
 #define GMT_FUNCTABLE 0xFFA15B54
 
 #define CURRENT_GUI_MODE (*(int*)0x909E4)                   // in SetGUIRequestMode
-// #define ISO_ADJUSTMENT_ACTIVE ((*(int*)(0x94310)) == 0xF)       // nikfreak ok found by alex dec ptpNotifyOlcInfoChanged and look for: if arg1 == 1: MEM(0x79B8) = *(arg2)
+// ISO_ADJUSTMENT_ACTIVE removed - was never verified, address 0x94310 unconfirmed
 
 // from a screenshot
 #define COLOR_FG_NONLV 1
@@ -260,9 +260,10 @@
 #define FRAME_BV ((int)FRAME_SHUTTER + (int)FRAME_APERTURE - (int)FRAME_ISO)
 
 // see "Malloc Information"
-// #define FRAME_SHUTTER_BLANKING_ZOOM   (*(uint16_t*)0x40452180) // ADTG register 805f
-// #define FRAME_SHUTTER_BLANKING_NOZOOM (*(uint16_t*)0x40452184) // ADTG register 8061
-
+// FRAME_SHUTTER_BLANKING registers - disabled, never verified on 70D
+// Addresses from ADTG registers 805f/8061, values change with zoom state
+// #define FRAME_SHUTTER_BLANKING_ZOOM   (*(uint16_t*)0x40452180)
+// #define FRAME_SHUTTER_BLANKING_NOZOOM (*(uint16_t*)0x40452184)
 // #define FRAME_SHUTTER_BLANKING_READ   (lv_dispsize > 1 ? FRAME_SHUTTER_BLANKING_NOZOOM : FRAME_SHUTTER_BLANKING_ZOOM)
 // #define FRAME_SHUTTER_BLANKING_WRITE  (lv_dispsize > 1 ? &FRAME_SHUTTER_BLANKING_ZOOM : &FRAME_SHUTTER_BLANKING_NOZOOM)
 

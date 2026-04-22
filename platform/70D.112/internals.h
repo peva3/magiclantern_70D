@@ -27,12 +27,6 @@
 /** This camera has a 3:2 screen, 720x480 **/
 #define CONFIG_3_2_SCREEN
 
-/** We only have a single red LED **/
-//~ #define CONFIG_BLUE_LED
-
-/** There is no LCD sensor that turns the display off **/
-//~ #define CONFIG_LCD_SENSOR
-
 /** This camera has a mirror lockup feature **/
 #define CONFIG_MLU
 
@@ -96,11 +90,6 @@
 /** We can restore ML files after formatting the card in the camera **/
 #define CONFIG_RESTORE_AFTER_FORMAT
 
-/** We know how to use DMA_MEMCPY, though I don't see any reason for doing so **/
-/** it's not really faster than plain memcpy, and the side effects are not yet fully understood **/
-/** (read: I'm too dumb to understand why it's better than memcpy and why it's safe to use) **/
-//~ #define CONFIG_DMA_MEMCPY
-
 /** We know how to use edmac_memcpy. This one is really fast (600MB/s!) */
 #define CONFIG_EDMAC_MEMCPY
 
@@ -144,8 +133,8 @@
 /** You can configure separate AFMA values for both wide and tele ends */
 #define CONFIG_AFMA_WIDE_TELE
 
-/** Hide Canon bottom bar from DebugMsg hook */
-//#define CONFIG_LVAPP_HACK_DEBUGMSG
+/** Hide Canon bottom bar from DebugMsg hook - enabled to help with FlexInfo flickering */
+#define CONFIG_LVAPP_HACK_DEBUGMSG
 
 /** Workaround for menu timeout in LiveView */
 #define CONFIG_MENU_TIMEOUT_FIX
