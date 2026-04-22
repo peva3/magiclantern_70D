@@ -19,7 +19,7 @@ Magic Lantern is a firmware enhancement for Canon DSLR cameras that adds video a
 ## Current Status
 
 **Phase:** Week 1 - Foundation Setup  
-**Build Status:** Reference build available, source build in progress  
+**Build Status:** Reference build available, source build working  
 **Testing:** QEMU emulation setup in progress  
 
 ### What Works (Reference Build - June 2025)
@@ -31,7 +31,7 @@ Magic Lantern is a firmware enhancement for Canon DSLR cameras that adds video a
 ✅ 19 modules loaded and functional  
 
 ### Known Issues
-🔴 **No LV_FOCUS_DATA** - Focus confirmation disabled  
+🟡 **LV_FOCUS_DATA partially fixed** - Focus confirmation via PROP_LV_LENS stability detection  
 🔴 **FPS Override broken** - Cannot change frame rates  
 🔴 **RAW Zebras disabled** - Causes display corruption  
 🔴 **Dual ISO movie mode broken** - Photo mode only  
@@ -44,9 +44,9 @@ Magic Lantern is a firmware enhancement for Canon DSLR cameras that adds video a
 - [x] Analyze reference build structure
 - [x] Create comprehensive documentation (AGENTS.md, FUTURE-WORK.md, TODO.md)
 - [x] Set up testing framework documentation
-- [ ] Install ARM toolchain and verify build
+- [x] Install ARM toolchain and verify build
 - [ ] Configure QEMU for 70D emulation
-- [ ] Create first host-side test suite
+- [x] Create first host-side test suite
 
 ### Completed
 - ✅ Repository created and cloned

@@ -116,11 +116,33 @@ Based on the deep dive into the Magic Lantern simplified codebase for the Canon 
 ## Brand new development
 
 ### 1) WiFi tethering / remote control module
-- Feasibility: The 70D has built-in WiFi; ML codebase already contains a DryOS socket API surface in ml_socket.h and a yolo-like WiFi workflow used on other cameras. However, 70D stubs.s currently lack concrete networking hooks (socket_create, wlan_connect, NwLimeInit, etc.). Observation of related code on 200D and qemu traces provides a blueprint for porting WiFi control.
-- What it enables: remote trigger/shooting, live transfer, remote UI control from a phone/tablet, and potential timecode/data exchange for synchronized shoots.
-- Required work: reverse-engineer 70D DryOS networking entry points; port the 200D-style WiFi init sequence; implement a minimal socket API shim and a tiny remote-control protocol; wire this into a small, safe UI module (ml_tether) that can be toggled from ML menu.
-- Risks/notes: hardware-dependent; needs hardware verification; ensure not to destabilize LiveView streaming.
-- References: ml_socket.h contents (static socket API signatures), yolo.c networking usage, stubs/files mentioning WiFi in 70D (m0933, m0934).
+- **Feasibility:** The 70D has built-in WiFi hardware; firmware includes `LiveViewWifiApp_handler` (stub at `0xFF7523B4`). Magic Lantern already has a DryOS socket API surface (`ml_socket.h`) and a working WiFi example (`yolo.c` module). However, 70D `stubs.S` currently lacks concrete networking hooks (`socket_create`, `wlan_connect`, `NwLimeInit`, etc.). Observation of related code on 200D (DIGIC 8) provides a blueprint for porting WiFi control to DIGIC V.
+
+- **What it enables:** Remote trigger/shooting, live image transfer, remote UI control from a phone/tablet, timecode/data exchange for synchronized shoots, and potential live view streaming (low-resolution).
+
+- **Required work:**
+  1. **Reverse-engineer 70D DryOS networking entry points:** Find firmware addresses for:
+     - Socket API: `socket_create`, `socket_bind`, `socket_connect`, `socket_send`, `socket_recv`, `socket_close_caller`
+     - WiFi management: `wlan_connect`, `nif_setup`, `set_IP_address`
+     - Canon WiFi initialization: `NwLimeInit`, `NwLimeOn`, `wlanpoweron`, `wlanup`, `wlanchk`, `wlanipset`
+  2. **Add stubs to `platform/70D.112/stubs.S`** using `NSTUB` macros.
+  3. **Test basic connectivity** using the existing `yolo` module (with modified config) to verify socket creation and WiFi association.
+  4. **Develop a minimal remote control module (`ml_tether`)** providing:
+     - Remote trigger (shutter)
+     - Start/stop recording
+     - Exposure setting changes (ISO, shutter, aperture)
+     - Live view stream (low-resolution YUV)
+  5. **Integrate with ML menu** for configuration (SSID, password, IP settings).
+
+- **Technical findings:**
+  - `ml_socket.h` defines socket API and `wlan_settings` struct (size `0xFC`).
+  - `yolo.c` demonstrates the full WiFi sequence: Lime core init → WiFi power on → connect → IP setup → socket communication.
+  - The `call()` function (variadic) is used to invoke firmware functions by name; requires a symbol table lookup (likely `calls_table`).
+  - 70D currently has only one WiFi-related stub: `LiveViewWifiApp_handler`. All other networking stubs are missing.
+
+- **Risks/notes:** Hardware-dependent; needs hardware verification; ensure not to destabilize LiveView streaming; may require reverse engineering of firmware symbols; power consumption considerations.
+
+- **References:** `ml_socket.h` contents, `yolo.c` networking usage, 200D `stubs.S` networking section, forum threads on WiFi tethering.
 
 ### 2) Cinematographer Mode port
 - Concept: Port Cinematographer mode (focus sequence capture and replay) from ML to 70D. This module records a sequence of lens focus points with transition speeds and replays them during filming.
@@ -161,3 +183,4 @@ Based on the deep dive into the Magic Lantern simplified codebase for the Canon 
 | SD overclock | Low | Partial | Low |
 | Beep support | Low | Disabled | Low |
 | Focus stacking bug | Medium | Known bug | High |
+| WiFi tethering missing | Medium | Not started | High |

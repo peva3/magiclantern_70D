@@ -151,7 +151,7 @@ This document outlines the development sprints for implementing the future work 
 
 ## Sprint 2 — Focus Features (Weeks 4-7)
 
-### Status: IN PROGRESS
+### Status: ✅ COMPLETED
 
 **UPDATE:** Use PROP_LV_LENS (0x80050000) instead of missing LV_FOCUS_DATA. Handler exists at lens.c:1900.
 Implementation: focus.c now includes 70D-specific focus tracking using focus_pos stability detection.
@@ -632,6 +632,28 @@ These tasks span multiple sprints:
 - magiclantern.bin: 436K
 
 All changes were committed and pushed to origin/main.
+
+---
+
+## Sprint 16 — Documentation & WiFi Research (Week 45)
+
+### Status: ✅ COMPLETED
+
+- **Documentation updates:**
+  - Updated AGENTS.md with detailed hardware specifications and WiFi tethering research
+  - Updated FUTURE-WORK.md with expanded WiFi tethering section and summary table
+  - Updated TODO.md with completed sprint statuses
+  - Consolidated findings from research/ folder into documentation
+
+- **WiFi tethering research:**
+  - Investigated DryOS networking stubs and missing WiFi functions for 70D
+  - Analyzed existing networking code (ml_socket.h, yolo.c)
+  - Documented required stubs and reverse engineering steps
+  - Added comprehensive section to FUTURE-WORK.md
+
+- **Code cleanup:**
+  - Verified build size remains within limits (autoexec.bin 447KB)
+  - No functional changes made during research phase
 
 ---
 

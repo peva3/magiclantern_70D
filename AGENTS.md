@@ -288,6 +288,27 @@ if (zebra_draw && raw_zebra_enable == 1) raw_needed = 1;
 
 **Fix applied:** Added `CONFIG_NO_RAW_ZEBRAS` to `platform/70D.112/internals.h` and updated zebra.c to use the proper config flag instead of hardcoded `#if !defined(CONFIG_70D)`. This properly documents the limitation for maintainability.
 
+### 8.4 WiFi Tethering - NOT STARTED
+
+**Problem:** 70D has built-in WiFi hardware but Magic Lantern lacks networking stubs (`socket_create`, `wlan_connect`, `NwLimeInit`, etc.) in `platform/70D.112/stubs.S`. Only one WiFi-related stub exists: `LiveViewWifiApp_handler` at `0xFF7523B4`.
+
+**Feasibility:** The ML codebase includes a DryOS socket API (`ml_socket.h`) and a working WiFi example (`yolo.c` module). The 200D port provides a blueprint for networking stubs (DIGIC 8). However, 70D (DIGIC V) requires reverse engineering of firmware addresses.
+
+**Required stubs:**
+- Socket API: `socket_create`, `socket_bind`, `socket_connect`, `socket_send`, `socket_recv`, `socket_close_caller`
+- WiFi management: `wlan_connect`, `nif_setup`, `set_IP_address`
+- Canon WiFi initialization: `NwLimeInit`, `NwLimeOn`, `wlanpoweron`, `wlanup`, `wlanchk`, `wlanipset` (via `call()`)
+
+**Findings:**
+- `ml_socket.h` defines socket API and `wlan_settings` struct (size `0xFC`).
+- `yolo.c` demonstrates full WiFi sequence: Lime core init → WiFi power on → connect → IP setup → socket communication.
+- The `call()` function (variadic) invokes firmware functions by name; requires symbol table lookup.
+- 70D currently missing all networking stubs except `LiveViewWifiApp_handler`.
+
+**Potential:** Remote trigger/shooting, live image transfer, remote UI control, timecode/data exchange.
+
+**Effort:** High (reverse engineering of firmware symbols, hardware verification).
+
 ## 9. Lens System (`lens.c`)
 
 - 70D uses same digital zoom handling as 600D (`CONFIG_600D || CONFIG_70D`) with `PROP_DIGITAL_ZOOM_RATIO`
