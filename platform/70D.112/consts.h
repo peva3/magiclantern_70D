@@ -272,7 +272,12 @@
 #define SRM_BUFFER_SIZE 0x2314000
 #define SRM_MAX_BUF_COUNT_VIDEO_MODE 16 // probably not the true max, D45 cams all guess 16 and non-fatally fail if using too much
 
-//TODO: Check if this hack works again or not :(
+/* UNAVI_BASE workaround - 70D lacks CancelUnaviFeedBackTimer function.
+ * These registers detect half-shutter press and exposure comp button state.
+ * UNAVI changes to value 2 when half-shutter is held.
+ * UNAVI_AV changes when exposure compensation button is pressed.
+ * Used for detecting when Canon's bottom info bar is displayed.
+ */
 #define UNAVI_BASE (0x9FC74)
 #define UNAVI (MEM(UNAVI_BASE + 0x24)) // 70D has no CancelUnaviFeedBackTimer, still this changes to value 2 when you keep HS pressed
 #define UNAVI_AV (MEM(UNAVI_BASE + 0x58)) // Same as above, but this location is linked to the exp comp button

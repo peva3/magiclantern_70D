@@ -598,9 +598,10 @@ int get_current_shutter_reciprocal_x1000()
     float shutter = frame_duration * (max - blanking) / max;
     return (int)(1.0 / shutter * 1000);
 
-// TODO: Cleanup 70D once fps override feature is fixed
-// till then use the fallback. Do it this way to have fast ettr
-// and keep frame_shutter timer enabled in consts.h
+/* 70D excluded from this path via !defined(CONFIG_70D)
+ * FPS override is disabled in features.h due to Timer B issues.
+ * Timer A-only workaround exists (HiJello-FastTv) but causes banding.
+ */
 #elif defined(FRAME_SHUTTER_TIMER) && !defined(CONFIG_70D)
     int timer = FRAME_SHUTTER_TIMER;
 
