@@ -674,6 +674,18 @@ static unsigned int sd_uhs_init()
         sd_uhs_menu[0].help2 = sd_choices_help2_others;
     }
 
+    if (is_camera("70D", "1.1.2"))
+    {
+        static const char *sd_choices_70d[] = {"OFF", "160MHz"};
+        static const char sd_choices_help2_70d[] = "\n"
+                                                    "160MHz: ~70MB/s on 70D (stable).\n"
+                                                    "192MHz/240MHz: UNSTABLE on 70D - may corrupt data.\n"
+                                                    "Higher presets disabled for safety.";
+        sd_uhs_menu[0].choices = sd_choices_70d;
+        sd_uhs_menu[0].help2 = sd_choices_help2_70d;
+        sd_uhs_menu[0].max = 1;
+    }
+
     menu_add("Prefs", sd_uhs_menu, COUNT(sd_uhs_menu));
 
     if (is_camera("5D3", "1.1.3"))

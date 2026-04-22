@@ -584,6 +584,14 @@ Implementation: focus.c now includes 70D-specific focus tracking using focus_pos
 - TG_FREQ_BASE = 32MHz (vs 28.8MHz for 5D3) affects all FPS timer calcs
 - Requires hardware testing to determine correct CMOS register values
 
+### Cross-Port Features Enabled:
+- [x] **FEATURE_ZOOM_TRICK_5D3** - Double-click to zoom shortcut (5D3/6D)
+- [x] **FEATURE_KEN_ROCKWELL_ZOOM_5D3** - Zoom from image review mode (5D3/6D)
+- [x] **FEATURE_SWAP_INFO_PLAY** - Swap info display in playback mode (6D)
+- [x] **FEATURE_LV_FOCUS_BOX_SNAP_TO_X5_RAW** - Snap focus box to x5 in raw mode (5D3)
+- [x] **FEATURE_FOCUS_PEAK_DISP_FILTER** - Focus peaking as display filter (6D)
+- [x] **Fixed arrow_key_mode_toggle guard** - Was called without FEATURE_ARROW_SHORTCUTS check in tweaks.c:1799
+
 ---
 
 ## Long-Term Architecture (Ongoing)
