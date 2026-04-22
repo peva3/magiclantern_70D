@@ -89,13 +89,58 @@ This document outlines the development sprints for implementing the future work 
   - Test Timer A-only approach for stability
   - Document banding patterns and mitigations
 
-- [ ] **S1.3** Verify `raw_lv_request` behavior on 70D
-  - Test if ETTR can safely request raw buffers in LiveView
-  - Document return values and failure modes
+- [x] **S1.3** Verify `raw_lv_request` behavior on 70D ✅ (Documented)
+  - raw_lv_request() uses reference counting (raw_lv_request_count)
+  - Calls raw_lv_enable() -> raw_update_params_work() on first request
+  - On disable, raw_lv_disable() is called with 50ms delay
+  - 70D uses EDMAC_RAW_SLURP (connection #0, 0xC0F04008) for raw capture
+  - PACK32_MODE at 0xC0F08094 controls bit depth (observed: 0x20/0x120)
+  - RAW_TYPE_REGISTER at 0xC0F37014 (70D specific)
+  - SHAD_GAIN_REGISTER at 0xC0F08030
+  - ETTR can safely request raw buffers via raw_lv_request()/raw_lv_release()
+  - Pink preview issue in zoom mode affects older DIGIC cameras (5D2/50D/500D) - 70D not affected
 
-- [ ] **S1.4** Establish safe camera state save/restore mechanism
-  - Identify critical registers that must be preserved
-  - Create rollback hooks for semi-invasive patches
+- [x] **S1.4** Establish safe camera state save/restore mechanism ✅ (Documented)
+  Critical registers identified for 70D (DIGIC V):
+  
+  **EDMAC Registers (0xC0F04xxx - 0xC0F30xxx):**
+  - 0xC0F04000: EDMAC base (connections #0-15)
+  - 0xC0F26000: EDMAC base (connections #16-31)
+  - 0xC0F30000: EDMAC base (connections #32-47)
+  - 0xC0F05000-0xC0F05200: EDMAC channel configuration
+  
+  **Display/Palette Registers (0xC0F14xxx):**
+  - 0xC0F14078: Display update trigger
+  - 0xC0F14080-0xC0F140D4: Palette and display buffers
+  - 0xC0F140cc: Zebra register (DIGIC_ZEBRA_REGISTER)
+  - 0xC0F140c4: Saturation register
+  - 0xC0F141B8: Brightness/contrast register
+  - 0xC0F14040: Filter enable register
+  - 0xC0F14164: Position register
+  
+  **FPS/Timer Registers (0xC0F06xxx):**
+  - 0xC0F06008: FPS_REGISTER_A (Timer A - row readout)
+  - 0xC0F06014: FPS_REGISTER_B (Timer B - frame timing, broken on 70D)
+  - 0xC0F06000: FPS_REGISTER_CONFIRM_CHANGES
+  
+  **RAW Processing Registers:**
+  - 0xC0F08094: PACK32_MODE (bit depth control)
+  - 0xC0F08030: SHAD_GAIN_REGISTER
+  - 0xC0F37014: RAW_TYPE_REGISTER (70D specific)
+  - 0xC0F08114: PACK32_ISEL (pink fix for older cameras)
+  
+  **ISO/Exposure Registers:**
+  - 0xC0F42744: ISO_PUSH_REGISTER_D5 (per-channel ISO push)
+  - 0xC0F14080: Exposure compensation base
+  - 0xC0F140c0: Exposure control
+  
+  **Save/Restore Pattern:**
+  - Use shamem_read() to capture current register values before modification
+  - Use EngDrvOut() or EngDrvOutLV() to write new values
+  - 0xC0F06000 must be written with 1 to confirm FPS changes
+  - State object hooks run in Canon tasks - see state-object.c
+  - task_dispatch_hook at 0x7AAD4 intercepts task creation
+  - pre_isr_hook/post_isr_hook at 0x7A9B8/0x7A9BC for interrupt handling
 
 **Testing:**
 - All tests read-only, no functional changes to camera behavior
