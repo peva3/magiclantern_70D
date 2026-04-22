@@ -436,3 +436,12 @@ The following issues and discoveries were found through the Magic Lantern forum 
 ## Conclusion
 
 The Canon 70D is a capable DIGIC V platform with robust EDMAC RAW video capabilities (sharing much with the 5D3 and 6D). However, its biggest architectural blindspots are the complete lack of LiveView Focus Data (`LV_FOCUS_DATA`), broken FPS timers, and finicky audio controls. Development on this body requires heavy reliance on `EVF_STATE` hooks rather than clean properties. The 70D uses cache hacks for patching (not MMU like newer cameras), has unique crop_rec limitations, and the SD controller cannot handle aggressive overclocking.
+
+## Recent Sprints (12-15) — Summary
+
+- S12: Dead code purge & cleanup (removed multiple #if 0 blocks, fixed raw.c bitwise operator, cleaned gui-common.c)
+- S13: Second pass dead code purge (deleted legacy bitrate-6d.c and additional disabled blocks)
+- S14: Module audit & cross-port research (sd_uhs, mlv_lite, dual_iso, crop_rec), enabled safe features from 6D/5D3
+- S15: sd_uhs safety hardening for 70D (menu restricted to OFF/160MHz presets with warning)
+
+Build verification: autoexec.bin 440K, magiclantern.bin 436K (under 656KB reserve)

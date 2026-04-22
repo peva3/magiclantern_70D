@@ -606,6 +606,35 @@ These tasks span multiple sprints:
 
 ---
 
+## Sprint 12–15 — Cleanup, Module Audit & Safe Enables (Weeks 39-44)
+
+### Status: ✅ COMPLETED
+
+- **S12** Dead code purge & cleanup
+  - Removed multiple #if 0 debug blocks across the codebase
+  - Fixed raw.c bitwise-to-logical operator
+  - Cleaned gui-common.c redundant logic and removed unused functions
+  - Added CONFIG_70D guards where appropriate
+
+- **S13** Second round dead code purge
+  - Deleted legacy bitrate-6d.c and additional disabled blocks
+  - Fixed stray preprocessor artifacts
+
+- **S14** Module audit & cross-port research
+  - Audited sd_uhs, mlv_lite, dual_iso, crop_rec, mlv_lite lossless paths
+  - Enabled safe portable features from 6D/5D3 (zoom tricks, focus-peek filter, swap-info-play)
+
+- **S15** sd_uhs safety hardening for 70D
+  - 70D-only sd_uhs menu now exposes only OFF/160MHz with user warning about higher presets
+
+**Build verification (post S15):**
+- autoexec.bin: 440K
+- magiclantern.bin: 436K
+
+All changes were committed and pushed to origin/main.
+
+---
+
 ## Testing Infrastructure
 
 ### Required for all sprints:
