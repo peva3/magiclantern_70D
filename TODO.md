@@ -17,19 +17,29 @@ This document outlines the development sprints for implementing the future work 
 
 ### Status: ✅ COMPLETED
 
-- [x] **S0.1** Create GitHub repository and clone to /app/70d
+- [x] **S0.1** Create GitHub repository and clone to /app/70d ✅
 - [x] **S0.2** Verify build system works end-to-end (build autoexec.bin for 70D) ✅
-- [x] **S0.3** Document current deployed build state (what modules are included, known bugs)
-- [x] **S0.4** Set up QEMU emulation layer for 70D (cloned qemu-eos)
-- [x] **S0.5** Create firmware backup/recovery documentation (critical for bricking scenarios)
-- [x] **S0.6** Create comprehensive documentation (AGENTS.md, FUTURE-WORK.md, TESTING_FRAMEWORK.md)
+  - **BUILD SUCCESS:** 435KB autoexec.bin produced
+  - Location: `platform/70D.112/build/autoexec.bin`
+  - Version string: `2026-04-22.70D.112`
+- [x] **S0.3** Document current deployed build state ✅
+- [x] **S0.4** Set up QEMU emulation layer for 70D ✅
+  - qemu-eos cloned to `/app/70d/qemu-eos`
+  - Note: 70D not yet supported in QEMU (will need adaptation)
+- [x] **S0.5** Create firmware backup/recovery documentation ✅
+- [x] **S0.6** Create comprehensive documentation (AGENTS.md, FUTURE-WORK.md, TESTING_FRAMEWORK.md) ✅
 - [x] **S0.7** Update README.md with current status and progress tracking ✅
+- [x] **S0.8** Create host-side test framework ✅
+  - tests/ directory with mock stubs
+  - test_focus.c runs successfully
+  - Validates CONFIG_70D detection
 
 **Deliverables:**
 - ✅ Working build environment with ARM toolchain installed
 - ✅ Verified autoexec.bin (435KB) that builds successfully from source
 - ✅ Complete documentation suite
 - ✅ QEMU infrastructure cloned and ready
+- ✅ Host-side test framework operational
 
 ---
 
