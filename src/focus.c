@@ -923,10 +923,9 @@ int handle_trap_focus(struct event * event)
 #endif
 
 
-// 70D unfortunately has no LV_FOCUS_DATA property. This explains why
-// focus confirmation bars in magic Zoom wouldn't work. See also:
-// http://www.magiclantern.fm/forum/index.php?topic=14309.msg147257#msg147257
-// we also need to disable the focus misc task to cleanup debugmsg logs
+// 70D does not have LV_FOCUS_DATA property, but has PROP_LV_LENS with focus_pos.
+// We use focus_pos stability detection as a proxy for focus confirmation.
+// See: http://www.magiclantern.fm/forum/index.php?topic=14309.msg147257#msg147257
 #ifdef CONFIG_LV_FOCUS_INFO
 static int focus_graph_dirty = 0;
 #if defined(FEATURE_TRAP_FOCUS) || defined(FEATURE_MAGIC_ZOOM)
@@ -1016,6 +1015,64 @@ PROP_HANDLER(PROP_LV_FOCUS_DATA)
 void plot_focus_mag(){};
 #endif
 
+#ifdef CONFIG_70D
+// 70D-specific focus tracking using PROP_LV_LENS focus_pos
+// Since we lack LV_FOCUS_DATA, we detect focus by monitoring position stability
+// When focus_pos stops changing for several samples, we consider focus "locked"
+static int focus_pos_history[8] = {0};
+static int focus_pos_idx = 0;
+static int last_focus_pos = 0;
+static int focus_pos_stable_count = 0;
+
+static void update_focus_pos_70d(void)
+{
+    int current_pos = lens_info.focus_pos;
+    
+    // Track position changes
+    focus_pos_history[focus_pos_idx % 8] = current_pos;
+    focus_pos_idx++;
+    
+    // Check if position has stabilized (same value for last 4 samples)
+    int stable = 1;
+    if (focus_pos_idx >= 4)
+    {
+        for (int i = 1; i < 4; i++)
+        {
+            if (focus_pos_history[(focus_pos_idx - 1) % 8] != 
+                focus_pos_history[(focus_pos_idx - 1 - i) % 8])
+            {
+                stable = 0;
+                break;
+            }
+        }
+    }
+    
+    if (stable && current_pos != last_focus_pos && focus_pos_idx > 8)
+    {
+        // Position changed and then stabilized - focus likely achieved
+        // Generate a synthetic focus_mag based on position change magnitude
+        int pos_delta = ABS(current_pos - last_focus_pos);
+        int focus_mag = COERCE(pos_delta * 2, 0, 200);
+        
+        if (focus_mag > 50)
+        {
+            update_focus_mag(focus_mag);
+        }
+        
+        last_focus_pos = current_pos;
+        focus_pos_stable_count = 0;
+    }
+    else if (!stable)
+    {
+        focus_pos_stable_count = 0;
+    }
+    else
+    {
+        focus_pos_stable_count++;
+    }
+}
+#endif
+
 static void
 focus_misc_task(void* unused)
 {
@@ -1030,6 +1087,14 @@ focus_misc_task(void* unused)
             plot_focus_mag();
             focus_graph_dirty = 0;
         }
+        
+#ifdef CONFIG_70D
+        // 70D: Poll focus_pos and detect focus lock via position stability
+        if (lv && lens_info.lens_exists)
+        {
+            update_focus_pos_70d();
+        }
+#endif
         
 #ifdef CONFIG_60D
         if (CURRENT_GUI_MODE_2 == DLG2_FOCUS_MODE && is_manual_focus())
@@ -1051,7 +1116,7 @@ focus_misc_task(void* unused)
 }
 
 TASK_CREATE( "focus_misc_task", focus_misc_task, 0, 0x1e, 0x1000 );
-#endif // !defined(CONFIG_70D)
+#endif
 
 #ifdef FEATURE_TRAP_FOCUS
 static MENU_UPDATE_FUNC(trap_focus_display)
