@@ -1027,48 +1027,49 @@ static int focus_pos_stable_count = 0;
 static void update_focus_pos_70d(void)
 {
     int current_pos = lens_info.focus_pos;
-    
-    // Track position changes
+
+    /* Track position samples in a circular buffer */
     focus_pos_history[focus_pos_idx % 8] = current_pos;
     focus_pos_idx++;
-    
-    // Check if position has stabilized (same value for last 4 samples)
-    int stable = 1;
-    if (focus_pos_idx >= 4)
+
+    /* Use a small sliding window to detect stability (noise-tolerant)
+       If max-min in the last WINDOW samples is <= STABLE_THRESHOLD, treat as stable. */
+    const int WINDOW = 4;
+    const int STABLE_THRESHOLD = 2; /* lens encoder steps considered noise */
+
+    if (focus_pos_idx < WINDOW) return; /* not enough samples yet */
+
+    int minv = focus_pos_history[(focus_pos_idx - 1) % 8];
+    int maxv = minv;
+    int sum = 0;
+    for (int i = 0; i < WINDOW; i++)
     {
-        for (int i = 1; i < 4; i++)
-        {
-            if (focus_pos_history[(focus_pos_idx - 1) % 8] != 
-                focus_pos_history[(focus_pos_idx - 1 - i) % 8])
-            {
-                stable = 0;
-                break;
-            }
-        }
+        int v = focus_pos_history[(focus_pos_idx - 1 - i) % 8];
+        if (v < minv) minv = v;
+        if (v > maxv) maxv = v;
+        sum += v;
     }
-    
-    if (stable && current_pos != last_focus_pos && focus_pos_idx > 8)
+
+    int stable = (maxv - minv) <= STABLE_THRESHOLD;
+    int avg = sum / WINDOW;
+
+    if (stable)
     {
-        // Position changed and then stabilized - focus likely achieved
-        // Generate a synthetic focus_mag based on position change magnitude
-        int pos_delta = ABS(current_pos - last_focus_pos);
-        int focus_mag = COERCE(pos_delta * 2, 0, 200);
-        
-        if (focus_mag > 50)
+        /* Only trigger when the stable position differs meaningfully from last reported */
+        int pos_delta = ABS(avg - last_focus_pos);
+        if (pos_delta > 0)
         {
-            update_focus_mag(focus_mag);
+            /* Scale delta to a focus_mag (tunable) */
+            int focus_mag = COERCE(pos_delta * 4, 0, 200);
+            if (focus_mag >= 10) /* threshold to avoid tiny blips */
+                update_focus_mag(focus_mag);
+
+            last_focus_pos = avg;
         }
-        
-        last_focus_pos = current_pos;
-        focus_pos_stable_count = 0;
-    }
-    else if (!stable)
-    {
-        focus_pos_stable_count = 0;
     }
     else
     {
-        focus_pos_stable_count++;
+        /* still moving; don't update last_focus_pos */
     }
 }
 #endif

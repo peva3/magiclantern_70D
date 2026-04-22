@@ -49,16 +49,13 @@ void mock_init_70d() {
 }
 
 uint32_t mock_read_register(uint32_t addr) {
-    if (addr < 0x10000) {
-        return g_camera.registers[addr / 4];
-    }
-    return 0;
+    uint32_t idx = (addr & 0xFFFF) >> 2;
+    return g_camera.registers[idx];
 }
 
 void mock_write_register(uint32_t addr, uint32_t val) {
-    if (addr < 0x10000) {
-        g_camera.registers[addr / 4] = val;
-    }
+    uint32_t idx = (addr & 0xFFFF) >> 2;
+    g_camera.registers[idx] = val;
 }
 
 int task_create(const char* name, int priority, int stack_size, void (*entry)(void*), void* arg) {
