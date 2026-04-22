@@ -6,9 +6,16 @@
 
 1. **Build Size Monitoring (CRITICAL):** The 70D reserves ~656KB for Magic Lantern (0x4E0000 to 0xD3C000). ALWAYS verify build size after any change:
    - Check `platform/70D.112/build/autoexec.bin` size
-   - Current baseline: 444KB (safe margin: ~200KB+)
+   - Current baseline: 444KB (safe margin: ~212KB)
    - NEVER commit changes that exceed 600KB without verification
    - Include size in commit messages for tracking
+   - **Size Tracking Log:**
+     | Date | autoexec.bin | magiclantern.bin | Changes |
+     |------|--------------|------------------|---------|
+     | 2026-04-22 | 435KB | 432KB | Initial baseline |
+     | 2026-04-22 | 438KB | 435KB | CONFIG_ZOOM_HALFSHUTTER_UILOCK |
+     | 2026-04-22 | 442KB | 439KB | +CONFIG_BEEP |
+     | 2026-04-22 | 443KB | 440KB | +CONFIG_Q_MENU_PLAYBACK, CONFIG_WB_WORKAROUND |
 
 2. **Documentation Updates:** Keep AGENTS.md and README.md files continuously updated with all findings, changes, and discoveries
 3. **Task Tracking:** Maintain TODO.md with current task status, marking completed items and adding new tasks as discovered

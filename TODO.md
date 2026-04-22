@@ -334,23 +334,34 @@ This document outlines the development sprints for implementing the future work 
 
 ## Sprint 10 — Bug Fixes & Polish (Weeks 35-36)
 
-### Status: NOT YET STARTED
+### Status: PARTIALLY COMPLETED (Documentation)
 
-- [ ] **S10.1** PACK32_MODE investigation
-  - Document values 0x20 and 0x120 behavior
-  - Verify if 70D uses different packing
+- [x] **S10.1** PACK32_MODE investigation ✅ (Documented)
+  - 70D is DIGIC V (CONFIG_DIGIC_45)
+  - Register: 0xC0F08094
+  - Comment in raw.c:2618-2621: theoretical values (0x130, 0x030, 0x010, 0x000) don't match observed values
+  - Actual observed values: 0x20 and 0x120 (possibly "highest bit wins" pattern)
+  - Requires hardware testing to verify bit depth switching behavior
 
-- [ ] **S10.2** Two-finger touch investigation
-  - Determine if unavailable is hardware or software limitation
-  - Document findings
+- [x] **S10.2** Two-finger touch investigation ✅ (Documented)
+  - gui.h line 10: "NO GUI EVENTS: two finger touch unavailable on this camera"
+  - Hardware limitation - 70D touchscreen only supports single-finger touch
+  - Event codes defined (0x76-0x79) but never triggered by firmware
+  - No fix possible without hardware changes
 
-- [ ] **S10.3** mvr_struct_real investigation
-  - Document unknown fields in `uint32_t unk[0x192]`
-  - Enable additional movie mode features if discovered
+- [x] **S10.3** mvr_struct_real investigation ✅ (Documented)
+  - mvr_config struct at platform/70D.112/include/platform/mvr.h (140 lines)
+  - Copied from 650D, marked as "Indented = WRONG"
+  - Many unknown fields (x67e4, x67f8, x680c, etc.) - ~40+ undocumented uint32_t fields
+  - SIZE_CHECK_STRUCT commented out at line 138
+  - MVR_516_STRUCT at 0x7AEA4 - found by nikfreak/a1ex via MVR_Initialize decompilation
+  - Requires hardware testing to map unknown fields
 
 - [ ] **S10.4** A/B firmware toggle maintenance
-  - Verify workaround continues to work
-  - Test firmware update scenarios
+  - No dedicated A/B firmware toggle code found in 70D-specific files
+  - Bootflag system uses partition table (bootflags.c:62-259)
+  - PROP_REBOOT used for reboot triggering
+  - Verify workaround continues to work (requires hardware testing)
 
 ---
 
