@@ -48,7 +48,7 @@
 
 /** There is a Q menu in Play mode, with image protect, rate etc **/
 /** But it's a bit different from the other cameras, so let's say it doesn't have **/
-// #define CONFIG_Q_MENU_PLAYBACK
+#define CONFIG_Q_MENU_PLAYBACK
 
 /** This camera has a flip-out display **/
 #define CONFIG_VARIANGLE_DISPLAY
@@ -91,7 +91,7 @@
 #define CONFIG_BEEP
 
 /** This camera has no trouble saving Kelvin and/or WBShift in movie mode **/
-// #define CONFIG_WB_WORKAROUND
+#define CONFIG_WB_WORKAROUND
 
 /** We can restore ML files after formatting the card in the camera **/
 #define CONFIG_RESTORE_AFTER_FORMAT

@@ -295,6 +295,17 @@ This document outlines the development sprints for implementing the future work 
   - Prevents UI glitches when zooming while holding shutter
   - Already enabled in 5D3 - verified working pattern
 
+- [x] **S9.x** Enable CONFIG_BEEP ✅ (see S9.3)
+  - Audio beep support enabled in internals.h
+
+- [x] **S9.x** Enable CONFIG_Q_MENU_PLAYBACK ✅
+  - Quick menu in playback mode (like other DIGIC V cameras)
+  - Adds rating functionality in photo playback
+
+- [x] **S9.x** Enable CONFIG_WB_WORKAROUND ✅
+  - White balance save/restore for movie mode
+  - Kelvin WB lock workaround (used by 600D, 60D, EOSM)
+
 - [ ] **S9.1** FlexInfo/Level display fix
   - Investigate bottom bar flicker source
   - Level freezes after ~1-2 min in LV
