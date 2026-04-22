@@ -1022,7 +1022,6 @@ void plot_focus_mag(){};
 static int focus_pos_history[8] = {0};
 static int focus_pos_idx = 0;
 static int last_focus_pos = 0;
-static int focus_pos_stable_count = 0;
 
 static void update_focus_pos_70d(void)
 {

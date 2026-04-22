@@ -30,10 +30,10 @@
 /** This camera has a mirror lockup feature **/
 #define CONFIG_MLU
 
-/** This camera doesn't report focus info in LiveView **/
-//~ ToDo: Focus Confirmation in Magic Zoom does not work
+/** This camera doesn't report LV_FOCUS_DATA property, but we use PROP_LV_LENS focus_pos as alternative **/
+//~ Focus Confirmation in Magic Zoom uses lens position stability detection
 //~ see http://magiclantern.fm/forum/index.php?topic=14309.msg147257#msg147257
-//~ #define CONFIG_LV_FOCUS_INFO
+#define CONFIG_LV_FOCUS_INFO
 
 #define CONFIG_ELECTRONIC_LEVEL
 

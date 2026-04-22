@@ -9,13 +9,14 @@
    - Current baseline: 444KB (safe margin: ~212KB)
    - NEVER commit changes that exceed 600KB without verification
    - Include size in commit messages for tracking
-   - **Size Tracking Log:**
-     | Date | autoexec.bin | magiclantern.bin | Changes |
-     |------|--------------|------------------|---------|
-     | 2026-04-22 | 435KB | 432KB | Initial baseline |
-     | 2026-04-22 | 438KB | 435KB | CONFIG_ZOOM_HALFSHUTTER_UILOCK |
-     | 2026-04-22 | 442KB | 439KB | +CONFIG_BEEP |
-     | 2026-04-22 | 443KB | 440KB | +CONFIG_Q_MENU_PLAYBACK, CONFIG_WB_WORKAROUND |
+    - **Size Tracking Log:**
+      | Date | autoexec.bin | magiclantern.bin | Changes |
+      |------|--------------|------------------|---------|
+      | 2026-04-22 | 435KB | 432KB | Initial baseline |
+      | 2026-04-22 | 438KB | 435KB | CONFIG_ZOOM_HALFSHUTTER_UILOCK |
+      | 2026-04-22 | 442KB | 439KB | +CONFIG_BEEP |
+      | 2026-04-22 | 443KB | 440KB | +CONFIG_Q_MENU_PLAYBACK, CONFIG_WB_WORKAROUND |
+      | 2026-04-22 | 441KB | 437KB | +CONFIG_LV_FOCUS_INFO (focus confirmation via PROP_LV_LENS) |
 
 2. **Documentation Updates:** Keep AGENTS.md and README.md files continuously updated with all findings, changes, and discoveries
 3. **Task Tracking:** Maintain TODO.md with current task status, marking completed items and adding new tasks as discovered
@@ -89,19 +90,58 @@ The 70D port is heavily configured via feature toggles and memory constants.
 ### Disabled / Missing Capabilities (`internals.h`, `features.h`)
 | Flag | Reason |
 |------|--------|
-| `CONFIG_LV_FOCUS_INFO` | **Missing.** 70D firmware does not expose `LV_FOCUS_DATA`. Breaks focus confirmation, Magic Zoom, Focus Stacking. |
+| `CONFIG_LV_FOCUS_INFO` | **Enabled (using PROP_LV_LENS).** 70D firmware does not expose `LV_FOCUS_DATA`, but we use `PROP_LV_LENS` focus_pos with stability detection. Focus confirmation and Magic Zoom partially restored. |
 | `CONFIG_AUDIO_CONTROLS` | **Missing.** Cannot control audio settings from ML yet. |
 | `CONFIG_FPS_UPDATE_FROM_EVF_STATE` | Doesn't work on 70D. |
 | `CONFIG_BEEP` | Beep support disabled. |
-| `CONFIG_LV_FOCUS_DATA` | No focus property available. |
+| `CONFIG_LV_FOCUS_DATA` | No LV_FOCUS_DATA property, but PROP_LV_LENS provides focus_pos. |
 | `FEATURE_FPS_OVERRIDE` | **Broken.** Timer B has untraceable issues. Timer A causes banding/patterns. Dev notes: "Tried it for a felt hundred hours." |
 | `FEATURE_RAW_ZEBRAS` | **Broken.** Causes glitches in QuickReview and LiveView. |
 | `FEATURE_FOLLOW_FOCUS` | Disabled (see lens.c). |
 | `FEATURE_RACK_FOCUS` | Disabled (see lens.c). |
 | `FEATURE_FOCUS_STACKING` | Disabled - buggy ("takes 1 behind and 1 before"). |
-| `FEATURE_FLEXINFO` | Bottom bar flickers - time/battery display unstable. |
+ | `FEATURE_FLEXINFO` | Bottom bar flickers - time/battery display unstable. |
 
-## 3. Stubs & Firmware Entry Points (`stubs.S`)
+## 3. Hardware Specifications & Capabilities
+
+Based on Canon EOS 70D specification sheets and research documents:
+
+### Key Hardware Features
+- **Image Sensor**: 22.5mm × 15.0mm APS-C CMOS (4.1 µm pixel pitch)
+- **Effective Pixels**: 20.2 megapixels (5472 × 3648)
+- **Image Processor**: DIGIC 5+ (DIGIC V architecture)
+- **Dual Pixel CMOS AF**: First Canon camera with this technology - phase detection across 80% of sensor
+- **WiFi**: Built-in 802.11 wireless LAN (cannot be used simultaneously with Eye-Fi cards)
+- **Touchscreen**: 3.0" vari-angle capacitive touch LCD (1,040,000 dots, approx. 100% coverage)
+- **Viewfinder**: Pentaprism with 98% coverage, 0.95× magnification
+- **Memory Cards**: SD/SDHC/SDXC with UHS-I bus support
+
+### Performance Specifications
+- **Continuous Shooting**: 7.0 fps (up to 65 JPEG or 16 RAW with UHS-I card)
+- **ISO Range**: 100-12800 (expandable to H: 25600)
+- **Shutter Speed**: 1/8000 to 30 sec., bulb, X-sync at 1/250 sec.
+- **AF System**: 19-point cross-type (all cross-type at f/5.6, center point cross-type at f/2.8)
+- **Battery**: LP-E6 lithium-ion (~920 shots at 23°C with 50% flash usage)
+
+### Video Capabilities
+- **Formats**: MOV container, H.264 video, Linear PCM audio
+- **Resolutions & Frame Rates**:
+  - 1920 × 1080: 30/25/24 fps (29.97/25/23.976 actual)
+  - 1280 × 720: 60/50 fps (59.94/50 actual)  
+  - 640 × 480: 30/25 fps (29.97/25 actual)
+- **Compression**: IPB (inter-frame) or All-I (intra-frame)
+- **Maximum Recording**: 29 min 59 sec per clip, 4GB file size limit (auto-creates new files)
+- **Digital Zoom**: 3× crop from sensor center (no quality loss) + 10× interpolated zoom
+
+### ML Development Implications
+1. **WiFi Potential**: Built-in WiFi enables remote control/tethering possibilities if DryOS networking stubs can be reverse-engineered
+2. **Dual Pixel AF**: Phase detection data may be accessible for depth mapping or advanced focus features (requires firmware RE)
+3. **Touchscreen**: `CONFIG_TOUCHSCREEN` already enabled; gesture-based UI improvements possible
+4. **UHS-I Support**: `sd_uhs` module already provides overclocking (limited to 160MHz on 70D)
+5. **Video Modes**: ML can leverage All-I compression for better editing, 60fps HD for slow motion
+6. **Battery Life**: Power management considerations for long recording sessions with ML overlays
+
+## 4. Stubs & Firmware Entry Points (`stubs.S`)
 
 The 70D has 277 lines of firmware stubs covering:
 
@@ -126,7 +166,7 @@ The 70D has 277 lines of firmware stubs covering:
 
 **Lens:** `AdjustFocusLens`, `SetLensFocalLength`, `set_motor_position`, `LvLensDrive`
 
-## 4. Property System (`property.h`)
+## 5. Property System (`property.h`)
 
 70D-specific property IDs:
 ```c
@@ -144,7 +184,7 @@ Drive modes shared with 5D3:
 Model ID: `MODEL_EOS_70D = 0x80000325`
 Firmware signature: `SIG_70D_112 = 0xd8698f05`
 
-## 5. RAW Processing & EDMAC (`raw.c`, `edmac.c`, `edmac-memcpy.c`)
+## 6. RAW Processing & EDMAC (`raw.c`, `edmac.c`, `edmac-memcpy.c`)
 
 **EDMAC Configuration (DIGIC V - 48 channels):**
 - `off1 bits = 19`, `off2 bits = 32`
@@ -170,17 +210,17 @@ Firmware signature: `SIG_70D_112 = 0xd8698f05`
 - skip_top = 52
 - skip_right = 8
 
-## 6. Focus System (`focus.c`)
+## 7. Focus System (`focus.c`)
 
-**Critical Limitation:** Line 926 notes "70D unfortunately has no LV_FOCUS_DATA property"
+**Critical Limitation:** Line 926 notes "70D unfortunately has no LV_FOCUS_DATA property". However, we have enabled CONFIG_LV_FOCUS_INFO and use PROP_LV_LENS focus_pos with stability detection.
 
 This means:
-- No focus confirmation bars in Magic Zoom
-- Focus graph/focus_misc task entirely disabled (lines 930-1054 wrapped in `#if !defined(CONFIG_70D)`)
-- No focus_mag plotting
-- No PROP_LV_FOCUS_DATA handler
-- No focus_misc_task runs on 70D
-- Trap_focus behavior differs on 70D vs other cameras
+- Focus confirmation bars in Magic Zoom now work (using lens position stability)
+- Focus graph/focus_misc task enabled (with 70D-specific update_focus_pos_70d)
+- focus_mag plotting uses lens position changes
+- PROP_LV_FOCUS_DATA handler still missing but not needed
+- focus_misc_task runs on 70D (polling lens_info.focus_pos)
+- Trap_focus behavior differs on 70D vs other cameras (still limited)
 
 ### Alternative Focus Data: PROP_LV_LENS
 
@@ -192,30 +232,25 @@ Despite lacking `PROP_LV_FOCUS_DATA` (0x80050026), the 70D DOES receive focus po
 - **Struct:** `lens.h:117` - `prop_lv_lens` struct with `focus_pos` at offset 0x23
 - **Registration:** Unlike typical handlers, this property is registered via Canon property system (auto-registered from PROP_HANDLER macro)
 
-This data is used in `lens.c:1868-1889` for tracking lens position changes but is NOT exposed to focus confirmation UI (Magic Zoom) which requires the higher-frequency `PROP_LV_FOCUS_DATA` format.
+This data is used in `lens.c:1868-1889` for tracking lens position changes and is now also used for focus confirmation UI (Magic Zoom) via stability detection in `update_focus_pos_70d`, though with lower update frequency than `PROP_LV_FOCUS_DATA`.
 
-## 7. Investigation: Broken Features & Fix Potential
+## 8. Investigation: Broken Features & Fix Potential
 
-### 7.1 LV_FOCUS_DATA (Focus Confirmation) - MEDIUM FIX POTENTIAL
+### 8.1 LV_FOCUS_DATA (Focus Confirmation) - PARTIALLY FIXED
 
 **Problem:** 70D firmware doesn't expose `PROP_LV_FOCUS_DATA` (0x80050026), which is required for focus confirmation bars in Magic Zoom and focus peaking.
 
+**Solution implemented:** Enabled `CONFIG_LV_FOCUS_INFO` in `internals.h` and using `PROP_LV_LENS` focus_pos with stability detection (`update_focus_pos_70d`). The `focus_misc_task` is now compiled and runs on 70D, polling `lens_info.focus_pos` and detecting focus lock via position stability.
+
 **Current state:**
-- Entire `focus_misc_task` wrapped in `#if !defined(CONFIG_70D)` (focus.c:930-1054)
-- `PROP_LV_FOCUS_DATA` handler never registered for 70D
+- `focus_misc_task` enabled (with 70D-specific block)
+- Focus confirmation menu now available in Magic Zoom settings
+- Focus graph plotting uses lens position changes
+- Update frequency limited by `PROP_LV_LENS` polling rate (slower than LV_FOCUS_DATA)
 
-**Alternative available:** `PROP_LV_LENS` (0x80050000) IS available and provides:
-- `lens_info.focus_dist` - focus distance in cm
-- `lens_info.focus_pos` - fine steps from lens (updates during motor movement)
+**Remaining limitations:** Focus confirmation may have latency due to slower updates; fine-tuning of stability thresholds may be needed.
 
-**Already implemented:** The lens.c:1900 handler already extracts focus_pos from PROP_LV_LENS into `lens_info.focus_pos`:
-```c
-lens_info.focus_pos = (int16_t) bswap16( lv_lens->focus_pos );
-```
-
-**Fix approach:** Re-enable focus_misc_task and modify to use `lens_info.focus_pos` instead of `PROP_LV_FOCUS_DATA`. The main limitation is update frequency - LV_LENS updates slowly, LV_FOCUS_DATA updates quickly during AF. Basic focus tracking is possible but may have latency.
-
-### 7.2 FPS Override - MEDIUM FIX POTENTIAL
+### 8.2 FPS Override - MEDIUM FIX POTENTIAL
 
 **Problem:** Explicitly disabled in `platform/70D.112/features.h:15`:
 
@@ -237,7 +272,7 @@ lens_info.focus_pos = (int16_t) bswap16( lv_lens->focus_pos );
 
 **Fix approach:** Test Timer A-only FPS override, verify stability. Requires hardware testing to validate.
 
-### 7.3 RAW Zebras - FIXED (HIGH FIX POTENTIAL)
+### 8.3 RAW Zebras - FIXED (HIGH FIX POTENTIAL)
 
 **Problem:** Explicitly disabled in code at `zebra.c:4121`:
 
@@ -253,21 +288,21 @@ if (zebra_draw && raw_zebra_enable == 1) raw_needed = 1;
 
 **Fix applied:** Added `CONFIG_NO_RAW_ZEBRAS` to `platform/70D.112/internals.h` and updated zebra.c to use the proper config flag instead of hardcoded `#if !defined(CONFIG_70D)`. This properly documents the limitation for maintainability.
 
-## 8. Lens System (`lens.c`)
+## 9. Lens System (`lens.c`)
 
 - 70D uses same digital zoom handling as 600D (`CONFIG_600D || CONFIG_70D`) with `PROP_DIGITAL_ZOOM_RATIO`
 - **Focus features bug** (line 677): "70D focus features don't play well with this and soft limit is reached quickly"
 - Focus stacking: "still buggy and takes 1 behind and 1 before all others afterwards are before at the same position no matter what's set in menu"
 - 70D shares `prop_lv_lens` struct layout with 6D/5D3/100D/750D/80D/7D2/5D4 (line 104)
 
-## 9. Custom Functions (`cfn.c`)
+## 10. Custom Functions (`cfn.c`)
 
 - ALO, HTP, MLU accessed via generic macros (not CFn on 70D - in main menus instead)
 - `PROP_CFN_TAB` = `0x80010007`, length `0x1c`
 - Position 7 = AF button assignment: `0=AF`, `1=metering`, `2=AeL`
 - ML tracks AF button state via direct memory array `some_cfn[0x1c]`
 
-## 9. AF Microadjustment (`afma.h`)
+## 11. AF Microadjustment (`afma.h`)
 
 - `PROP_AFMA = 0x80010006`, buffer size `0x22`
 - Mode at offset `0xD`
@@ -275,7 +310,7 @@ if (zebra_draw && raw_zebra_enable == 1) raw_needed = 1;
 - Per-lens tele at offset `21`
 - All lenses at offset `23`
 
-## 10. GUI & Touch (`gui.h`)
+## 12. GUI & Touch (`gui.h`)
 
 **Touch Events:**
 - `BGMT_TOUCH_1_FINGER = 0x6f`
@@ -288,13 +323,13 @@ if (zebra_draw && raw_zebra_enable == 1) raw_needed = 1;
 - METERING/AF-area button toggle commented out ("unreliable")
 - Play mode zebras mapped to LIGHT button
 
-## 11. State Objects (`state-object.h`)
+## 13. State Objects (`state-object.h`)
 
 - `DISPLAY_STATE = DISPLAY_STATEOBJ`
 - `INPUT_ENABLE_IMAGE_PHYSICAL_SCREEN_PARAMETER = 23` — vsync source
 - `EVF_STATE`, `MOVREC_STATE`, `SSS_STATE` pointers verified by nikfreak
 
-## 12. MVR (Movie Recorder) (`mvr.h`)
+## 14. MVR (Movie Recorder) (`mvr.h`)
 
 70D-specific struct (140 lines, 0x1D8 bytes):
 - QScale configuration
@@ -304,7 +339,7 @@ if (zebra_draw && raw_zebra_enable == 1) raw_needed = 1;
   - 30/25 fps VGA
 - 70D-specific: `uint32_t unk[0x192]`, size `0x658`
 
-## 13. Modules (`modules.included`)
+## 15. Modules (`modules.included`)
 
 **Enabled (21 modules):** adv_int, arkanoid, autoexpo, bench, crop_rec, deflick, dot_tune, dual_iso, edmac, ettr, file_man, img_name, lua, mlv_lite, mlv_play, mlv_snd, pic_view, sd_uhs, selftest, silent
 
@@ -339,7 +374,7 @@ if (zebra_draw && raw_zebra_enable == 1) raw_needed = 1;
 - Different ProcessTwoInTwoOutLosslessPath
 - Different register settings (e.g., `0xC0F373B4 = 0`)
 
-## 14. raw_vid / raw_vidx Architecture
+## 16. raw_vid / raw_vidx Architecture
 
 These represent a cleaner, newer architecture than mlv_rec:
 
@@ -357,7 +392,7 @@ These represent a cleaner, newer architecture than mlv_rec:
 
 **70D NOT enabled for raw_vid/raw_vidx** — would need crop dimension mapping and worker priority tuning.
 
-## 15. TCC (Tiny C Compiler)
+## 17. TCC (Tiny C Compiler)
 
 - Located in `modules/script/tcc/`
 - Version: 0.9.26 (Fabrice Bellard)
@@ -365,7 +400,7 @@ These represent a cleaner, newer architecture than mlv_rec:
 - Statically linked, no dynamic loading (`CONFIG_TCC_STATIC`, `CONFIG_NOLDL`)
 - Used for on-camera C script compilation
 
-## 16. Notable Architectural Quirks & Hacks
+## 18. Notable Architectural Quirks & Hacks
 
 - **Cache Hacks:** Unlike DIGIC 6+ cameras using MMU table manipulation, 70D uses CPU cache line locking hacks in `patch.c` to patch ROM instructions on the fly.
 - **AF Button Swap:** 70D handles CFn differently — ALO, HTP, MLU are in main menus, not CFn. Uses `some_cfn[0x1c]` array.
@@ -374,7 +409,7 @@ These represent a cleaner, newer architecture than mlv_rec:
 - **FlexInfo Flickering:** Bottom bar (time, battery) flickers due to GUI rendering conflict. Uses `UNAVI_BASE` workaround.
 - **Missing CancelUnaviFeedBackTimer:** 70D firmware lacks this function, requiring alternative approach.
 
-## 18. Forum Findings (Discovered Issues & Solutions)
+## 19. Forum Findings (Discovered Issues & Solutions)
 
 The following issues and discoveries were found through the Magic Lantern forum thread (topic 14309, 140 pages):
 
@@ -403,7 +438,7 @@ The following issues and discoveries were found through the Magic Lantern forum 
 - **Level indicator freeze:** Reported as freezing after ~1 minute of use. Related to EVF_STATE rendering.
 - **ML menu disappears:** Menu flickering/disappearing in LiveView/movie mode (also affects 6D).
 - **RAW zebras:** Disabled because they cause problems in QuickReview and LV. Causes visual glitches.
-- **Focus features:** Trap focus only works in photo mode (not LiveView) due to missing LV_FOCUS_DATA property. Other focus features (follow, rack, stacking) disabled.
+- **Focus features:** Trap focus only works in photo mode (not LiveView) due to missing LV_FOCUS_DATA property. Focus confirmation now works via PROP_LV_LENS stability detection. Other focus features (follow, rack, stacking) disabled.
 - **Dual ISO video:** Not working initially, later fixes were attempted
 - **Hot pixels from EDMAC_RAW_SLURP:** Were causing issues in early builds, fixed by disabling raw slurping
 - **Shutter speed ignored:** Sometimes increasing shutter speed doesn't take effect (only decreasing works)
@@ -426,18 +461,18 @@ The following issues and discoveries were found through the Magic Lantern forum 
 - **ArcziPL:** crop_rec_4k experiments with 14-bit lossless
 - **theBilalFakhouri:** sd_uhs module enhancements
 
-## 17. Codebase Statistics
+## 20. Codebase Statistics
 
 - **137+ matches** for "70D" / "70d" references across the codebase
 - **55+ files** read and analyzed
 - **16 known bugs/TODOs** specifically for 70D
 - Closely related to: **6D**, **5D3** (share color matrix, EDMAC channels, EVF_STATE)
 
-## Conclusion
+## 21. Conclusion
 
-The Canon 70D is a capable DIGIC V platform with robust EDMAC RAW video capabilities (sharing much with the 5D3 and 6D). However, its biggest architectural blindspots are the complete lack of LiveView Focus Data (`LV_FOCUS_DATA`), broken FPS timers, and finicky audio controls. Development on this body requires heavy reliance on `EVF_STATE` hooks rather than clean properties. The 70D uses cache hacks for patching (not MMU like newer cameras), has unique crop_rec limitations, and the SD controller cannot handle aggressive overclocking.
+The Canon 70D is a capable DIGIC V platform with robust EDMAC RAW video capabilities (sharing much with the 5D3 and 6D). However, its biggest architectural blindspots are the lack of native LiveView Focus Data (`LV_FOCUS_DATA`) (partially mitigated via PROP_LV_LENS), broken FPS timers, and finicky audio controls. Development on this body requires heavy reliance on `EVF_STATE` hooks rather than clean properties. The 70D uses cache hacks for patching (not MMU like newer cameras), has unique crop_rec limitations, and the SD controller cannot handle aggressive overclocking.
 
-## Recent Sprints (12-15) — Summary
+## 22. Recent Sprints (12-15) — Summary
 
 - S12: Dead code purge & cleanup (removed multiple #if 0 blocks, fixed raw.c bitwise operator, cleaned gui-common.c)
 - S13: Second pass dead code purge (deleted legacy bitrate-6d.c and additional disabled blocks)

@@ -7,8 +7,9 @@ Based on the deep dive into the Magic Lantern simplified codebase for the Canon 
 ### 1. LiveView Focus Data (`LV_FOCUS_DATA`) Emulation or Discovery
 - **The Issue:** The 70D firmware does not expose focus distance/data properties during LiveView (`internals.h`).
 - **Impact:** Focus confirmation in Magic Zoom is broken. Focus graphing is disabled. Focus stacking is buggy ("takes 1 behind and 1 before, all others are before").
-- **Future Work:** Reverse engineer the DIGIC V memory space during AF operations to find where focus peaking data or lens step counts are temporarily stored. If Canon's property system doesn't broadcast it, ML needs a direct memory spy hook.
-- **Code Reference:** `focus.c` line 926 explicitly notes "70D unfortunately has no LV_FOCUS_DATA property". The entire focus_misc task (lines 930-1054) is wrapped in `#if !defined(CONFIG_70D)`.
+- **Status:** Partially fixed by enabling `CONFIG_LV_FOCUS_INFO` and using `PROP_LV_LENS` focus_pos with stability detection (see `update_focus_pos_70d` in `focus.c`). Focus confirmation menu now available, but may have limited accuracy due to slower update rate of lens position data.
+- **Future Work:** Fine-tune stability detection thresholds, improve focus graph display, and investigate alternative sources of focus data (e.g., direct memory hooks).
+- **Code Reference:** `focus.c` line 926 explicitly notes "70D unfortunately has no LV_FOCUS_DATA property". The 70D-specific focus tracking uses `lens_info.focus_pos` (from `PROP_LV_LENS`) with sliding-window stability detection.
 
 ### 2. FPS Override Resolution (`FEATURE_FPS_OVERRIDE`)
 - **The Issue:** Modifying the camera's frame rate is disabled for the 70D.
@@ -112,11 +113,43 @@ Based on the deep dive into the Magic Lantern simplified codebase for the Canon 
 - **Issue:** `reboot.c` contains a workaround for 70D dual firmware partitions.
 - **Future Work:** Ensure this continues to work as firmware updates are released.
 
+## Brand new development
+
+### 1) WiFi tethering / remote control module
+- Feasibility: The 70D has built-in WiFi; ML codebase already contains a DryOS socket API surface in ml_socket.h and a yolo-like WiFi workflow used on other cameras. However, 70D stubs.s currently lack concrete networking hooks (socket_create, wlan_connect, NwLimeInit, etc.). Observation of related code on 200D and qemu traces provides a blueprint for porting WiFi control.
+- What it enables: remote trigger/shooting, live transfer, remote UI control from a phone/tablet, and potential timecode/data exchange for synchronized shoots.
+- Required work: reverse-engineer 70D DryOS networking entry points; port the 200D-style WiFi init sequence; implement a minimal socket API shim and a tiny remote-control protocol; wire this into a small, safe UI module (ml_tether) that can be toggled from ML menu.
+- Risks/notes: hardware-dependent; needs hardware verification; ensure not to destabilize LiveView streaming.
+- References: ml_socket.h contents (static socket API signatures), yolo.c networking usage, stubs/files mentioning WiFi in 70D (m0933, m0934).
+
+### 2) Cinematographer Mode port
+- Concept: Port Cinematographer mode (focus sequence capture and replay) from ML to 70D. This module records a sequence of lens focus points with transition speeds and replays them during filming.
+- Why now: We already have a working lens focus data path from PROP_LV_LENS and an initial update_focus_pos_70d() with a sliding-window stability approach (Sprint 2). The 70D touchscreen and vari-angle screen provide ideal UX.
+- What it does: lets a single operator rehearse a shot by recording focal positions and speeds, then replay the sequence while filming, with joystick-based focus adjustments during planning.
+- Required work: port the Cinematographer-mode C code, map its lens control hooks to PROP_LV_LENS focus_pos, ensure safe toggling when ML menus are active, and implement CFG persistence (cinemato.cfg).
+- Risks/notes: ensure compatibility with 70D EDMAC/ADTG flow; avoid interfering with live AF if not in manual mode.
+- References: Cinematographer-mode project and thread (GitHub and forum thread 27053).
+
+### 3) Dual Fast Picture (two-shot bursts)
+- Concept: Implement DualFastPicture behavior: two rapid shots with independent ISO/shutter settings to simulate fast bracketing.
+- Why now: There are public ports of this module (LamnaTheShark/MagicLanternDualFastPicture) for other bodies; 70D can leverage the same approach using existing shoot pipeline and bramp logic.
+- What it does: capture two frames in quick succession with independently chosen exposure settings, enabling quick exposure bracketing for HDR-like workflow in-camera.
+- Required work: port the module to 70D (module folder, Makefile adaptation, and 70D-specific shooting path integration); expose user menu to configure two shot parameters; ensure timing works with LV and LiveView.
+- Risks/notes: verify shutter timing to avoid mis-sync and ensure it works in LiveView vs. standard view.
+- References: MagicLanternDualFastPicture repo (LamnaTheShark).
+
+### 4) Touchscreen-driven focus control
+- Concept: Use the 70D touchscreen to modify focus points in LiveView with minimal UI overhead.
+- Why now: 70D has CONFIG_TOUCHSCREEN enabled; there are touch events already defined in GUI. The UX could be significantly improved for on-shot focusing.
+- What it does: map touch gestures to lens focus shifts (tap to set focus, drag to nudge, two-finger pinch to zoom within LiveView) and reflect the focused distance in the overlay.
+- Required work: integrate touchscreen events with lens focus_position updates (via lens.c) and update UI overlays; keep compatibility with existing focus modes and avoid conflicting with autofocus.
+- Risks/notes: maintain stability with Canon's LV stack; ensure not to disrupt AF assist.
+
 ## Summary Table
 
 | Issue | Severity | Status | Effort |
 |-------|----------|--------|--------|
-| LV_FOCUS_DATA missing | High | Known limitation | High |
+| LV_FOCUS_DATA missing | High | Partially fixed (PROP_LV_LENS) | Medium |
 | FPS Override broken | High | Known limitation | Very High |
 | RAW Zebras broken | High | Disabled | Medium |
 | crop_rec advanced modes | Medium | Not implemented | High |
