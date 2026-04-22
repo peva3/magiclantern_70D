@@ -4,12 +4,18 @@
 
 **These requirements must be followed for ALL future work:**
 
-1. **Documentation Updates:** Keep AGENTS.md and README.md files continuously updated with all findings, changes, and discoveries
-2. **Task Tracking:** Maintain TODO.md with current task status, marking completed items and adding new tasks as discovered
-3. **Testing:** Test every change before committing - use QEMU emulation, host-side compilation, and simulation frameworks
-4. **Commit Protocol:** After completing each task or milestone, commit changes with clear messages and push to GitHub
-5. **Git Identity:** Always use pmwoodward3@gmail.com (email) and peva3 (username) for commits
-6. **Incremental Progress:** Complete work in small, testable chunks - never batch multiple untested changes
+1. **Build Size Monitoring (CRITICAL):** The 70D reserves ~656KB for Magic Lantern (0x4E0000 to 0xD3C000). ALWAYS verify build size after any change:
+   - Check `platform/70D.112/build/autoexec.bin` size
+   - Current baseline: 444KB (safe margin: ~200KB+)
+   - NEVER commit changes that exceed 600KB without verification
+   - Include size in commit messages for tracking
+
+2. **Documentation Updates:** Keep AGENTS.md and README.md files continuously updated with all findings, changes, and discoveries
+3. **Task Tracking:** Maintain TODO.md with current task status, marking completed items and adding new tasks as discovered
+4. **Testing:** Test every change before committing - use QEMU emulation, host-side compilation, and simulation frameworks
+5. **Commit Protocol:** After completing each task or milestone, commit changes with clear messages and push to GitHub
+6. **Git Identity:** Always use pmwoodward3@gmail.com (email) and peva3 (username) for commits
+7. **Incremental Progress:** Complete work in small, testable chunks - never batch multiple untested changes
 
 **Repository:** https://github.com/peva3/magiclantern_70D  
 **Current Phase:** Week 1 - Foundation Setup  
