@@ -474,6 +474,48 @@ Implementation: focus.c now includes 70D-specific focus tracking using focus_pos
 
 ---
 
+## Sprint 12 — Dead Code Purge & Safe Enables (Weeks 39-40)
+
+### Status: ✅ COMPLETED
+
+**Goal:** Remove dead `#if 0` blocks, fix minor code quality issues, enable safe features for 70D.
+
+- [x] **S12.1** Remove dead `#if 0` blocks
+  - stdio.c:14-33 (unused streq implementation)
+  - tasks.c:103-135 (debug stack checking)
+  - tasks.c:422-477 (BMP lock debugging)
+  - focus.c:1279-1294 (dead focus stacking menu entries)
+  - menu.c:5440-5448 (dead BGMT_PLAY case)
+  - menu.c:6296-6339 (bubbles hack, bmp_draw_scaled_ex test, Gryp logging)
+  - powersave.c:220-222 (NotifyBox debug call)
+  - cropmarks.c:434-456 (draw_cropmark_area, show_apsc_crop_factor)
+  - rbf_font.c:365-371 (tab width fix that breaks cursor)
+  - module.c:676-693 (TCC section debug logging)
+  - NOTE: module.c:228-377 NOT removed - contains TCC struct definitions needed by real code
+
+- [x] **S12.2** Fix bitwise vs logical operator in raw.c:2627
+  - Changed `|` to `||` in preprocessor condition
+
+- [x] **S12.3** Clean up gui-common.c
+  - Simplified redundant `CONFIG_LVAPP_HACK_DEBUGMSG || CONFIG_LVAPP_HACK` to just `CONFIG_LVAPP_HACK`
+  - Removed unused `DebugMsg_uninstall()` function
+
+- [x] **S12.4** Add CONFIG_70D to zebra.c Magic Zoom warning exclusion
+  - 70D shares DIGIC V architecture with 6D/5D3 - same >30fps limitation
+
+- [x] **S12.5** Add CONFIG_70D to shoot.c bitrate measurement
+  - 70D records H264 and benefits from same bitrate measurement as 5D3/6D
+
+- [x] **S12.6** Remove commented-out set_pic_quality function in tweaks.c
+  - Dead code wrapped in `/* ... */`
+
+- [x] **S12.7** Fix unused parameter warnings
+  - tweaks.c: set_expsim stub now uses `(void)expsim`
+
+**Build:** autoexec.bin 444KB (unchanged, well under 656KB limit)
+
+---
+
 ## Long-Term Architecture (Ongoing)
 
 These tasks span multiple sprints:

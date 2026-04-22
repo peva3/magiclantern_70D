@@ -28,7 +28,7 @@ int get_last_time_active() { return last_time_active; }
 
 // disable Canon bottom bar
 
-#if defined(CONFIG_LVAPP_HACK_DEBUGMSG) || defined(CONFIG_LVAPP_HACK)
+#if defined(CONFIG_LVAPP_HACK)
 static int bottom_bar_hack = 0;
 #endif
 
@@ -75,18 +75,6 @@ static void DebugMsg_hack()
         uint32_t d = (uint32_t)&DryosDebugMsg;
         orig_DebugMsg_instr = *(uint32_t*)(d);
         *(uint32_t*)(d) = B_INSTR((uint32_t)&DryosDebugMsg, hacked_DebugMsg);
-    }
-}
-
-static void DebugMsg_uninstall()
-{
-    // uninstall our mean hack (not used)
-    
-    if (orig_DebugMsg_instr)
-    {
-        uint32_t d = (uint32_t)&DryosDebugMsg;
-        *(uint32_t*)(d) = orig_DebugMsg_instr;
-        orig_DebugMsg_instr = 0;
     }
 }
 

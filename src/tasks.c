@@ -100,40 +100,6 @@ void task_update_loads() // called every second from clock_task
 }
 #endif
 
-#if 0 // for debugging only (tskmon checks all tasks in background, so it shouldn't be needed)
-
-/* manually checks peak stack usage for current task (just call it from any task) */
-/* returns free stack space */
-int task_check_stack()
-{
-    struct task_attr_str task_attr;
-    int id = current_task->taskId;
-
-    /* works, gives the same result as DryOS routine, so... let's just use the DryOS one
-     *
-//#ifdef CONFIG_TSKMON
-    tskmon_stack_check(id);
-    msleep(50); // wait until the task is rescheduled, so tskmon can check it
-    uint32_t stack_used = 0;
-    uint32_t stack_free = 0;
-    tskmon_stack_get_max(id, &stack_used, &stack_free);
-    bmp_printf(FONT_MED, 0, 0, "free: %d used: %d", stack_free, stack_used);
-    return stack_free;
-//#elif !defined(CONFIG_VXWORKS)
-    */
-    
-    int r = get_task_info_by_id(1, id, &task_attr);
-    if (r == 0)
-    {
-        int free = task_attr.size - task_attr.used;
-        bmp_printf(FONT(FONT_MED, free ? COLOR_WHITE : COLOR_RED, COLOR_BLACK), 0, 0, "%s: stack free: %d used: %d   ", get_task_name_from_id(id), free, task_attr.used);
-        return free;
-    }
-    return -1;
-    //#endif
-}
-#endif
-
 #ifdef FEATURE_SHOW_TASKS
 static int tasks_show_flags = 0;
 
@@ -419,60 +385,3 @@ PROP_HANDLER(PROP_SHUTDOWN_REASON)
 }
 #endif
 
-#if 0
-static int task_holding_bmp_lock = 0;
-static int line_holding_bmp_lock = 0;
-static char func_holding_bmp_lock[50] = "";
-
-int CheckBmpAcquireRecursiveLock(void* lock, int line, const char* func)
-{
-    char* task_name = get_current_task_name();
-    
-    // just a warning, sometimes we can't get without it (e.g. at redraw), but it's best to avoid
-    /*
-    if (streq(task_name, "GuiMainTask"))
-    {
-        int x = 100;
-        bmp_puts(FONT_MED, &x, &x, "BMP_LOCK GMT");
-    }*/
-    
-    // this is really bad - don't ever try to block property handling task!
-    if (streq(task_name, "PropMgr"))
-    {
-        extern int current_prop_handler;
-        char msg[50];
-        snprintf(msg, sizeof(msg), "BMP_LOCK PROP %x!!!", current_prop_handler);
-        int x = 100;
-        bmp_puts(FONT_MED, (unsigned int *)&x, (unsigned int *)&x, msg);
-        beep();
-        info_led_blink(20,50,50);
-        ASSERT(0);
-    }
-
-    int wait = 2000;
-    int r;
-    while ((r = (int)AcquireRecursiveLock(lock, wait)))
-    {
-        char msg[100];
-        snprintf(msg, sizeof(msg), "%s:%s:%d:\nRLock held by %s:%s:%d  ", get_current_task_name(), func, line, get_task_name_from_id(task_holding_bmp_lock), func_holding_bmp_lock, line_holding_bmp_lock);//, get_task_name_from_id(task_holding_bmp_lock));
-        int x = 100;
-        bmp_puts(FONT_MED, (unsigned int *)&x, (unsigned int *)&x, msg);
-        ml_assert_handler(msg, __FILE__, __LINE__, __func__);
-        wait = 0;
-    }
-    task_holding_bmp_lock = current_task->taskId;
-    line_holding_bmp_lock = line;
-    snprintf(func_holding_bmp_lock, sizeof(func_holding_bmp_lock), func);
-    return r;
-}
-
-int CheckBmpReleaseRecursiveLock(void* lock)
-{
-    int r = (int)ReleaseRecursiveLock(lock);
-    //~ task_holding_bmp_lock = -1;
-    //~ char msg[50] = "                  ";
-    //~ int x = 100;
-    //~ bmp_puts(FONT_LARGE, &x, &x, msg);
-    return r;
-}
-#endif

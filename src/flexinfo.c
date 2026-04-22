@@ -2224,56 +2224,6 @@ uint32_t info_print_battery_icon(info_elem_t *config, info_elem_battery_icon_t *
         return 1;
     }
 
-#if 0 // fights with Canon icon; do not draw, but keep it for positioning the other elements
-
-#ifdef CONFIG_BATTERY_INFO
-    int batlev = GetBatteryLevel();
-    int info_field_color = bmp_getpixel(615,455);
-
-    int pos_x = element->hdr.pos.abs_x;
-    int pos_y = element->hdr.pos.abs_y;
-
-    if(run_type == INFO_PRINT)
-    {
-        uint batcol = 0;
-        uint batfil = 0;
-        bmp_fill(info_field_color,pos_x-4,pos_y+14,96,32); // clear the Canon battery icon
-
-        if (batlev <= (int)element->pct_red)
-        {
-            batcol = COLOR_RED;
-        }
-        else
-        {
-            batcol = COLOR_WHITE;
-        }
-
-        bmp_fill(batcol,pos_x+10,pos_y,72,32); // draw the new battery icon
-        bmp_fill(batcol,pos_x,pos_y+8,12,16);
-        bmp_fill(info_field_color,pos_x+14,pos_y+4,64,24);
-
-        if (batlev <= (int)element->pct_red)
-        {
-            batcol = COLOR_RED;
-        }
-        else if (batlev <= (int)element->pct_yellow)
-        {
-            batcol = COLOR_YELLOW;
-        }
-        else
-        {
-            batcol = COLOR_GREEN2;
-        }
-
-        batfil = batlev*56/100;
-        bmp_fill(batcol,pos_x+18+56-batfil,pos_y+8,batfil,16);
-    }
-#else
-    /* feature n/a, paint it red */
-    bmp_fill(COLOR_RED, element->hdr.pos.abs_x, element->hdr.pos.abs_y, element->hdr.pos.w, element->hdr.pos.h);
-#endif
-
-#endif
     return 0;
 }
 

@@ -217,9 +217,6 @@ void idle_wakeup_reset_counters(int reason) // called from handle_buttons
 {
     if (ml_shutdown_requested) return;
     
-#if 0
-    NotifyBox(2000, "wakeup: %d   ", reason);
-#endif
 
     //~ bmp_printf(FONT_LARGE, 50, 50, "wakeup: %d   ", reason);
     

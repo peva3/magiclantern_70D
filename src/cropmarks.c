@@ -431,30 +431,6 @@ cropmark_redraw()
     )
 }
 
-#if 0
-void draw_cropmark_area()
-{
-    get_yuv422_vram();
-    bmp_draw_rect(COLOR_BLUE, os.x0, os.y0, os.x_ex, os.y_ex);
-    draw_line(os.x0, os.y0, os.x_max, os.y_max, COLOR_BLUE);
-    draw_line(os.x0, os.y_max, os.x_max, os.y0, COLOR_BLUE);
-    
-    bmp_draw_rect(COLOR_RED, HD2BM_X(0), HD2BM_Y(0), HD2BM_DX(vram_hd.width), HD2BM_DY(vram_hd.height));
-    draw_line(HD2BM_X(0), HD2BM_Y(0), HD2BM_X(vram_hd.width), HD2BM_Y(vram_hd.height), COLOR_RED);
-    draw_line(HD2BM_X(0), HD2BM_Y(vram_hd.height), HD2BM_X(vram_hd.width), HD2BM_Y(0), COLOR_RED);
-}
-
-void show_apsc_crop_factor()
-{
-    int x_ex_crop = os.x_ex * 10/16;
-    int y_ex_crop = os.y_ex * 10/16;
-    int x_off = (os.x_ex - x_ex_crop)/2;
-    int y_off = (os.y_ex - y_ex_crop)/2;
-    bmp_draw_rect(COLOR_WHITE, os.x0 + x_off, os.y0 + y_off, x_ex_crop, y_ex_crop);
-    bmp_draw_rect(COLOR_BLACK, os.x0 + x_off + 1, os.y0 + y_off + 1, x_ex_crop - 2, y_ex_crop - 2);
-}
-#endif
-
 static void black_bars()
 {
     if (!get_global_draw()) return;

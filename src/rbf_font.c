@@ -362,13 +362,6 @@ static int FAST rbf_draw_char(font *rbf_font, int x, int y, int ch, int fontspec
     else
         font_draw_char(rbf_font, x, y, cdata, rbf_font->width, rbf_font->hdr.height, rbf_font->wTable[ch], fontspec);
 
-#if 0   /* fixme: breaks cursor in editor.lua */
-    if (ch == '\t')
-    {
-        int tab_width = rbf_font->wTable[' '] * 4;
-        return (x + tab_width) / tab_width * tab_width - x;
-    }
-#endif
     ml_refresh_display_needed = 1;
     return rbf_font->wTable[ch];
 }

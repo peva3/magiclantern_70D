@@ -2624,7 +2624,7 @@ void raw_lv_request_bpp(int bpp)
             MODE_12BIT = 0x010,
             MODE_10BIT = 0x000,
         };
-    #elif defined(CONFIG_200D) | defined(CONFIG_6D2) | defined(CONFIG_7D2)
+    #elif defined(CONFIG_200D) || defined(CONFIG_6D2) || defined(CONFIG_7D2)
     // FIXME currently doesn't do anything for 6D2 or 7D2 since
     // EngDrvOut() is a nop there.  Some definition of the enum is required to build.
     // See 200D for a safe filtered EngDrvOut() - which probably should be more

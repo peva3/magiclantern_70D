@@ -1276,22 +1276,6 @@ static struct menu_entry focus_menu[] = {
                 .help = "Sets up stack focus to use the same range as rack focus.",
             },
 
-            #if 0
-            {
-                .name = "Trigger mode",
-                .priv = &focus_stack_enabled, 
-                .max = 1,
-                .choices = (const char *[]) {"Press PLAY", "Take a pic"},
-                .help = "Choose how to start the focus stacking sequence.",
-            },
-            {
-                .name = "Bracket focus",
-                .priv = &focus_bracket_dir, 
-                .max = 2,
-                .choices = (const char *[]) {"normal", "reverse","disable"},
-                .help = "Start in front or behind focus (varies among lenses)",
-            },
-            #endif
             MENU_EOL
         },
     },

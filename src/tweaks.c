@@ -218,18 +218,8 @@ static MENU_UPDATE_FUNC(expsim_display)
 #endif
 
 #else // no _expsim, use some dummy stubs
-void set_expsim(int expsim){};
+void set_expsim(int expsim){ (void)expsim; }
 #endif
-
-/*
-void set_pic_quality(int q)
-{
-    if (q == -1) return;
-    prop_request_change(PROP_PIC_QUALITY, &q, 4);
-    prop_request_change(PROP_PIC_QUALITY2, &q, 4);
-    prop_request_change(PROP_PIC_QUALITY3, &q, 4);
-}
-*/
 
 extern unsigned lcd_sensor_shortcuts;
 

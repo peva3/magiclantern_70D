@@ -375,7 +375,7 @@ static void do_this_every_second() // called every second
     #endif
 
     // TODO: update bitrate.c to use this approach too
-    #if defined(CONFIG_5D3) || defined(CONFIG_6D)
+    #if defined(CONFIG_5D3) || defined(CONFIG_6D) || defined(CONFIG_70D)
     if (RECORDING_H264)
     {
         extern void measure_bitrate();
