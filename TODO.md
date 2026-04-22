@@ -462,9 +462,9 @@ This document outlines the development sprints for implementing the future work 
   - May help with FlexInfo flickering issue
 
 - [ ] **S11.9** Replace hardcoded camera lists with config flags
-  - shoot.c:6141-6142 - audio remote shot camera list
-  - audio-common.c:499, 533 - repeated camera lists
-  - Create CONFIG_AUDIO_RELEASE_SHOT flag
+  - SKIPPED: Lists are scattered across 25+ files, many already correctly grouped
+  - Would require architectural refactoring (CONFIG_AUDIO_RELEASE_SHOT, etc.)
+  - Moved to Long-Term Architecture as L5
 
 ---
 
@@ -476,6 +476,7 @@ These tasks span multiple sprints:
 - [ ] **L2** MLV v3 global dependency cleanup (started in S7.3)
 - [ ] **L3** Cross-camera compatibility improvements
 - [ ] **L4** Performance optimization (worker priorities, buffer sizes)
+- [ ] **L5** Replace hardcoded camera lists with capability flags (S11.9 deferred)
 
 ---
 
