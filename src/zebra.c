@@ -4115,10 +4115,8 @@ livev_hipriority_task( void* unused )
         if (raw && lv_dispsize == 1 && !is_movie_mode())
         {
             /* only raw zebras, raw histogram and raw spotmeter are working in LV raw mode */
-            // 70D has problems with RAW zebras
-            // TODO: Adjust with appropriate internals-config: CONFIG_NO_RAW_ZEBRAS
-            // (is this name good?  We already have FEATURE_RAW_ZEBRAS...  what's the distinction?)
-            #if !defined(CONFIG_70D) && defined(FEATURE_RAW_ZEBRAS)
+            // 70D has problems with RAW zebras (CONFIG_NO_RAW_ZEBRAS defined in 70D internals)
+            #if defined(FEATURE_RAW_ZEBRAS) && !defined(CONFIG_NO_RAW_ZEBRAS)
             if (zebra_draw && raw_zebra_enable == 1) raw_needed = 1;        /* raw zebras: always */
             #endif
             #if defined(FEATURE_HISTOGRAM)

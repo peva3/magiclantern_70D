@@ -195,9 +195,14 @@ This data is used in `lens.c:1868-1889` for tracking lens position changes but i
 - `lens_info.focus_dist` - focus distance in cm
 - `lens_info.focus_pos` - fine steps from lens (updates during motor movement)
 
-**Fix approach:** Re-enable focus_misc_task and modify to use `PROP_LV_LENS` data instead of `PROP_LV_FOCUS_DATA`. The main difference is update frequency - LV_LENS updates slowly, LV_FOCUS_DATA updates quickly during AF.
+**Already implemented:** The lens.c:1900 handler already extracts focus_pos from PROP_LV_LENS into `lens_info.focus_pos`:
+```c
+lens_info.focus_pos = (int16_t) bswap16( lv_lens->focus_pos );
+```
 
-### 7.2 FPS Override - LOW FIX POTENTIAL
+**Fix approach:** Re-enable focus_misc_task and modify to use `lens_info.focus_pos` instead of `PROP_LV_FOCUS_DATA`. The main limitation is update frequency - LV_LENS updates slowly, LV_FOCUS_DATA updates quickly during AF. Basic focus tracking is possible but may have latency.
+
+### 7.2 FPS Override - MEDIUM FIX POTENTIAL
 
 **Problem:** Explicitly disabled in `platform/70D.112/features.h:15`:
 
@@ -205,7 +210,7 @@ This data is used in `lens.c:1868-1889` for tracking lens position changes but i
 // Really, this simply doesn't work
 // Tried it for a felt hundred hours
 // TIMER_B has untraceable problems
-// Using TIMER_A_ONLY causes banding / patterns 
+// Using TIMER_A_ONLY causes banding / patterns
 #undef FEATURE_FPS_OVERRIDE
 ```
 
@@ -215,9 +220,11 @@ This data is used in `lens.c:1868-1889` for tracking lens position changes but i
 - FPS_REGISTER_CONFIRM_CHANGES = 0xC0F06000
 - TG_FREQ_BASE = 32000000 (different from most other cameras at 28800000)
 
-**Fix approach:** Requires hardware-level timer debugging. Timer B issues are "untraceable" per developer notes. Likely requires oscilloscope/logic analyzer to debug timing issues. Not recommended without significant effort.
+**Forum fix (David_Hugh):** Found that Timer A-only workaround works via "HiJello-FastTv" setting. FPS_REGISTER_B works differently on 70D than other DIGIC V cameras.
 
-### 7.3 RAW Zebras - HIGH FIX POTENTIAL
+**Fix approach:** Test Timer A-only FPS override, verify stability. Requires hardware testing to validate.
+
+### 7.3 RAW Zebras - FIXED (HIGH FIX POTENTIAL)
 
 **Problem:** Explicitly disabled in code at `zebra.c:4121`:
 
@@ -231,7 +238,7 @@ if (zebra_draw && raw_zebra_enable == 1) raw_needed = 1;
 
 **Symptom:** Causes visual glitches in QuickReview and LiveView
 
-**Fix approach:** Add proper `CONFIG_NO_RAW_ZEBRAS` define to `internals.h` instead of using `#if !defined(CONFIG_70D)` scattered in code. This would properly document the limitation and make it cleaner to maintain.
+**Fix applied:** Added `CONFIG_NO_RAW_ZEBRAS` to `platform/70D.112/internals.h` and updated zebra.c to use the proper config flag instead of hardcoded `#if !defined(CONFIG_70D)`. This properly documents the limitation for maintainability.
 
 ## 8. Lens System (`lens.c`)
 

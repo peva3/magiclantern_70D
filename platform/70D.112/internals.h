@@ -159,6 +159,9 @@
 /** this method bypasses Canon's lv_save_raw and slurps the raw data directly from connection #0 */
 #define CONFIG_EDMAC_RAW_SLURP
 
+/** RAW zebras cause visual glitches in QuickReview and LiveView on 70D */
+#define CONFIG_NO_RAW_ZEBRAS
+
 #define CONFIG_MALLOC_STRUCT_V2
 
 #define CONFIG_TASK_STRUCT_V2
