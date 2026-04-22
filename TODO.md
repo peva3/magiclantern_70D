@@ -11,6 +11,13 @@ This document outlines the development sprints for implementing the future work 
 **Current Phase:** Week 1 - Foundation Setup  
 **Last Updated:** 2026-04-22
 
+### Key Contributors (from forum research)
+- **nikfreak:** Primary 70D port developer
+- **David_Hugh:** Found FPS Timer A workaround (HiJello-FastTv)
+- **ArcziPL:** crop_rec_4k with 14-bit lossless
+- **theBilalFakhouri:** sd_uhs module enhancements
+- **a1ex:** Main ML developer, fps-engio and lossless support
+
 ---
 
 ## Sprint 0 — Foundation & Setup (Week 1 - COMPLETED)
@@ -41,21 +48,46 @@ This document outlines the development sprints for implementing the future work 
 - ✅ QEMU infrastructure cloned and ready
 - ✅ Host-side test framework operational
 
+### Confirmed Working Features (from forum)
+
+**Working (do not break):**
+- ✅ Zebras (over/under) in photo mode
+- ✅ Focus Peak in photo mode (greyscale)
+- ✅ Crop Marks in photo and play modes
+- ✅ Ghost Image, Spotmeter, False Color
+- ✅ Waveform (sometimes flickers), Vector scope
+- ✅ Histogram (sometimes freezes - reboot helps)
+- ✅ Audio meters
+- ✅ RAW video (works with limitations - hot pixels at ISO 1600+)
+- ✅ Dual ISO (photo mode)
+- ✅ ETTR
+- ✅ Crop_rec (3x zoom) in photo mode
+
+**Known Issues (user-reported):**
+- 🔶 Level indicator freezes after ~1 min in LV
+- 🔶 Histogram sometimes freezes
+- 🔶 ML menu flickers in LiveView/movie mode
+- 🔶 Shutter speed sometimes ignored (only decreasing works)
+- 🔶 FPS sometimes changes 23.97 → 23.98 randomly
+
 ---
 
 ## Sprint 1 — Discovery & Safe Hooks (Weeks 2-3)
 
 ### Status: PLANNED
 
-- [ ] **S1.1** Map `LV_FOCUS_DATA` equivalent memory locations
-  - Use memory spy hooks during AF operations
-  - Dump candidate addresses during focus peaking
-  - Identify where focus data is stored (if at all)
+**UPDATE:** 70D DOES have PROP_LV_LENS (0x80050000) with focus_pos data - use this as alternative to LV_FOCUS_DATA.
 
-- [ ] **S1.2** FPS register investigation
-  - Document `FPS_REGISTER_A` (0xC0F06008) and `FPS_REGISTER_B` (0xC0F06014) behavior
-  - Test read/write patterns with safe values
-  - Identify banding source when using Timer A
+- [ ] **S1.1** Verify PROP_LV_LENS focus_pos data quality
+  - Test update frequency during AF operations
+  - Compare against lens encoder positions
+  - Determine suitability for focus confirmation UI
+
+- [ ] **S1.2** FPS register investigation (UPDATED)
+  - David_Hugh found workaround: Timer A only via "HiJello-FastTv"
+  - FPS_REGISTER_B (0xC0F06014) works differently on 70D
+  - Test Timer A-only approach for stability
+  - Document banding patterns and mitigations
 
 - [ ] **S1.3** Verify `raw_lv_request` behavior on 70D
   - Test if ETTR can safely request raw buffers in LiveView
@@ -76,21 +108,24 @@ This document outlines the development sprints for implementing the future work 
 
 ### Status: NOT YET STARTED
 
-- [ ] **S2.1** Implement LV_FOCUS_DATA memory spy
-  - If memory location identified in S1.1, create property-like interface
-  - Handle cases where data is not broadcast (polling fallback)
+**UPDATE:** Use PROP_LV_LENS (0x80050000) instead of missing LV_FOCUS_DATA. Handler exists at lens.c:1900.
+
+- [ ] **S2.1** Implement focus confirmation using PROP_LV_LENS
+  - Create property-like interface using existing lens.c:1900 handler
+  - Extract focus_pos from prop_lv_lens struct (lens.h:117, offset 0x23)
+  - Handle polling fallback (LV_LENS updates slower than LV_FOCUS_DATA)
 
 - [ ] **S2.2** Re-enable focus confirmation in Magic Zoom
   - Remove `#if !defined(CONFIG_70D)` guards in focus.c
-  - Test focus bars with spy/proxy data
-  - Tune sensitivity and update frequency
+  - Test focus bars with PROP_LV_LENS data
+  - Tune sensitivity for slower update frequency
 
 - [ ] **S2.3** Restore focus graph/misc task
   - Re-enable `focus_misc_task` for 70D
-  - Verify focus_mag plotting works
+  - Use PROP_LV_LENS instead of PROP_LV_FOCUS_DATA
   - Test with various lenses (wide, tele, macro)
 
-- [ ] **S2.4** Fix focus stacking bug
+- [ ] **S2.4** Fix focus stacking bug (LOW PRIORITY)
   - Investigate "takes 1 behind and 1 before" issue
   - Address soft limit being reached quickly (lens.c line 677)
   - Test multi-shot stacking sequence
@@ -101,15 +136,17 @@ This document outlines the development sprints for implementing the future work 
 
 ### Status: NOT YET STARTED
 
-- [ ] **S3.1** Timer A/B register deep dive
-  - Identify why Timer B has "untraceable problems"
-  - Document Timer A banding pattern (frequency, severity)
-  - Map blanking registers that may affect banding
+**UPDATE:** David_Hugh found experimental workaround using Timer A only (HiJello-FastTv). FPS_REGISTER_B works differently on 70D.
 
-- [ ] **S3.2** Implement safe FPS override prototype
-  - Start with 24fps (closest to native, lowest risk)
-  - Test 30fps, then 60fps (if 70D supports 1080p60)
-  - Add guard rails to prevent unsafe values
+- [ ] **S3.1** Test Timer A-only workaround
+  - Verify HiJello-FastTv setting stability
+  - Test 24fps, 30fps, 60fps baselines
+  - Document any remaining banding issues
+
+- [ ] **S3.2** Explore Timer A+B hybrid approach
+  - Investigate why Timer B has "untraceable problems"
+  - Test read-modify-write patterns carefully
+  - Map blanking registers that may affect banding
 
 - [ ] **S3.3** Banding mitigation
   - Test `TG_FREQ_BASE` adjustments (currently 32000000)
@@ -119,7 +156,7 @@ This document outlines the development sprints for implementing the future work 
 - [ ] **S3.4** User interface for FPS selection
   - Add menu entries for 24/30/60 fps
   - Display current FPS and warnings
-  - Add "safe mode" fallback
+  - Add "safe mode" fallback to Timer A only
 
 ---
 
@@ -127,25 +164,26 @@ This document outlines the development sprints for implementing the future work 
 
 ### Status: NOT YET STARTED
 
-- [ ] **S4.1** Investigate RAW slurp timing conflict
+**UPDATE:** HIGH FIX POTENTIAL - Just needs proper CONFIG_NO_RAW_ZEBRAS define in internals.h instead of scattered #if guards.
+
+- [ ] **S4.1** Add CONFIG_NO_RAW_ZEBRAS to internals.h
+  - Replace scattered `#if !defined(CONFIG_70D)` with proper config flag
+  - This documents the limitation cleanly for maintenance
+
+- [ ] **S4.2** Investigate RAW slurp timing conflict (if needed after S4.1)
   - Document when EDMAC RAW slurp occurs vs LV rendering
   - Identify race condition causing QuickReview corruption
   - Test vsync-locked RAW capture
 
-- [ ] **S4.2** Implement double-buffered RAW capture
+- [ ] **S4.3** Implement double-buffered RAW capture (if needed)
   - Use existing double-buffer architecture from raw_vid module
   - Ensure RAW buffer is stable before zebra analysis
   - Add semaphore or lock to prevent concurrent access
 
-- [ ] **S4.3** Re-enable RAW zebras feature
-  - Remove `FEATURE_RAW_ZEBRAS` disable flag
+- [ ] **S4.4** Test RAW zebras re-enablement
+  - Remove zebra.c:4121 guard
   - Test under varied lighting (low, medium, high dynamic range)
   - Verify no QuickReview or LV corruption
-
-- [ ] **S4.4** Calibrate zebra thresholds
-  - Map RAW values to zebra patterns
-  - Add user-adjustable thresholds
-  - Test accuracy vs histogram data
 
 ---
 
@@ -153,14 +191,17 @@ This document outlines the development sprints for implementing the future work 
 
 ### Status: NOT YET STARTED
 
+**UPDATE:** User-reported working (ArcziPL crop_rec_4k with 14-bit lossless). Hot pixels at ISO 1600+ in 3X crop.
+
 - [ ] **S5.1** Map 70D CMOS/ADTG/ENGIO registers
   - Identify register addresses for crop window control
   - Document safe values for 1:1 binning mode
   - Test 3K and 4K crop presets
 
 - [ ] **S5.2** Implement crop_rec presets for 70D
+  - ArcziPL developed crop_rec_4k variants with 14-bit lossless
   - Add 1:1 mode (full sensor width, line-skipped)
-  - Add 3K mode (~3072px width)
+  - Add 3K mode (~3072px width) - reported working
   - Add 4K UHD mode (4096x2160 or 3840x2160)
   - Add preset menu entries
 
@@ -168,6 +209,7 @@ This document outlines the development sprints for implementing the future work 
   - Verify crop dimensions match expected values
   - Test frame rate stability at each crop
   - Check for overheating or buffer underruns
+  - Address hot pixel issue at ISO 1600+ in 3X crop mode
 
 ---
 
@@ -175,8 +217,10 @@ This document outlines the development sprints for implementing the future work 
 
 ### Status: NOT YET STARTED
 
+**UPDATE:** Photo mode works. Movie mode initially broken, later fixes attempted.
+
 - [ ] **S6.1** Investigate dual ISO photo vs movie pipeline
-  - Document how ISO switching works in photo mode (working)
+  - Photo mode confirmed working by users
   - Identify why movie mode fails (ADTG injection timing?)
   - Compare VSYNC cycle timing between modes
 
@@ -244,13 +288,18 @@ This document outlines the development sprints for implementing the future work 
 
 ### Status: NOT YET STARTED
 
-- [ ] **S9.1** FlexInfo display fix
+**UPDATE:** Level indicator freezes after ~1 min (workaround: press INFO). SD UHS ~70MB/s max at 160MHz.
+
+- [ ] **S9.1** FlexInfo/Level display fix
   - Investigate bottom bar flicker source
+  - Level freezes after ~1-2 min in LV
+  - Workaround: Disable ML overlays, use Canon's level, re-enable ML
   - Implement coordinate remapping or refresh sync
-  - Test with various menu configurations
 
 - [ ] **S9.2** SD UHS tuning
   - Test intermediate frequencies (120MHz, 133MHz)
+  - 160MHz preset gives ~70MB/s (working)
+  - 192/240MHz cause instability
   - Implement PauseReadClock/PauseWriteClock hooks if missing
   - Document stable overclock settings
 

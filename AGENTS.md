@@ -159,7 +159,7 @@ Firmware signature: `SIG_70D_112 = 0xd8698f05`
 
 ## 6. Focus System (`focus.c`)
 
-**Critical Limitation:** Line 926: "70D unfortunately has no LV_FOCUS_DATA property"
+**Critical Limitation:** Line 926 notes "70D unfortunately has no LV_FOCUS_DATA property"
 
 This means:
 - No focus confirmation bars in Magic Zoom
@@ -169,14 +169,78 @@ This means:
 - No focus_misc_task runs on 70D
 - Trap_focus behavior differs on 70D vs other cameras
 
-## 7. Lens System (`lens.c`)
+### Alternative Focus Data: PROP_LV_LENS
+
+Despite lacking `PROP_LV_FOCUS_DATA` (0x80050026), the 70D DOES receive focus position data via `PROP_LV_LENS` (0x80050000):
+
+- **Handler:** `lens.c:1900` - `PROP_HANDLER(PROP_LV_LENS)` extracts:
+  - `lens_info.focus_dist` (uint16, focus distance in cm)
+  - `lens_info.focus_pos` (int16, fine steps from lens, updates during motor movement)
+- **Struct:** `lens.h:117` - `prop_lv_lens` struct with `focus_pos` at offset 0x23
+- **Registration:** Unlike typical handlers, this property is registered via Canon property system (auto-registered from PROP_HANDLER macro)
+
+This data is used in `lens.c:1868-1889` for tracking lens position changes but is NOT exposed to focus confirmation UI (Magic Zoom) which requires the higher-frequency `PROP_LV_FOCUS_DATA` format.
+
+## 7. Investigation: Broken Features & Fix Potential
+
+### 7.1 LV_FOCUS_DATA (Focus Confirmation) - MEDIUM FIX POTENTIAL
+
+**Problem:** 70D firmware doesn't expose `PROP_LV_FOCUS_DATA` (0x80050026), which is required for focus confirmation bars in Magic Zoom and focus peaking.
+
+**Current state:**
+- Entire `focus_misc_task` wrapped in `#if !defined(CONFIG_70D)` (focus.c:930-1054)
+- `PROP_LV_FOCUS_DATA` handler never registered for 70D
+
+**Alternative available:** `PROP_LV_LENS` (0x80050000) IS available and provides:
+- `lens_info.focus_dist` - focus distance in cm
+- `lens_info.focus_pos` - fine steps from lens (updates during motor movement)
+
+**Fix approach:** Re-enable focus_misc_task and modify to use `PROP_LV_LENS` data instead of `PROP_LV_FOCUS_DATA`. The main difference is update frequency - LV_LENS updates slowly, LV_FOCUS_DATA updates quickly during AF.
+
+### 7.2 FPS Override - LOW FIX POTENTIAL
+
+**Problem:** Explicitly disabled in `platform/70D.112/features.h:15`:
+
+```c
+// Really, this simply doesn't work
+// Tried it for a felt hundred hours
+// TIMER_B has untraceable problems
+// Using TIMER_A_ONLY causes banding / patterns 
+#undef FEATURE_FPS_OVERRIDE
+```
+
+**Details:**
+- FPS_REGISTER_A = 0xC0F06008 (Timer A - controls row readout)
+- FPS_REGISTER_B = 0xC0F06014 (Timer B - controls frame timing)
+- FPS_REGISTER_CONFIRM_CHANGES = 0xC0F06000
+- TG_FREQ_BASE = 32000000 (different from most other cameras at 28800000)
+
+**Fix approach:** Requires hardware-level timer debugging. Timer B issues are "untraceable" per developer notes. Likely requires oscilloscope/logic analyzer to debug timing issues. Not recommended without significant effort.
+
+### 7.3 RAW Zebras - HIGH FIX POTENTIAL
+
+**Problem:** Explicitly disabled in code at `zebra.c:4121`:
+
+```c
+// 70D has problems with RAW zebras
+// TODO: Adjust with appropriate internals-config: CONFIG_NO_RAW_ZEBRAS
+#if !defined(CONFIG_70D) && defined(FEATURE_RAW_ZEBRAS)
+if (zebra_draw && raw_zebra_enable == 1) raw_needed = 1;
+#endif
+```
+
+**Symptom:** Causes visual glitches in QuickReview and LiveView
+
+**Fix approach:** Add proper `CONFIG_NO_RAW_ZEBRAS` define to `internals.h` instead of using `#if !defined(CONFIG_70D)` scattered in code. This would properly document the limitation and make it cleaner to maintain.
+
+## 8. Lens System (`lens.c`)
 
 - 70D uses same digital zoom handling as 600D (`CONFIG_600D || CONFIG_70D`) with `PROP_DIGITAL_ZOOM_RATIO`
 - **Focus features bug** (line 677): "70D focus features don't play well with this and soft limit is reached quickly"
 - Focus stacking: "still buggy and takes 1 behind and 1 before all others afterwards are before at the same position no matter what's set in menu"
 - 70D shares `prop_lv_lens` struct layout with 6D/5D3/100D/750D/80D/7D2/5D4 (line 104)
 
-## 8. Custom Functions (`cfn.c`)
+## 9. Custom Functions (`cfn.c`)
 
 - ALO, HTP, MLU accessed via generic macros (not CFn on 70D - in main menus instead)
 - `PROP_CFN_TAB` = `0x80010007`, length `0x1c`
@@ -289,6 +353,58 @@ These represent a cleaner, newer architecture than mlv_rec:
 - **SD Overclocking:** `sd_uhs` module works but `160MHz1` fails immediately on 70D SD host controller.
 - **FlexInfo Flickering:** Bottom bar (time, battery) flickers due to GUI rendering conflict. Uses `UNAVI_BASE` workaround.
 - **Missing CancelUnaviFeedBackTimer:** 70D firmware lacks this function, requiring alternative approach.
+
+## 18. Forum Findings (Discovered Issues & Solutions)
+
+The following issues and discoveries were found through the Magic Lantern forum thread (topic 14309, 140 pages):
+
+### Working Features (Confirmed by Users)
+- **Zebras (over/under):** OK in photo mode, fast zebras only work (raw zebras disabled)
+- **Focus Peak:** OK in photo mode (greyscale)
+- **Crop Marks:** OK in photo and play modes
+- **Ghost Image:** OK
+- **Spotmeter:** OK (position works)
+- **False Color:** OK (banding detection works)
+- **Waveform:** Works but sometimes flickers
+- **Vector scope:** OK
+- **Histogram:** Works well (sometimes freezes, reboot battery helps)
+- **Level indicator:** Freezes after ~1 minute in LV (known bug)
+- **Audio meters:** OK
+- **RAW video:** Works but with limitations (hot pixels at higher ISO)
+- **Dual ISO (photo):** Works per user reports
+- **ETTR:** Works
+- **Crop_rec (3x zoom):** Works in photo mode with some caveats
+
+### Known Issues & Solutions
+- **Hot pixels in RAW video:** More prominent at ISO 1600+, especially in 3X crop mode. Solution: Keep ISO low or use 14-bit lossless compression.
+- **FPS override:** Initially disabled due to vertical banding issues. Later experimentally re-enabled using Timer A only (Timer B has untraceable problems on 70D). David_Hugh found that `FPS_REGISTER_B` at address `C0F06014` works differently than other DIGIC V cameras. Workaround: Use Timer A via "HiJello-FastTv" setting.
+- **SD card write speed:** Limited to ~40MB/s without overclocking. With sd_uhs module using 160MHz preset, can get up to ~70MB/s. Higher presets (192/240MHz) cause instability on 70D.
+- **Electronic level freeze:** Freezes after ~1-2 minutes in LV. Workaround: Disable ML overlays by pressing INFO button, use Canon's level, then re-enable ML.
+- **Level indicator freeze:** Reported as freezing after ~1 minute of use. Related to EVF_STATE rendering.
+- **ML menu disappears:** Menu flickering/disappearing in LiveView/movie mode (also affects 6D).
+- **RAW zebras:** Disabled because they cause problems in QuickReview and LV. Causes visual glitches.
+- **Focus features:** Trap focus only works in photo mode (not LiveView) due to missing LV_FOCUS_DATA property. Other focus features (follow, rack, stacking) disabled.
+- **Dual ISO video:** Not working initially, later fixes were attempted
+- **Hot pixels from EDMAC_RAW_SLURP:** Were causing issues in early builds, fixed by disabling raw slurping
+- **Shutter speed ignored:** Sometimes increasing shutter speed doesn't take effect (only decreasing works)
+- **FPS changes randomly:** Users report 23.97fps randomly changing to 23.98
+
+### Critical Discoveries by Users
+- **FPS Register address:** `C0F06014` (Timer B) works differently on 70D than other cameras (discovered by David_Hugh)
+- **SD clock registers:** Related to `C0F04xxx` range for SD speed (from nikfreak's investigation)
+- **Focus pixel patterns:** 70D has its own focus pixel map, needs separate FPM file
+
+### BitBucket Repository
+- Main development repo: `https://bitbucket.org/nikfreak/magic-lantern/branch/70D_merge_fw112`
+- Crop_rec_4k variants were developed by ArcziPL with 14-bit lossless support
+- SD_UHS custom builds available from various contributors
+
+### Key Contributors
+- **nikfreak:** Primary 70D port developer
+- **a1ex:** Main ML developer, helped with fps-engio and lossless
+- **David_Hugh:** Found FPS timer solution
+- **ArcziPL:** crop_rec_4k experiments with 14-bit lossless
+- **theBilalFakhouri:** sd_uhs module enhancements
 
 ## 17. Codebase Statistics
 
