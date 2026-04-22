@@ -8,7 +8,7 @@ This document outlines the development sprints for implementing the future work 
 **Base Repository:** https://github.com/peva3/magiclantern_70D  
 **Forked From:** https://github.com/reticulatedpines/magiclantern_simplified  
 **Developer Identity:** pmwoodward3@gmail.com / peva3  
-**Current Phase:** Week 1 - Foundation Setup  
+**Current Phase:** Week 7 - QEMU 70D Emulation
 **Last Updated:** 2026-04-22
 
 ### Key Contributors (from forum research)
@@ -632,6 +632,43 @@ These tasks span multiple sprints:
 - magiclantern.bin: 436K
 
 All changes were committed and pushed to origin/main.
+
+---
+
+## Sprint 17 — QEMU 70D Emulation (Week 46)
+
+### Status: ✅ COMPLETED (structure fixes; boot testing blocked by missing ROMs)
+
+**Goal:** Fix QEMU 70D MPU spell structure to match working 6D pattern, enable development with placeholder ROMs.
+
+### Changes Made:
+
+- [x] **S17.1** Restructure 70D.h spell #1/#2 — restored spell #1 `{ 0 }` terminator, moved WaitID 0x80000001 properties into proper spell #2 with PROP_MULTIPLE_EXPOSURE_SETTING reply (mirrors 6D structure)
+- [x] **S17.2** Remove duplicate empty spell #7 for WaitID 0x80000001
+- [x] **S17.3** Add PROP_BOARD_TEMP reply to spell #27 (`{ 0x06, 0x05, 0x03, 0x38, 0x97, 0x00 }` — mirrors 6D spell #26)
+- [x] **S17.4** Add PROP_SW2_MOVIE_START self-reply to spell #45 (`{ 0x06, 0x05, 0x01, 0x8a, 0x00, 0x00 }` — mirrors 6D spell #42)
+- [x] **S17.5** Fix eos.c `check_rom_mirroring()` — replaced `assert(0)` with warning message to allow QEMU boot with placeholder ROMs for development
+- [x] **S17.6** Create placeholder ROM files (ROM0.BIN 8MB, ROM1.BIN 32MB, SFDATA.BIN 8MB) in `/app/70d/roms/70D/`
+- [x] **S17.7** Verified QEMU launches with 70D model — MPU spells loaded correctly, memory map configured
+
+### Remaining Gaps vs 6D (requires real ROM dumps to test):
+
+| Gap | 70D Status | 6D Equivalent | Fix Risk |
+|-----|-----------|---------------|----------|
+| PROP_LV_FOCUS_DATA spell | Missing | 6D spell #30 | N/A (firmware limitation) |
+| PROP_ACTIVE_SWEEP_STATUS + PROP_DL_ACTION | Missing | 6D spell #58 | Medium |
+| PROP_GPS_TIME_SYNC | Missing | 6D spell #60 | Low |
+| NotifyGUIEvent spells | Commented out (lines 256-265) | 6D has working | Needs investigation |
+| WaitID 0x80020000 completion | Commented out (line 264) | 6D has it | Needs investigation |
+| HDMI GPIO address | Falls through to default 0x0138 | 6D has explicit 0x0158 | Needs hardware RE |
+| sio_send_retry patch | Required (patches.gdb) | Not needed | Already in GDB scripts |
+
+### Blocker:
+- **Cannot test actual boot or MPU communication without real ROM dumps from a physical 70D camera**
+- FIR firmware update file is encrypted and cannot be used to extract ROM content
+- ROM dumps must come from a physical camera using ML's built-in dump functionality
+
+**Committed to qemu-eos repo:** `c2507bace3`
 
 ---
 

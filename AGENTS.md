@@ -25,8 +25,8 @@
 6. **Git Identity:** Always use pmwoodward3@gmail.com (email) and peva3 (username) for commits
 7. **Incremental Progress:** Complete work in small, testable chunks - never batch multiple untested changes
 
-**Repository:** https://github.com/peva3/magiclantern_70D  
-**Current Phase:** Week 1 - Foundation Setup  
+**Repository:** https://github.com/peva3/magiclantern_70D
+**Current Phase:** Week 7 - QEMU 70D Emulation
 **Last Updated:** 2026-04-22
 
 ---
@@ -493,11 +493,40 @@ The following issues and discoveries were found through the Magic Lantern forum 
 
 The Canon 70D is a capable DIGIC V platform with robust EDMAC RAW video capabilities (sharing much with the 5D3 and 6D). However, its biggest architectural blindspots are the lack of native LiveView Focus Data (`LV_FOCUS_DATA`) (partially mitigated via PROP_LV_LENS), broken FPS timers, and finicky audio controls. Development on this body requires heavy reliance on `EVF_STATE` hooks rather than clean properties. The 70D uses cache hacks for patching (not MMU like newer cameras), has unique crop_rec limitations, and the SD controller cannot handle aggressive overclocking.
 
-## 22. Recent Sprints (12-15) — Summary
+## 22. Recent Sprints (12-17) — Summary
 
 - S12: Dead code purge & cleanup (removed multiple #if 0 blocks, fixed raw.c bitwise operator, cleaned gui-common.c)
 - S13: Second pass dead code purge (deleted legacy bitrate-6d.c and additional disabled blocks)
 - S14: Module audit & cross-port research (sd_uhs, mlv_lite, dual_iso, crop_rec), enabled safe features from 6D/5D3
 - S15: sd_uhs safety hardening for 70D (menu restricted to OFF/160MHz presets with warning)
+- S16: Documentation & WiFi research (DryOS networking stubs analysis, AGENTS.md/TODO.md updates)
+- S17: QEMU 70D MPU spell fixes — restructured spell #1/#2 to match 6D pattern, added PROP_BOARD_TEMP and PROP_SW2_MOVIE_START replies, fixed eos.c ROM mirroring assert for development with placeholder ROMs
 
 Build verification: autoexec.bin 440K, magiclantern.bin 436K (under 656KB reserve)
+
+## 23. QEMU 70D Emulation Status
+
+### QEMU Model Configuration
+- ROM0: 0xF0000000 (8MB), ROM1: 0xF8000000 (32MB)
+- RAM: 0x40000000-0x5FFFFFFF, MMIO: 0xC0000000-0xDFFFFFFF
+- GDB scripts: `/app/70d/qemu-eos/magiclantern/cam_config/70D/` (debugmsg.gdb, patches.gdb)
+- Run via: `run_qemu.py 70D -q <build_dir> -r /app/70d/roms`
+
+### MPU Spell Fixes (Sprint 17)
+- **Spell #1 terminator restored** — was commented out ("fixme: 0x80000001 does not complete")
+- **Spell #2 created** — WaitID 0x80000001 handler with PROP_MULTIPLE_EXPOSURE_SETTING reply (mirrors 6D)
+- **PROP_BOARD_TEMP** reply added to spell #27 (mirrors 6D spell #26)
+- **PROP_SW2_MOVIE_START** self-reply added to spell #45 (mirrors 6D spell #42)
+- **Duplicate spell #7 removed** — empty WaitID 0x80000001 handler was redundant with new spell #2
+
+### Remaining QEMU Gaps vs 6D
+- PROP_LV_FOCUS_DATA spell missing (firmware limitation, not fixable)
+- NotifyGUIEvent spells commented out (lines 256-265 in 70D.h)
+- HDMI GPIO address uses default 0x0138 (6D uses 0x0158)
+- sio_send_retry firmware patch required (in patches.gdb)
+
+### ROM Dump Requirement
+- **Cannot test actual boot without real ROM dumps from physical 70D camera**
+- Placeholder (zero-filled) ROMs load correctly but execute NOPs indefinitely
+- FIR firmware update file is encrypted — cannot extract ROM content
+- ROM dumps must be captured on-camera using ML's built-in dump functionality
