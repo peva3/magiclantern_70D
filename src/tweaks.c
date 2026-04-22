@@ -1796,7 +1796,9 @@ void zoom_trick_step()
 
         // action!
         if (zoom_trick == 1) fake_simple_button(BGMT_PRESS_ZOOM_IN);
+#ifdef FEATURE_ARROW_SHORTCUTS
         if (zoom_trick == 2) arrow_key_mode_toggle();
+#endif
 
 
         timestamp_for_unknown_button = 0;

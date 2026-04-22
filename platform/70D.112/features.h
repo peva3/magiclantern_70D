@@ -32,3 +32,10 @@
 /* Audio Features */
 #define FEATURE_AUDIO_METERS
 #define FEATURE_AUDIO_REMOTE_SHOT
+
+/* Features ported from 6D/5D3 (DIGIC V peers) */
+#define FEATURE_ZOOM_TRICK_5D3       /* Double-click to zoom shortcut (5D3/6D) */
+#define FEATURE_KEN_ROCKWELL_ZOOM_5D3 /* Zoom from image review mode (5D3/6D) */
+#define FEATURE_SWAP_INFO_PLAY       /* Swap info display in playback mode (6D) */
+#define FEATURE_LV_FOCUS_BOX_SNAP_TO_X5_RAW /* Snap focus box to x5 in raw mode (5D3) */
+#define FEATURE_FOCUS_PEAK_DISP_FILTER /* Focus peaking as display filter (6D) */
