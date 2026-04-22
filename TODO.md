@@ -365,11 +365,14 @@ Implementation: focus.c now includes 70D-specific focus tracking using focus_pos
   - all_features.h enables it automatically for cameras with property support
   - No additional changes needed
 
-- [ ] **S9.1** FlexInfo/Level display fix
-  - Investigate bottom bar flicker source
-  - Level freezes after ~1-2 min in LV
-  - Workaround: Disable ML overlays, use Canon's level, re-enable ML
-  - Implement coordinate remapping or refresh sync
+- [x] **S9.1** FlexInfo/Level display fix
+  - Added 70D-specific flexinfo config in flexinfo.c avoiding bottom bar flicker zone (y=459)
+  - 70D config uses inner screen positions, avoids vari-angle display conflict area
+  - CONFIG_LVAPP_HACK_DEBUGMSG enabled (Sprint 11) suppresses Canon bottom bar
+  - Level freeze: electronic_level.c uses PROP_ROLLING_PITCHING_LEVEL which stops updating after ~1 min
+  - Root cause: 70D firmware stops sending rolling/pitching level property after timeout
+  - Workaround: Disable ML overlays, use Canon's level, re-enable ML (user-reported)
+  - Fix requires hardware tracing of property flow or hooking Canon's level refresh timer
 
 - [ ] **S9.2** SD UHS tuning
   - Test intermediate frequencies (120MHz, 133MHz)
