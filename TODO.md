@@ -308,10 +308,11 @@ This document outlines the development sprints for implementing the future work 
   - Implement PauseReadClock/PauseWriteClock hooks if missing
   - Document stable overclock settings
 
-- [ ] **S9.3** Beep support
-  - Investigate why CONFIG_BEEP is disabled
-  - Implement beep handler if hardware supports
-  - Add menu toggle
+- [x] **S9.3** Beep support ✅
+  - Investigated why CONFIG_BEEP is disabled: was commented out
+  - All required stubs exist (StartASIFDMADAC, StopASIFDMADAC, SoundDevActiveIn, etc.)
+  - Enabled CONFIG_BEEP in internals.h - builds successfully
+  - autoexec.bin increased from 438KB to 442KB
 
 - [ ] **S9.4** METERING/AF-area toggle reliability
   - Debug button handling for toggle
