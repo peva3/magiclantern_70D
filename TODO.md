@@ -547,6 +547,45 @@ Implementation: focus.c now includes 70D-specific focus tracking using focus_pos
 
 ---
 
+## Sprint 14 — Module Audit & Cross-Port Research (Weeks 43-44)
+
+### Status: ✅ COMPLETED
+
+**Goal:** Audit all 21 included modules for 70D-specific issues, research features from other ML ports.
+
+### Module Audit Results:
+
+#### sd_uhs Module (HIGH PRIORITY FIXES AVAILABLE)
+- **160MHz1 explicitly broken** on 70D (forced to 160MHz2)
+- **No GPIO register overrides** for 70D (likely cause of 240MHz instability)
+- **No hybrid clock mode** for 70D (misses "magic trick" for stable high-freq OC)
+- **Menu shows unstable presets** (192/240MHz) without warning - users may corrupt data
+- **Safe mode detection register** (0xC0400614) may be wrong for 70D (SD regs are in C0F04xxx range)
+- **SDR50 baseline borrowed from 700D** - may not match 70D hardware
+
+#### mlv_lite Module (GOOD)
+- Well-supported: lossless works, EDMAC rect copies work
+- Only 70D-specific: dialog_refresh_timer_addr = 0xff558ff0
+- lossless.c has proper 70D handling with unique register addresses (0xC0F373B4 vs 0xC0F375B4)
+- Known workaround: 0x5002d resource omitted from EDMAC lock (TTL_Prepare hangs otherwise)
+
+#### dual_iso Module (PARTIAL)
+- Photo mode works (confirmed by users)
+- **Movie mode deliberately disabled** - FRAME_CMOS_ISO_START = 0
+- CMOS bit parameters (BITS=3, FLAG_BITS=2, EXPECTED_FLAG=3) copied from 7D, unverified
+- Movie mode stride is 46 bytes vs photo mode's 20 bytes (unusual)
+- `is_70d` flag set but never used in enable/disable functions
+- Line-skipping mask (0x800) not applied to 70D - may need it
+
+#### crop_rec Module (NOT FUNCTIONAL)
+- **No 70D initialization block** - module is built but non-functional
+- All write function pointers stay at 0 (CMOS_WRITE, ADTG_WRITE, etc.)
+- Skip offsets wrong: uses 146, 70D needs 144
+- TG_FREQ_BASE = 32MHz (vs 28.8MHz for 5D3) affects all FPS timer calcs
+- Requires hardware testing to determine correct CMOS register values
+
+---
+
 ## Long-Term Architecture (Ongoing)
 
 These tasks span multiple sprints:
