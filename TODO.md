@@ -351,6 +351,17 @@ This document outlines the development sprints for implementing the future work 
   - White balance save/restore for movie mode
   - Kelvin WB lock workaround (used by 600D, 60D, EOSM)
 
+- [x] **S9.x** Enable FEATURE_NITRATE ✅
+  - Bitrate control and display for movie mode
+  - Shows measured bitrate during recording
+  - Safe feature - just reads and displays movie encoding parameters
+  - autoexec.bin: 444KB (no size increase from NITRATE)
+
+- [x] **S9.x** FEATURE_SHUTTER_LOCK already enabled ✅
+  - Already active via CONFIG_PROP_REQUEST_CHANGE in internals.h
+  - all_features.h enables it automatically for cameras with property support
+  - No additional changes needed
+
 - [ ] **S9.1** FlexInfo/Level display fix
   - Investigate bottom bar flicker source
   - Level freezes after ~1-2 min in LV

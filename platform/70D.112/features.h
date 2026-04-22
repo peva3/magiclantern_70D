@@ -21,7 +21,6 @@
 
 /* disable RAW zebras as they cause problems in QR and LV too */
 #undef FEATURE_RAW_ZEBRAS
-#undef FEATURE_NITRATE
 
 // we got enough infos on main display and top lcd.
 // Mainly this got disabled due to the bottom line
