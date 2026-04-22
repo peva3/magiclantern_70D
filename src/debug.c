@@ -294,13 +294,6 @@ static void run_test()
     // since dm_store is more permissive than dm_print.
     call("dumpf");
 
-#if 0 && defined(CONFIG_200D)
-    // Want to run a quick test?  You can hack it in here,
-    // after modifying the above guards.  The guards allow
-    // you to hack in whatever hard-coded per cam constants
-    // you want, if you're doing that kind of thing.
-#endif
-
 }
 
 #ifdef FEATURE_BOOTFLAG_MENU
@@ -704,26 +697,6 @@ static MENU_UPDATE_FUNC(efictemp_display)
 #endif
 #endif
 
-#if 0 // CONFIG_5D2
-static void ambient_display(
-    void *            priv,
-    int            x,
-    int            y,
-    int            selected
-)
-{
-    extern int lightsensor_raw_value;
-    int ev = gain_to_ev_scaled(lightsensor_raw_value, 10);
-    bmp_printf(
-        selected ? MENU_FONT_SEL : MENU_FONT,
-        x, y,
-        "Ambient light: %d.%d EV",
-        ev/10, ev%10
-    );
-    menu_draw_icon(x, y, MNI_ON, 0);
-}
-#endif
-
 #ifdef FEATURE_DEBUG_PROP_DISPLAY
 static CONFIG_INT("prop.i", prop_i, 0);
 static CONFIG_INT("prop.j", prop_j, 0);
@@ -898,13 +871,6 @@ static struct menu_entry debug_menus[] = {
         .help = "Take a screenshot for each ML menu.",
     }, */
 #if CONFIG_DEBUGMSG
-    #if 0
-    {
-        .name = "Draw palette",
-        .select        = bmp_draw_palette,
-        .help = "Display a test pattern to see the color palette."
-    },
-    #endif
     {
         .name = "Spy properties",
         .priv = &draw_prop,
@@ -1095,14 +1061,6 @@ static struct menu_entry debug_menus[] = {
         //.essential = FOR_MOVIE | FOR_PHOTO,
     },
 #endif
-    #if 0 // CONFIG_5D2
-    {
-        .name = "Ambient light",
-        //~.display = ambient_display,
-        .help = "Ambient light from the sensor under LCD, in raw units.",
-        //.essential = FOR_MOVIE | FOR_PHOTO,
-    },
-    #endif
 #ifdef CONFIG_BATTERY_INFO
     {
         .name = "Battery level",

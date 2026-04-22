@@ -268,26 +268,7 @@ null_pointer_check()
                 return;
             }
 
-            /* for reference only */
-            #if 0
-            #if defined(CONFIG_60D) || defined(CONFIG_1100D) || defined(CONFIG_600D)
-            /* [60D]   AeWB -> pc=ff07cb10
-             * [1100D] AeWB -> pc=ff07dbd4 lr=ff07dbd4 stack=137058+0x4000 entry=ff1ee5d8(9b9604)
-             * [600D]  AeWB -> pc=ff07f658 lr=ff07f658 stack=137058+0x4000 entry=ff1fbab4(90df10)
-             */
-            if (streq(task_name, "AeWb"))
-                return;
-            #endif
-
-            #if defined(CONFIG_550D) || defined(CONFIG_500D) || defined(CONFIG_60D) || defined(CONFIG_1100D) || defined(CONFIG_600D)
-            /* Ignore FileMgr NPE
-             * [500D] FileMgr -> pc=ffff0740 lr=ffff0728 stack=13bf88+0x1000 entry=ff1a67b0(65d230)
-             * [550D] FileMgr -> pc=      10 lr=ff01380c stack=113128+0x1000 entry=ff1d8a3c(72c488)
-             * [60D]  FileMgr -> pc=ff013e9c
-             */
-            if (streq(task_name, "FileMgr"))
-                return;
-            #endif
+            /* for reference only - older cameras had NPE workarounds */
 
             #if defined(CONFIG_550D) || defined(CONFIG_500D)
             /* Ignore MovieRecorder NPE
@@ -311,7 +292,6 @@ null_pointer_check()
              */
             if (streq(task_name, "USBTrns"))
                 return;
-            #endif
             #endif
 
             static char msg[256];

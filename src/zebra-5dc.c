@@ -1549,32 +1549,8 @@ int get_spot_motion(int dxb, int xcb, int ycb, int draw)
 void
 spotmeter_erase()
 {
-#if 0
-    if (!spotmeter_dirty) return;
-    spotmeter_dirty = 0;
-
-    int xcb = spot_prev_xcb;
-    int ycb = spot_prev_ycb;
-    int dx = spotmeter_formula <= 3 ? 26 : 52;
-    int y0 = -13;
-    uint32_t* M = (uint32_t*)get_bvram_mirror();
-    uint32_t* B = (uint32_t*)bmp_vram();
-    for(int y = (ycb&~1) + y0 ; y <= (ycb&~1) + 36 ; y++ )
-    {
-        for(int x = xcb - dx ; x <= xcb + dx ; x+=4 )
-        {
-            uint8_t* m = (uint8_t*)(&(M[BM(x,y)/4])); //32bit to 8bit 
-            if (*m == 0x80) *m = 0;
-            m++;
-            if (*m == 0x80) *m = 0;
-            m++;
-            if (*m == 0x80) *m = 0;
-            m++;
-            if (*m == 0x80) *m = 0;
-            B[BM(x,y)/4] = 0;
-        }
-    }
-#endif
+    /* spotmeter erase code removed - was disabled with #if 0 */
+    (void)0;
 }
 #endif
 
@@ -1813,27 +1789,6 @@ struct menu_entry zebra_menus[] = {
             MENU_EOL
         }
     },
-    #if 0
-    {
-        .name = "False color",
-        .priv       = &falsecolor_draw,
-        .update    = falsecolor_display,
-        .submenu_height = 160,
-        .help = "Exposure aid: each brightness level is color-coded.",
-        //.essential = FOR_LIVEVIEW | FOR_PLAYBACK,
-        .children =  (struct menu_entry[]) {
-            {
-                .name = "Palette",
-                .priv = &falsecolor_palette, 
-                .max = COUNT(false_colour)-1,
-                .icon_type = IT_DICE,
-                .update = falsecolor_display_palette,
-                .help = "False color palettes for exposure, banding, green screen...",
-            },
-            MENU_EOL
-        }
-    },
-    #endif
 /*  {
         .name = "Histo/Wavefm",
         .priv       = &hist_draw,

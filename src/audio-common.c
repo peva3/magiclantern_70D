@@ -979,25 +979,6 @@ audio_set_meterlabel(){
 
 }
 
-#if 0
-static void
-audio_o2gain_display( void * priv, int x, int y, int selected )
-{
-    static uint8_t gains[] = { 0, 6, 12, 18 };
-    unsigned gain_reg= *(unsigned*) priv;
-    gain_reg &= 0x3;
-    
-    bmp_printf(
-               selected ? MENU_FONT_SEL : MENU_FONT,
-               x, y,
-               //23456789
-               "o2gain:  -%2d dB",
-               gains[ gain_reg ]
-               );
-}
-#endif
-
-
 static const char* get_audio_input_string()
 {
     switch(input_choice) {

@@ -250,29 +250,6 @@ static struct mem_allocator allocators[] = {
     },
 #ifndef CONFIG_INSTALLER    /* installer only needs the basic allocators */
 
-
-#if 0 /* not implemented yet */
-    {
-        .name = "RscMgr",
-        .malloc = _rscmgr_malloc,
-        .free = _rscmgr_free,
-        .get_free_space = rscmgr_get_free_space,
-        .preferred_min_alloc_size = 16 * 1024,
-        .preferred_max_alloc_size = 2 * 1024 * 1024,
-    },
-#endif
-
-#if 0 /* not implemented yet */
-    {
-        .name = "task_mem",
-        .malloc = _task_malloc,
-        .free = _task_free,
-        .get_free_space = task_get_free_space,
-        .preferred_min_alloc_size = 64 * 1024,
-        .preferred_max_alloc_size = 512 * 1024,
-    },
-#endif
-
     // Canon expects this memory pool to be completely empty when it starts some operations.
     // If it isn't, the camera can lock completely, Err 70, or crash.
     // An example operation is image editing.  Go to image review, press Q (Q/Set on some cams),
@@ -1344,17 +1321,6 @@ static MENU_UPDATE_FUNC(meminfo_display)
             MENU_SET_ICON(MNI_DICE, 0);
             mem_error_display(entry, info);
             break;
-#if 0
-        case 1: // malloc
-            MENU_SET_VALUE("%s", format_memory_size(m));
-            if (m < 128*1024) MENU_SET_WARNING(MENU_WARN_ADVICE, "Would be nice to have at least 128K free here.");
-            break;
-
-        case 2: // AllocateMemory
-            MENU_SET_VALUE("%s", format_memory_size(M));
-            if (M < 1024*1024) MENU_SET_WARNING(MENU_WARN_ADVICE, "Canon code requires around 1 MB from here.");
-            break;
-#endif
 
         case 3: // task stack
             MENU_SET_VALUE("%s", format_memory_size(max_stack_ack));

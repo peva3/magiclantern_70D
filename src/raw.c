@@ -1307,33 +1307,6 @@ int raw_update_params_work()
         /* return failure, and make sure the black level is recomputed at next call */
         dirty = 1;
 
-        #if 0
-        static int first_bad_frame = 1;
-        if (first_bad_frame)
-        {
-            /* for debugging: if black check fails, save the bad frame as DNG */
-            first_bad_frame = 0;
-
-            /* make a copy of the raw buffer, because it's being updated while we are saving it */
-            void* buf = malloc(raw_info.frame_size);
-            if (buf)
-            {
-                memcpy(buf, raw_info.buffer, raw_info.frame_size);
-                // On modern cams, save_dng() doesn't yet work, cause unknown.
-                // To save something there, uncomment dump_seg() line.
-                // tools/image/image_buffer_guesser/display_buf.py can be used
-                // to view and save the buffer data.
-                //dump_seg(buf, raw_info.frame_size, "raw.dmp");
-                char filename[50];
-                get_numbered_file_name("bad%02d.dng", 99, filename, sizeof(filename));
-                struct raw_info local_raw_info = raw_info;
-                local_raw_info.buffer = buf;
-                save_dng(filename, &local_raw_info);
-                free(buf);
-            }
-        }
-        #endif
-
         dbg_printf("Black check error\n");
         return 0;
     }

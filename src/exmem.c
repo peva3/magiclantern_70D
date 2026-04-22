@@ -396,44 +396,6 @@ int _shoot_get_free_space()
     return (int)(31.5 * 1024 * 1024);
 }
 
-#if 0
-void exmem_test()
-{
-    struct memSuite *hSuite = 0;
-    struct memChunk *hChunk = 0;
-    
-    msleep(2000);
-    AllocateMemoryResource(1024*1024*32, allocCBR, (unsigned int)&hSuite, 0x50);
-    int r = take_semaphore_nc(alloc_sem, 100);
-    if (r)
-        return;
-    
-    if(!hSuite)
-    {
-        bmp_printf(FONT(FONT_MED, COLOR_WHITE, COLOR_BLACK), 0, 0, "Alloc Fail");
-        return;
-    }
-    hChunk = GetFirstChunkFromSuite(hSuite);
-    int num = 0;
-    
-    bmp_printf(FONT(FONT_MED, COLOR_WHITE, COLOR_BLACK), 0, 0, "C:%d S:0x%08X", GetNumberOfChunks(hSuite), GetSizeOfMemorySuite(hSuite) );
-    while(hChunk)
-    {
-        if(num > 13)
-        {
-            num = 13;
-        }
-        bmp_printf(FONT(FONT_MED, COLOR_WHITE, COLOR_BLACK), 0, 30 + num * 20, 
-            "[%d] A:0x%08X S:0x%08X R:0x%08X", num, GetMemoryAddressOfMemoryChunk(hChunk), GetSizeOfMemoryChunk(hChunk), GetRemainOfMemoryChunk(hChunk));
-        hChunk = GetNextMemoryChunk(hSuite, hChunk);
-        num++;
-    } 
-    bmp_printf(FONT(FONT_MED, COLOR_WHITE, COLOR_BLACK), 0, 30 + num++ * 20, "Done");
-
-    FreeMemoryResource(hSuite, freeCBR, 0);
-}
-#endif
-
 /* SRM job memory */
 
 // SJE FIXME: disable SRM stuff if it's known to not work on a cam.

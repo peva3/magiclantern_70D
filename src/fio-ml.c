@@ -36,21 +36,6 @@ static char dcim_dir[FIO_MAX_PATH_LENGTH];
 /* only enable if needed */
 CONFIG_INT("cf.workaround", cf_card_workaround, 0);
 
-#if 0
-MENU_UPDATE_FUNC(card_info_display)
-{
-    //~ int pcmcia  = *(uint8_t*)0x68c88;
-    //~ int ide     = *(uint8_t*)0x68c89;
-    //~ int udma    = *(uint8_t*)0x68c8A;
-    char* make  = (char*)0x68c8B;
-    char* model = (char*)0x68cAA;
-    int cf_present = is_dir("A:/");
-
-    MENU_SET_VALUE("%s %s", cf_present ? make : "N/A", model);
-    MENU_SET_ICON(cf_present ? MNI_ON : MNI_OFF, 0);
-}
-#endif
-
 struct card_info* get_ml_card()
 {
     return ML_CARD;

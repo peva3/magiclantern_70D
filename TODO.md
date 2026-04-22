@@ -516,6 +516,37 @@ Implementation: focus.c now includes 70D-specific focus tracking using focus_pos
 
 ---
 
+## Sprint 13 — Dead Code Purge Round 2 (Weeks 41-42)
+
+### Status: ✅ COMPLETED
+
+**Goal:** Remove remaining dead `#if 0` blocks, delete entirely dead files, clean up more unused code.
+
+- [x] **S13.1** Delete entirely dead file: `bitrate-6d.c` (656 lines)
+  - 70D uses `bitrate-5d3.o`, not `bitrate-6d.c`
+  - File was wrapped in `#if 0` with comment "not minimally invasive"
+
+- [x] **S13.2** Remove dead `#if 0` blocks
+  - `minimal-d678.c`: Memory scanning diagnostic + LiveView RAW experiments (52 lines)
+  - `log-d678.c`: MPU message logging + recv callback hook (31 lines)
+  - `fio-ml.c`: CF card info display (14 lines, hardcoded CF addresses)
+  - `exmem.c`: `exmem_test()` debug function (37 lines)
+  - `tskmon.c`: Older camera NPE workarounds (19 lines)
+  - `debug.c`: Empty test hook + ambient light menu + draw palette (31 lines)
+  - `menuindex.c`: Broken help system menus (17 lines)
+  - `reboot.c`: Alternative firmware jump path (9 lines)
+  - `property.c`: `_get_prop()` / `_get_prop_str()` unreliable helpers (23 lines)
+  - `raw.c`: Bad frame DNG save debug code (26 lines)
+  - `mem.c`: RscMgr/task_mem allocator entries + memory info cases (31 lines)
+  - `audio-common.c`: `audio_o2gain_display()` function (17 lines)
+  - `zebra-5dc.c`: Spotmeter erase code + false color menu (47 lines)
+
+- [x] **S13.3** Fixed stray `#endif` in `tskmon.c` caused by over-eager removal
+
+**Build:** autoexec.bin 436KB (down from 444KB - 8KB saved!)
+
+---
+
 ## Long-Term Architecture (Ongoing)
 
 These tasks span multiple sprints:

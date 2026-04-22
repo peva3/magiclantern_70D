@@ -32,14 +32,6 @@ static void my_DebugMsg(int class, int level, char* fmt, ...)
     if (buf_size - len < 100)
         return;
 
-#if 0
-    if ((class != 0 || level != 15) && level < 3)
-    {
-        /* skip "unimportant" messages */
-        return;
-    }
-#endif
-
 #if defined(CONFIG_DIGIC_78X)
     static volatile uint32_t lock;
     uint32_t old = cli_spin_lock(&lock);
@@ -257,21 +249,6 @@ static void mpu_decode(const char * in, char * out, int max_len)
     if (len) out[len-1] = 0;
 }
 
-#if 0
-extern int (*mpu_recv_cbr)(char * buf, int size);
-extern int __attribute__((long_call)) mpu_recv(char * buf);
-
-static int mpu_recv_log(char * buf, int size_unused)
-{
-    int size = buf[-1];
-    mpu_decode(buf, mpu_msg, sizeof(mpu_msg));
-    DryosDebugMsg(0, 15, "*** mpu_recv(%02x %s)", size, mpu_msg);
-
-    /* call the original */
-    return mpu_recv(buf);
-}
-#endif
-
 int GetFreeMemForAllocateMemory()
 {
     int a,b;
@@ -332,17 +309,6 @@ void log_start()
     /* install hooks before and after each hardware interrupt */
     pre_isr_hook = &pre_isr_log;
     post_isr_hook = &post_isr_log;
-
-#if 0
-    /* wait for InitializeIntercom to complete
-     * then install our own hook quickly
-     * this assumes Canon's init_task is already running */
-    while (!mpu_recv_cbr)
-    {
-        msleep(10);
-    }
-    mpu_recv_cbr = &mpu_recv_log;
-#endif
 
     sync_caches();
 

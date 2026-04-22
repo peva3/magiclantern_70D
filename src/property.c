@@ -200,29 +200,6 @@ prop_init( void* unused )
     prop_reset_registration();
 }
 
-#if 0
-// for reading simple integer properties
-// not reliable in realtime scenarios (race condition?)
-int _get_prop(int prop)
-{
-    int* data = 0;
-    size_t len = 0;
-    int err = prop_get_value(prop, (void **) &data, &len);
-    if (!err) return data[0];
-    return 0;
-}
-
-// for strings
-// not reliable in realtime scenarios (race condition?)
-char* _get_prop_str(int prop)
-{
-    char* data = 0;
-    size_t len = 0;
-    int err = prop_get_value(prop, (void **) &data, &len);
-    if (!err) return data;
-    return 0;
-}
-#endif
 /* not reliable
 
 

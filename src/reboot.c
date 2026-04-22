@@ -347,16 +347,6 @@ cstart( void )
     // It won't hurt on those who don't.
     sync_caches();
 
-    #if 0
-      qprint("[boot] jump to main firmware: "); qprintn(MAIN_FIRMWARE_ADDR); qprint("\n");
-      #if defined(CONFIG_DIGIC_78X)
-        void __attribute__((long_call)) (*main_firmware)() = (void*) (MAIN_FIRMWARE_ADDR | 1);
-      #else
-        void __attribute__((long_call)) (*main_firmware)() = (void*) MAIN_FIRMWARE_ADDR;
-      #endif
-      main_firmware();
-    #endif
-
     /* Jump into the newly relocated code
        Q: Why target/compiler-specific attribute long_call?
        A: If in any case the base address passed to linker (-Ttext 0x40800000) doesnt fit because we
