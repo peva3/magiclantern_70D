@@ -162,11 +162,11 @@ This document outlines the development sprints for implementing the future work 
 
 ## Sprint 4 — RAW Zebras & Exposure (Weeks 12-14)
 
-### Status: NOT YET STARTED
+### Status: ✅ COMPLETED
 
-**UPDATE:** HIGH FIX POTENTIAL - Just needs proper CONFIG_NO_RAW_ZEBRAS define in internals.h instead of scattered #if guards.
+**UPDATE:** ✅ DONE - CONFIG_NO_RAW_ZEBRAS added to internals.h at line 163. zebra.c updated to use proper config flag at line 4119. This documents the limitation cleanly for maintenance.
 
-- [ ] **S4.1** Add CONFIG_NO_RAW_ZEBRAS to internals.h
+- [x] **S4.1** Add CONFIG_NO_RAW_ZEBRAS to internals.h ✅
   - Replace scattered `#if !defined(CONFIG_70D)` with proper config flag
   - This documents the limitation cleanly for maintenance
 
@@ -286,9 +286,14 @@ This document outlines the development sprints for implementing the future work 
 
 ## Sprint 9 — Quality of Life Improvements (Weeks 32-34)
 
-### Status: NOT YET STARTED
+### Status: IN PROGRESS
 
 **UPDATE:** Level indicator freezes after ~1 min (workaround: press INFO). SD UHS ~70MB/s max at 160MHz.
+
+- [x] **S9.x** Enable CONFIG_ZOOM_HALFSHUTTER_UILOCK ✅
+  - Enables UI lock during zoom operations with half-shutter pressed
+  - Prevents UI glitches when zooming while holding shutter
+  - Already enabled in 5D3 - verified working pattern
 
 - [ ] **S9.1** FlexInfo/Level display fix
   - Investigate bottom bar flicker source

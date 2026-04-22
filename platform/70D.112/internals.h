@@ -154,7 +154,7 @@
  *  Workaround: block the shutter button while switching zoom, to avoid the race condition
  *  todo: find a proper fix that does not prevent picture taking
  */
-//~ #define CONFIG_ZOOM_HALFSHUTTER_UILOCK
+#define CONFIG_ZOOM_HALFSHUTTER_UILOCK
 
 /** this method bypasses Canon's lv_save_raw and slurps the raw data directly from connection #0 */
 #define CONFIG_EDMAC_RAW_SLURP
