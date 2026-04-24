@@ -94,6 +94,10 @@ qemu-eos/trace/trace-generated.h
 qemu-eos/trace/trace-generated-timestamp.c
 qemu-eos/magiclantern/core.*
 qemu-eos/magiclantern/disk_images/*.qcow2
+qemu-eos/ui/keycodemapdb/
+qemu-eos/dtc/
+qemu-eos/capstone/
+qemu-eos/slirp/
 
 # ROM dumps (too large for git, placeholder or real)
 roms/

@@ -27,7 +27,40 @@
 
 **Repository:** https://github.com/peva3/magiclantern_70D
 **Current Phase:** Week 7 - QEMU 70D Emulation
-**Last Updated:** 2026-04-22
+**Last Updated:** 2026-04-24
+
+## QEMU-EOS Setup (in-tree)
+
+The qemu-eos codebase is merged directly into this repo (as a git subtree with full history). No separate clone needed.
+
+### One-time build setup:
+```bash
+# 1. Populate nested submodules (keycodemapdb, dtc, capstone)
+cd qemu-eos
+git clone https://gitlab.com/qemu-project/keycodemapdb.git ui/keycodemapdb
+cd ui/keycodemapdb && git checkout 6b3d716e2b && cd ../../..
+git clone https://gitlab.com/qemu-project/dtc.git dtc
+cd dtc && git checkout 88f18909db && cd ..
+git clone https://gitlab.com/qemu-project/capstone.git capstone
+cd capstone && git checkout 22ead3e0bf && cd ..
+
+# 2. Configure and build
+mkdir -p build && cd build
+../configure --target-list=arm-softmmu --disable-werror
+make -j$(nproc)
+```
+
+### Quick test:
+```bash
+./test_70d_qemu.sh              # Quick test (10s, placeholder ROMs)
+./test_70d_qemu.sh --gdb        # With GDB server
+./test_70d_qemu.sh --boot-trace # GDB + boot-trace script
+```
+
+### GDB scripts:
+- `qemu-eos/magiclantern/cam_config/70D/debugmsg.gdb` — Standard task/interrupt/func logging
+- `qemu-eos/magiclantern/cam_config/70D/boot.gdb` — Enhanced 4-phase boot trace
+- `qemu-eos/magiclantern/cam_config/70D/patches.gdb` — Patches only (sio_send_retry)
 
 ---
 
