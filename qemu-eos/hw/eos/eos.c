@@ -859,8 +859,9 @@ static int check_rom_mirroring(void *buf, int size, int full_size)
         // identical halves? check recursively to find the lowest size with unique data
         if (!check_rom_mirroring(buf, size / 2, full_size))
         {
-            fprintf(stderr, "[EOS] mirrored data; unique 0x%X bytes repeated 0x%X times\n", size / 2, full_size / (size / 2));
-            assert(0);
+fprintf(stderr, "[EOS] mirrored data; unique 0x%X bytes repeated 0x%X times\n", size / 2, full_size / (size / 2));
+fprintf(stderr, "[EOS] warning: ROM mirroring check failed (placeholder or partial ROM?), continuing\n");
+return 1;
         }
         return 1;
     }

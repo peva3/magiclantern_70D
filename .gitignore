@@ -77,4 +77,25 @@ modules/*/*/build
 developer_guide/developer_guide.html
 developer_guide/developer_guide.pdf
 
+# qemu-eos build artifacts
+qemu-eos/build/
+qemu-eos/*.o
+qemu-eos/*.d
+qemu-eos/config-all-devices.mak
+qemu-eos/config-all-disks.mak
+qemu-eos/config-host.mak
+qemu-eos/config-status.mak
+qemu-eos/config-targets.mak
+qemu-eos/Makefile.ninja
+qemu-eos/build.ninja
+qemu-eos/stubs/
+qemu-eos/trace/trace-generated.c
+qemu-eos/trace/trace-generated.h
+qemu-eos/trace/trace-generated-timestamp.c
+qemu-eos/magiclantern/core.*
+qemu-eos/magiclantern/disk_images/*.qcow2
+
+# ROM dumps (too large for git, placeholder or real)
+roms/
+
 syntax: regexp
