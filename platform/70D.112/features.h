@@ -11,7 +11,12 @@
 // Really, this simply doesn't work
 // Tried it for a felt hundred hours
 // TIMER_B has untraceable problems
-// Using TIMER_A_ONLY causes banding / patterns 
+// Using TIMER_A_ONLY causes banding / patterns
+// UPDATE: David_Hugh found Timer A-only workaround works via HiJello-FastTv setting
+// S3.1 TEST RESULT: Enabling FEATURE_FPS_OVERRIDE causes early boot crash in QEMU
+// Root cause: FPS override code path hits unhandled case on 70D
+// Resolution: Requires HiJello-FastTv setting selection OR further code investigation
+// Marked as REQUIRES_INVESTIGATION - hardware testing needed
 #undef FEATURE_FPS_OVERRIDE
 
 /* see comments in lens.c */
