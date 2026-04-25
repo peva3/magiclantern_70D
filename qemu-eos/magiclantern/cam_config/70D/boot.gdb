@@ -14,7 +14,11 @@
 # For lighter tracing, use debugmsg.gdb instead.
 
 source -v debug-logging.gdb
-source -v 70D/patches.gdb
+
+# Firmware patches (applied inline to avoid double target remote from patches.gdb)
+# patch sio_send_retry - prevents infinite "send retrying..." loop
+set *(int*)0xFF33A570 = 0xe3a00000
+set *(int*)0xFF33A574 = 0xe12fff1e
 
 macro define CURRENT_TASK 0x7AAC0
 macro define CURRENT_ISR (MEM(0x648) ? MEM(0x64C) >> 2 : 0)
@@ -266,5 +270,3 @@ printf "  boot_enable_mpu     - enable MPU logging\n"
 printf "  boot_enable_props   - enable property logging\n"
 printf "  boot_enable_semaphores - enable semaphore logging\n"
 printf "  boot_enable_timers  - enable timer logging\n\n"
-
-cont
