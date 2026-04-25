@@ -534,16 +534,19 @@ The Canon 70D is a capable DIGIC V platform with robust EDMAC RAW video capabili
 - S15: sd_uhs safety hardening for 70D (menu restricted to OFF/160MHz presets with warning)
 - S16: Documentation & WiFi research (DryOS networking stubs analysis, AGENTS.md/TODO.md updates)
 - S17: QEMU 70D MPU spell fixes — restructured spell #1/#2 to match 6D pattern, added PROP_BOARD_TEMP and PROP_SW2_MOVIE_START replies, fixed eos.c ROM mirroring assert for development with placeholder ROMs
+- S18: MPU spell coverage improvement — added 5 missing property groups (PROP_AF_MICROADJUSTMENT, PROP_LV_LENS in PERMIT_ICU_EVENT, PROP_CONTINUOUS_AF_VALID variant, PROP_ROLLING_PITCHING_LEVEL chain, PROP 80050034)
+- S19: ROM1 size bug fix — corrected from 8MB to 16MB in both QEMU and ML; full firmware boot achieved with real ROM dumps
 
-Build verification: autoexec.bin 440K, magiclantern.bin 436K (under 656KB reserve)
+Build verification: autoexec.bin 440KB, magiclantern.bin 437KB (under 656KB reserve)
 
 ## 23. QEMU 70D Emulation Status
 
 ### QEMU Model Configuration
-- ROM0: 0xF0000000 (8MB), ROM1: 0xF8000000 (32MB)
+- ROM0: 0xF0000000 (8MB), ROM1: 0xF8000000 (**16MB** — fixed from 8MB bug)
 - RAM: 0x40000000-0x5FFFFFFF, MMIO: 0xC0000000-0xDFFFFFFF
-- GDB scripts: `/app/70d/qemu-eos/magiclantern/cam_config/70D/` (debugmsg.gdb, patches.gdb)
+- GDB scripts: `/app/70d/qemu-eos/magiclantern/cam_config/70D/` (debugmsg.gdb, patches.gdb, boot.gdb)
 - Run via: `run_qemu.py 70D -q <build_dir> -r /app/70d/roms`
+- Test script: `./test_70d_qemu.sh --boot --no-build --timeout 15`
 
 ### MPU Spell Fixes (Sprint 17)
 - **Spell #1 terminator restored** — was commented out ("fixme: 0x80000001 does not complete")
@@ -552,14 +555,35 @@ Build verification: autoexec.bin 440K, magiclantern.bin 436K (under 656KB reserv
 - **PROP_SW2_MOVIE_START** self-reply added to spell #45 (mirrors 6D spell #42)
 - **Duplicate spell #7 removed** — empty WaitID 0x80000001 handler was redundant with new spell #2
 
-### Remaining QEMU Gaps vs 6D
+### MPU Spell Coverage (Sprint 18)
+- **PROP_AF_MICROADJUSTMENT** added to init spell #1 and mode spell #2 (70D supports AFMA per afma.h)
+- **PROP_LV_LENS** added as reply #19.13 in PERMIT_ICU_EVENT spell #19 (critical for focus confirmation)
+- **PROP_CONTINUOUS_AF_VALID** variant with value=0x01 added as spell #31 (Dual Pixel AF)
+- **PROP_ROLLING_PITCHING_LEVEL** chain added (spells #67-#69) — 70D has electronic level
+- **PROP 80050034** added as spell #30 (present in 5D3, 700D, 60D, 600D)
+
+### ROM1 Size Bug Fix
+- **Issue:** `rom1_size` was incorrectly set to 8MB based on truncated ROM dump
+- **Evidence:** Stub at `0xFFA1844C` (10.09MB offset), backup_region hardcoded 16MB, all DIGIC V peers use 16MB
+- **Fix:** Changed to 16MB in both `qemu-eos/hw/eos/model_list.c` and `platform/70D.112/consts.h`
+- **Impact:** Addresses above 0xFF800000 now map to correct physical offsets
+
+### Boot Test Results (SUCCESS)
+```
+Canon Init: K325 READY → ICU Firmware 1.1.2 → startupInitializeComplete
+GUI State: PROP_GUI_STATE 2 (active), PROP_VARIANGLE_GUICTRL enabled
+ML Init: [MCELL][GuiFactoryRegisterEventCommissionProcedure] — ML GUI factory registered
+MPU Stats: 250+ messages, 93 complete spell cycles, 0 hangs
+```
+
+### Remaining QEMU Gaps vs 6D (low priority)
 - PROP_LV_FOCUS_DATA spell missing (firmware limitation, not fixable)
 - NotifyGUIEvent spells commented out (lines 256-265 in 70D.h)
 - HDMI GPIO address uses default 0x0138 (6D uses 0x0158)
-- sio_send_retry firmware patch required (in patches.gdb)
+- SD card partition detection — QEMU SD emulation accuracy issue
+- I2C peripheral emulation — warnings (no I2C devices in QEMU)
 
-### ROM Dump Requirement
-- **Cannot test actual boot without real ROM dumps from physical 70D camera**
-- Placeholder (zero-filled) ROMs load correctly but execute NOPs indefinitely
-- FIR firmware update file is encrypted — cannot extract ROM content
-- ROM dumps must be captured on-camera using ML's built-in dump functionality
+### ROM Dump Requirement — RESOLVED
+- Real ROM dumps obtained from physical 70D camera: ROM0.BIN (8MB), ROM1.BIN (16MB), SFDATA.BIN (16MB)
+- ROM1 re-dumped with corrected ROM1_SIZE=16MB build
+- All ROM files committed to `/app/70d/roms/70D/`

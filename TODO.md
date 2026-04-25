@@ -9,7 +9,7 @@ This document outlines the development sprints for implementing the future work 
 **Forked From:** https://github.com/reticulatedpines/magiclantern_simplified  
 **Developer Identity:** pmwoodward3@gmail.com / peva3  
 **Current Phase:** Week 7 - QEMU 70D Emulation
-**Last Updated:** 2026-04-22
+**Last Updated:** 2026-04-25
 
 ### Key Contributors (from forum research)
 - **nikfreak:** Primary 70D port developer
@@ -637,7 +637,7 @@ All changes were committed and pushed to origin/main.
 
 ## Sprint 17 — QEMU 70D Emulation (Week 46)
 
-### Status: ✅ COMPLETED (structure fixes; boot testing blocked by missing ROMs)
+### Status: ✅ COMPLETED (full firmware boot achieved with real ROM dumps)
 
 **Goal:** Fix QEMU 70D MPU spell structure to match working 6D pattern, enable development with placeholder ROMs.
 
@@ -650,25 +650,37 @@ All changes were committed and pushed to origin/main.
 - [x] **S17.5** Fix eos.c `check_rom_mirroring()` — replaced `assert(0)` with warning message to allow QEMU boot with placeholder ROMs for development
 - [x] **S17.6** Create placeholder ROM files (ROM0.BIN 8MB, ROM1.BIN 32MB, SFDATA.BIN 8MB) in `/app/70d/roms/70D/`
 - [x] **S17.7** Verified QEMU launches with 70D model — MPU spells loaded correctly, memory map configured
+- [x] **S17.8** ROM1 size bug fix: Changed `rom1_size` from 8MB to 16MB in both QEMU `model_list.c` and ML `consts.h` — ROM1 physical chip is 16MB like all DIGIC V cameras
+- [x] **S17.9** Added 5 missing MPU property groups to 70D.h: PROP_AF_MICROADJUSTMENT, PROP_LV_LENS in PERMIT_ICU_EVENT, PROP_CONTINUOUS_AF_VALID variant, PROP_ROLLING_PITCHING_LEVEL chain, PROP 80050034
+- [x] **S17.10** Enabled sf_dump module for SFDATA.BIN dumps
+- [x] **S17.11** Full firmware boot achieved — Canon initialization completes to `startupInitializeComplete`, GUI active with `PROP_GUI_STATE 2`
+- [x] **S17.12** ML autoexec.bin loading successful — ML GUI factory registered, menu system active
 
-### Remaining Gaps vs 6D (requires real ROM dumps to test):
+### Boot Test Results:
+
+```
+Canon Init: K325 READY → ICU Firmware 1.1.2 → startupInitializeComplete
+GUI State: PROP_GUI_STATE 2 (active), PROP_VARIANGLE_GUICTRL enabled
+ML Init: [MCELL][GuiFactoryRegisterEventCommissionProcedure] — ML GUI factory registered
+MPU Stats: 250+ messages, 93 complete spell cycles, 0 hangs
+```
+
+### Remaining Gaps vs 6D (low priority, boot works):
 
 | Gap | 70D Status | 6D Equivalent | Fix Risk |
 |-----|-----------|---------------|----------|
 | PROP_LV_FOCUS_DATA spell | Missing | 6D spell #30 | N/A (firmware limitation) |
-| PROP_ACTIVE_SWEEP_STATUS + PROP_DL_ACTION | Missing | 6D spell #58 | Medium |
-| PROP_GPS_TIME_SYNC | Missing | 6D spell #60 | Low |
-| NotifyGUIEvent spells | Commented out (lines 256-265) | 6D has working | Needs investigation |
-| WaitID 0x80020000 completion | Commented out (line 264) | 6D has it | Needs investigation |
-| HDMI GPIO address | Falls through to default 0x0138 | 6D has explicit 0x0158 | Needs hardware RE |
-| sio_send_retry patch | Required (patches.gdb) | Not needed | Already in GDB scripts |
+| SD card partition detection | QEMU SD emulation accuracy issue | Works on real hardware | Medium |
+| I2C peripheral emulation | Warnings (no I2C devices in QEMU) | N/A | Low |
 
-### Blocker:
-- **Cannot test actual boot or MPU communication without real ROM dumps from a physical 70D camera**
-- FIR firmware update file is encrypted and cannot be used to extract ROM content
-- ROM dumps must come from a physical camera using ML's built-in dump functionality
+### Files Updated:
+- `qemu-eos/hw/eos/model_list.c`: rom1_size = 0x01000000 (16MB)
+- `qemu-eos/hw/eos/mpu_spells/70D.h`: +5 property groups
+- `platform/70D.112/consts.h`: ROM1_SIZE = 0x01000000 (16MB)
+- `platform/70D.112/modules.included`: +sf_dump
+- `platform/70D.112/build/sd_boot.qcow2`: ML-loaded SD image
 
-**Committed to qemu-eos repo:** `c2507bace3`
+**Committed:** `aa6e17d1fb`, `190b376b0c`, `7a2acb3810`, `7c1838d974`, `6b203b614a` — all pushed to GitHub
 
 ---
 
