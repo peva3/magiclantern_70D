@@ -182,25 +182,18 @@ Implementation: focus.c now includes 70D-specific focus tracking using focus_pos
 
 ## Sprint 3 — FPS Override (Weeks 8-11)
 
-### Status: NOT YET STARTED
+### Status: ⚠️ REQUIRES_INVESTIGATION (QEMU test failed)
 
 **UPDATE:** David_Hugh found experimental workaround using Timer A only (HiJello-FastTv). FPS_REGISTER_B works differently on 70D.
 
-- [ ] **S3.1** Test Timer A-only workaround
-  - Verify HiJello-FastTv setting stability
-  - Test 24fps, 30fps, 60fps baselines
-  - Document any remaining banding issues
-
+- [x] **S3.1** Test Timer A-only workaround in QEMU
+  - ✅ Enabled FEATURE_FPS_OVERRIDE
+  - ❌ Result: Early boot crash (cache flush infinite loop)
+  - ❌ FPS override code path hits unhandled 70D-specific case
+  - 🔶 HiJello-FastTv setting may need pre-selection OR code fixes required
+  - Build size impact: +22KB (462KB with, 440KB without)
 - [ ] **S3.2** Explore Timer A+B hybrid approach
-  - Investigate why Timer B has "untraceable problems"
-  - Test read-modify-write patterns carefully
-  - Map blanking registers that may affect banding
-
 - [ ] **S3.3** Banding mitigation
-  - Test `TG_FREQ_BASE` adjustments (currently 32000000)
-  - Explore blanking period modifications
-  - Implement fallback if banding cannot be eliminated
-
 - [ ] **S3.4** User interface for FPS selection
   - Add menu entries for 24/30/60 fps
   - Display current FPS and warnings
