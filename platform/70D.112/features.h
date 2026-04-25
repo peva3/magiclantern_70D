@@ -8,16 +8,13 @@
 #undef FEATURE_IMAGE_POSITION // assume it is not needed with a variangle display
 #undef FEATURE_ARROW_SHORTCUTS // No suitable button found
 
-// Really, this simply doesn't work
-// Tried it for a felt hundred hours
-// TIMER_B has untraceable problems
-// Using TIMER_A_ONLY causes banding / patterns
-// UPDATE: David_Hugh found Timer A-only workaround works via HiJello-FastTv setting
-// S3.1 TEST RESULT: Enabling FEATURE_FPS_OVERRIDE causes early boot crash in QEMU
-// Root cause: FPS override code path hits unhandled case on 70D
-// Resolution: Requires HiJello-FastTv setting selection OR further code investigation
-// Marked as REQUIRES_INVESTIGATION - hardware testing needed
-#undef FEATURE_FPS_OVERRIDE
+// TIMER_B has untraceable problems (causes banding/patterns)
+// Timer A-only works via HiJello/FastTv setting (fps_criteria=3)
+// David_Hugh found this workaround; recommended for 70D
+// Previous QEMU crash was invalid (stale 25KB autoexec.bin on SD image)
+// S3.1a: Confirmed booting in QEMU with proper 462KB build (2026-04-25)
+// Build: 462KB with FPS override (+11KB vs 451KB baseline)
+#define FEATURE_FPS_OVERRIDE
 
 /* see comments in lens.c */
 #undef FEATURE_FOLLOW_FOCUS

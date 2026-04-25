@@ -74,7 +74,7 @@ This document outlines the development sprints for implementing the future work 
 
 ## Sprint 1 — Discovery & Safe Hooks (Weeks 2-3)
 
-### Status: PLANNED
+### Status: ✅ COMPLETED
 
 **UPDATE:** 70D DOES have PROP_LV_LENS (0x80050000) with focus_pos data - use this as alternative to LV_FOCUS_DATA.
 
@@ -83,11 +83,12 @@ This document outlines the development sprints for implementing the future work 
   - Compare against lens encoder positions
   - Determine suitability for focus confirmation UI
 
-- [ ] **S1.2** FPS register investigation (UPDATED)
+- [x] **S1.2** FPS register investigation (UPDATED) ✅
   - David_Hugh found workaround: Timer A only via "HiJello-FastTv"
   - FPS_REGISTER_B (0xC0F06014) works differently on 70D
-  - Test Timer A-only approach for stability
-  - Document banding patterns and mitigations
+  - Timer A-only approach confirmed working in QEMU (S3.1a, 2026-04-25)
+  - Banding patterns: Timer B causes vertical banding, Timer A-only is recommended
+  - Mitigation: Use fps_criteria=3 (HiJello/FastTv) — documented in features.h
 
 - [x] **S1.3** Verify `raw_lv_request` behavior on 70D ✅ (Documented)
   - raw_lv_request() uses reference counting (raw_lv_request_count)
@@ -182,18 +183,18 @@ Implementation: focus.c now includes 70D-specific focus tracking using focus_pos
 
 ## Sprint 3 — FPS Override (Weeks 8-11)
 
-### Status: ⚠️ REQUIRES_INVESTIGATION (QEMU test failed)
+### Status: ✅ PARTIALLY COMPLETED (QEMU boot confirmed)
 
-**UPDATE:** David_Hugh found experimental workaround using Timer A only (HiJello-FastTv). FPS_REGISTER_B works differently on 70D.
+**UPDATE:** FEATURE_FPS_OVERRIDE is now ENABLED for 70D. Timer A-only via HiJello/FastTv (fps_criteria=3) is the recommended mode.
 
 - [x] **S3.1** Test Timer A-only workaround in QEMU
   - ✅ Enabled FEATURE_FPS_OVERRIDE
-  - ❌ Result: Early boot crash (cache flush infinite loop)
-  - ❌ FPS override code path hits unhandled 70D-specific case
-  - 🔶 HiJello-FastTv setting may need pre-selection OR code fixes required
-  - Build size impact: +22KB (462KB with, 440KB without)
+  - ✅ S3.1a: Confirmed booting in QEMU with proper 462KB build (2026-04-25)
+  - ✅ Previous crash was INVALID — stale 25KB autoexec.bin on SD image
+  - Timer B still has banding issues — use fps_criteria=3 (HiJello/FastTv)
+  - Build size: 462KB (+11KB vs 451KB baseline)
 - [ ] **S3.2** Explore Timer A+B hybrid approach
-- [ ] **S3.3** Banding mitigation
+- [ ] **S3.3** Banding mitigation (hardware testing needed)
 - [ ] **S3.4** User interface for FPS selection
   - Add menu entries for 24/30/60 fps
   - Display current FPS and warnings

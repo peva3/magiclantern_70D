@@ -17,6 +17,7 @@
       | 2026-04-22 | 442KB | 439KB | +CONFIG_BEEP |
       | 2026-04-22 | 443KB | 440KB | +CONFIG_Q_MENU_PLAYBACK, CONFIG_WB_WORKAROUND |
       | 2026-04-22 | 441KB | 437KB | +CONFIG_LV_FOCUS_INFO (focus confirmation via PROP_LV_LENS) |
+| 2026-04-25 | 462KB | 459KB | +FEATURE_FPS_OVERRIDE (Timer A-only via HiJello/FastTv) |
 
 2. **Documentation Updates:** Keep AGENTS.md and README.md files continuously updated with all findings, changes, and discoveries
 3. **Task Tracking:** Maintain TODO.md with current task status, marking completed items and adding new tasks as discovered
@@ -128,7 +129,7 @@ The 70D port is heavily configured via feature toggles and memory constants.
 | `CONFIG_FPS_UPDATE_FROM_EVF_STATE` | Doesn't work on 70D. |
 | `CONFIG_BEEP` | Beep support disabled. |
 | `CONFIG_LV_FOCUS_DATA` | No LV_FOCUS_DATA property, but PROP_LV_LENS provides focus_pos. |
-| `FEATURE_FPS_OVERRIDE` | **Broken.** Timer B has untraceable issues. Timer A causes banding/patterns. Dev notes: "Tried it for a felt hundred hours." |
+| `FEATURE_FPS_OVERRIDE` | **Enabled (2026-04-25).** Timer B has untraceable issues (banding). Timer A-only via HiJello/FastTv mode (fps_criteria=3) works. Previous QEMU crash was invalid (stale SD image). Build: 462KB. |
 | `FEATURE_RAW_ZEBRAS` | **Broken.** Causes glitches in QuickReview and LiveView. |
 | `FEATURE_FOLLOW_FOCUS` | Disabled (see lens.c). |
 | `FEATURE_RACK_FOCUS` | Disabled (see lens.c). |
@@ -283,27 +284,30 @@ This data is used in `lens.c:1868-1889` for tracking lens position changes and i
 
 **Remaining limitations:** Focus confirmation may have latency due to slower updates; fine-tuning of stability thresholds may be needed.
 
-### 8.2 FPS Override - MEDIUM FIX POTENTIAL
+### 8.2 FPS Override - ENABLED (2026-04-25)
 
-**Problem:** Explicitly disabled in `platform/70D.112/features.h:15`:
+**Status:** `FEATURE_FPS_OVERRIDE` is now **enabled** in `platform/70D.112/features.h`.
 
-```c
-// Really, this simply doesn't work
-// Tried it for a felt hundred hours
-// TIMER_B has untraceable problems
-// Using TIMER_A_ONLY causes banding / patterns
-#undef FEATURE_FPS_OVERRIDE
-```
+**History:**
+- Originally disabled: "Tried it for a felt hundred hours"
+- Timer B has untraceable issues (causes vertical banding/patterns on 70D)
+- David_Hugh found Timer A-only workaround via "HiJello, FastTv" setting (fps_criteria=3)
+- Previous QEMU crash (S3.1) was caused by stale 25KB autoexec.bin on SD image, NOT FPS code
+- S3.1a: Confirmed booting in QEMU with proper 462KB build
 
 **Details:**
 - FPS_REGISTER_A = 0xC0F06008 (Timer A - controls row readout)
 - FPS_REGISTER_B = 0xC0F06014 (Timer B - controls frame timing)
 - FPS_REGISTER_CONFIRM_CHANGES = 0xC0F06000
 - TG_FREQ_BASE = 32000000 (different from most other cameras at 28800000)
+- 70D does NOT have NEW_FPS_METHOD defined (unlike 5D3/600D/60D/1100D)
+- 70D does NOT have FRAME_SHUTTER_BLANKING_WRITE (commented out in consts.h)
+- fps_criteria menu shows: "Low light", "Exact FPS", "Low Jello, 180d", "HiJello, FastTv"
+- Recommended: Use fps_criteria=3 (HiJello/FastTv) for Timer A-only override
 
-**Forum fix (David_Hugh):** Found that Timer A-only workaround works via "HiJello-FastTv" setting. FPS_REGISTER_B works differently on 70D than other DIGIC V cameras.
+**Build impact:** 462KB with FPS override (+11KB vs 451KB baseline)
 
-**Fix approach:** Test Timer A-only FPS override, verify stability. Requires hardware testing to validate.
+**Remaining concerns:** Hardware testing needed to verify Timer A-only produces stable video without banding.
 
 ### 8.3 RAW Zebras - FIXED (HIGH FIX POTENTIAL)
 
