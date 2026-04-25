@@ -418,10 +418,10 @@ struct eos_model_desc eos_model_list[] = {
         .dedicated_movie_mode   = 0,
     },
     {
-        .name                   = MODEL_NAME_70D,
-        .digic_version          = 5,
-        .rom0_size              = 0x00800000,   /* 8MB */
-        .rom1_size              = 0x00800000,   /* 8MB, from actual dump */
+    .name = MODEL_NAME_70D,
+    .digic_version = 5,
+    .rom0_size = 0x00800000, /* 8MB */
+    .rom1_size = 0x01000000, /* 16MB — DIGIC V default; firmware has symbols beyond 8MB (e.g. audio_thresholds at 0xFFA1844C) */
         .ram_size               = 0x20000000,   /* 512MB */
         .current_task_addr      = 0x7AAC0,
         .mpu_request_register   = 0xC02200BC,   /* written in mpu_send (run with -d io) */

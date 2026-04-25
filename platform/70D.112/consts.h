@@ -288,11 +288,12 @@
 
 #define JUDGE_BOTTOM_INFO_DISP_TIMER_STATE    0x9FCCC
 
-// ROM sizes for 70D — override DIGIC V defaults (16MB each).
-// QEMU model expects ROM0=8MB.  ROM1 dump hangs at 16MB on hardware;
-// 8MB is the safe maximum.  Matches 50D/5D2/6D/5D3 pattern (8MB ROM1).
-#define ROM0_SIZE 0x00800000  // 8MB  (default 0x01000000 = 16MB)
-#define ROM1_SIZE 0x00800000  // 8MB  (default 0x01000000 = 16MB)
+// ROM sizes for 70D — ROM0 is 8MB (smaller than DIGIC V default 16MB).
+// ROM1 is 16MB like all other DIGIC V cameras (6D, 5D3, 700D, 100D, EOSM).
+// The previous 8MB override was based on a truncated ROM dump; stubs like
+// audio_thresholds (0xFFA1844C = offset 10.09MB) require the full 16MB.
+#define ROM0_SIZE 0x00800000 // 8MB (default 0x01000000 = 16MB)
+#define ROM1_SIZE 0x01000000 // 16MB (DIGIC V default)
 
 // temperature convertion from raw-temperature to celsius
 // http://www.magiclantern.fm/forum/index.php?topic=9673.0
