@@ -32,29 +32,30 @@ CFLAGS += -march=$(MODULE_ARCH)
 # List of modules that are built by default, including
 # when building a zip for a cam.
 ML_MODULES = \
-    raw_video/mlv_lite \
-    raw_video/mlv_play \
-    raw_video/mlv_rec \
-    raw_video/mlv_snd \
-    file_man \
-    pic_view \
-    ettr \
-    dual_iso \
-    silent \
-    dot_tune \
-    autoexpo \
-    arkanoid \
-    deflick \
-    img_name \
-    lua \
-    bench \
-    selftest \
-    adv_int \
-    crop_rec \
-    dev_tools/edmac \
-    sd_uhs \
-    raw_video/raw_vidx \
-    yolo
+	raw_video/mlv_lite \
+	raw_video/mlv_play \
+	raw_video/mlv_rec \
+	raw_video/mlv_snd \
+	file_man \
+	pic_view \
+	ettr \
+	dual_iso \
+	silent \
+	dot_tune \
+	autoexpo \
+	arkanoid \
+	deflick \
+	img_name \
+	lua \
+	bench \
+	selftest \
+	adv_int \
+	crop_rec \
+	dev_tools/edmac \
+	dev_tools/sf_dump \
+	sd_uhs \
+	raw_video/raw_vidx \
+	yolo
 
 .PHONY: clean $(BUILD_DIR)
 
