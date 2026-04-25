@@ -99,7 +99,9 @@ qemu-eos/dtc/
 qemu-eos/capstone/
 qemu-eos/slirp/
 
-# ROM dumps (too large for git, placeholder or real)
-roms/
+# ROM dumps - only track essential ones (no RAM dumps, no placeholders)
+roms/*/RAM*.BIN
+roms/*/placeholder*
+roms/**/ROM*.BIN.gz
 
 syntax: regexp
