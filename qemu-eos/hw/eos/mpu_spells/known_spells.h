@@ -314,4 +314,4 @@ const struct known_spell known_spells[] = {
     { 0x09, 0x2d, 0x80050044, "PROP 80050044" },
     { 0x09, 0x2e, 0x80050045, "PROP_LV_FOCAL_DISTANCE" },
     { 0x0a, 0x08, 0xFFFFFFFF, "PD_NotifyOlcInfoChanged" },
-};
+ /* 70D additions from boot trace analysis (Sprint 18) */ { 0x01, 0x56, 0x8002000D, "PROP_GUI_SWITCH" }, /* GUI state change events (0x0611, 0x0612, 0x0613, 0x0622) */ { 0x03, 0x68, 0x8003006F, "PROP 8003006F" }, /* Appears during boot sequence */ { 0x03, 0x69, 0x80030070, "PROP 80030070" }, /* Appears 4x during boot (spells #50-53) */ { 0x03, 0x6a, 0x80030071, "PROP 80030071" }, /* Unknown property */ { 0x04, 0x23, 0x80040023, "PROP 80040023" }, /* Unknown 80040023 property */ { 0x04, 0x24, 0x80040024, "PROP 80040024" }, /* Unknown 80040024 property */ };
