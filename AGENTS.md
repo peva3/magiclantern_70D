@@ -18,6 +18,7 @@
       | 2026-04-22 | 443KB | 440KB | +CONFIG_Q_MENU_PLAYBACK, CONFIG_WB_WORKAROUND |
       | 2026-04-22 | 441KB | 437KB | +CONFIG_LV_FOCUS_INFO (focus confirmation via PROP_LV_LENS) |
 | 2026-04-25 | 462KB | 459KB | +FEATURE_FPS_OVERRIDE (Timer A-only via HiJello/FastTv) |
+| 2026-04-26 | 452KB | 448KB | crop_rec 70D timer tables (module-only change, no autoexec impact) |
 
 2. **Documentation Updates:** Keep AGENTS.md and README.md files continuously updated with all findings, changes, and discoveries
 3. **Task Tracking:** Maintain TODO.md with current task status, marking completed items and adding new tasks as discovered
@@ -540,8 +541,9 @@ The Canon 70D is a capable DIGIC V platform with robust EDMAC RAW video capabili
 - S17: QEMU 70D MPU spell fixes — restructured spell #1/#2 to match 6D pattern, added PROP_BOARD_TEMP and PROP_SW2_MOVIE_START replies, fixed eos.c ROM mirroring assert for development with placeholder ROMs
 - S18: MPU spell coverage improvement — added 5 missing property groups (PROP_AF_MICROADJUSTMENT, PROP_LV_LENS in PERMIT_ICU_EVENT, PROP_CONTINUOUS_AF_VALID variant, PROP_ROLLING_PITCHING_LEVEL chain, PROP 80050034)
 - S19: ROM1 size bug fix — corrected from 8MB to 16MB in both QEMU and ML; full firmware boot achieved with real ROM dumps
+- S20: crop_rec 70D timer tables — added 70D-specific default_timerA/B (TG_FREQ_BASE=32MHz), get_default_timer*() accessors, max_resolutions sensor comment
 
-Build verification: autoexec.bin 440KB, magiclantern.bin 437KB (under 656KB reserve)
+Build verification: autoexec.bin 452KB, magiclantern.bin 448KB (under 656KB reserve)
 
 ## 23. QEMU 70D Emulation Status
 

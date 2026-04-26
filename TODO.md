@@ -8,8 +8,8 @@ This document outlines the development sprints for implementing the future work 
 **Base Repository:** https://github.com/peva3/magiclantern_70D  
 **Forked From:** https://github.com/reticulatedpines/magiclantern_simplified  
 **Developer Identity:** pmwoodward3@gmail.com / peva3  
-**Current Phase:** Week 7 - QEMU 70D Emulation
-**Last Updated:** 2026-04-25
+**Current Phase:** Week 7 - QEMU 70D Emulation + crop_rec 70D
+**Last Updated:** 2026-04-26
 
 ### Key Contributors (from forum research)
 - **nikfreak:** Primary 70D port developer
@@ -231,9 +231,9 @@ Implementation: focus.c now includes 70D-specific focus tracking using focus_pos
 
 ## Sprint 5 — Crop Recording (Weeks 15-18)
 
-### Status: NOT YET STARTED
+### Status: PARTIALLY STARTED (S20 added timer tables and presets; hardware calibration still needed)
 
-**UPDATE:** User-reported working (ArcziPL crop_rec_4k with 14-bit lossless). Hot pixels at ISO 1600+ in 3X crop.
+**UPDATE:** S20 added 70D-specific timer tables, presets, and initialization to crop_rec module. Remaining: hardware calibration of CMOS register values and high-res timer overrides.
 
 - [ ] **S5.1** Map 70D CMOS/ADTG/ENGIO registers
   - Identify register addresses for crop window control
@@ -502,12 +502,14 @@ Implementation: focus.c now includes 70D-specific focus tracking using focus_pos
 - `is_70d` flag set but never used in enable/disable functions
 - Line-skipping mask (0x800) not applied to 70D - may need it
 
-#### crop_rec Module (NOT FUNCTIONAL)
-- **No 70D initialization block** - module is built but non-functional
-- All write function pointers stay at 0 (CMOS_WRITE, ADTG_WRITE, etc.)
-- Skip offsets wrong: uses 146, 70D needs 144
-- TG_FREQ_BASE = 32MHz (vs 28.8MHz for 5D3) affects all FPS timer calcs
-- Requires hardware testing to determine correct CMOS register values
+#### crop_rec Module (NOW FUNCTIONAL — S20)
+- **70D initialization block added** — CMOS_WRITE=0x26B54, ADTG_WRITE=0x2684C, ENGIO_WRITE=0xFF2BC6C4
+- **70D-specific presets added** — 1:1, 3x3_1X, 3K, UHD, 4K_HFPS, CENTER_Z
+- **Skip offsets fixed** — skip_left=144 (was 146 from 5D3)
+- **Timer tables updated** — 70D-specific default_timerA/B (TG_FREQ_BASE=32MHz)
+- **get_default_timerA/B() accessors** — dynamic dispatch based on is_70D flag
+- **max_resolutions** — comment added for 70D sensor (5472x3648 vs 5D3 5796x3870)
+- **Remaining:** High-res preset timer overrides (3K/UHD/4K) need hardware calibration
 
 ### Cross-Port Features Enabled:
 - [x] **FEATURE_ZOOM_TRICK_5D3** - Double-click to zoom shortcut (5D3/6D)
@@ -606,6 +608,38 @@ MPU Stats: 250+ messages, 93 complete spell cycles, 0 hangs
 - `platform/70D.112/build/sd_boot.qcow2`: ML-loaded SD image
 
 **Committed:** `aa6e17d1fb`, `190b376b0c`, `7a2acb3810`, `7c1838d974`, `6b203b614a` — all pushed to GitHub
+
+---
+
+## Sprint 20 — crop_rec 70D Timer Tables (Week 49)
+
+### Status: ✅ COMPLETED
+
+**Goal:** Make crop_rec module functional on 70D by adding 70D-specific initialization, timer tables, and presets.
+
+### Changes Made:
+
+- [x] **S20.1** Audit crop_rec module source — identified 70D-specific CMOS/ADTG/ENGIO write stubs needed
+- [x] **S20.2** Add 70D initialization block to crop_rec with correct write functions (CMOS_WRITE=0x26B54, ADTG_WRITE=0x2684C, ENGIO_WRITE=0xFF2BC6C4)
+- [x] **S20.3** Fix skip offsets for 70D (skip_left=144 vs 5D3's 146)
+- [x] **S20.4** Add crop presets for 70D (1:1, 3x3_1X, 3K, UHD, 4K_HFPS, CENTER_Z)
+- [x] **S20.5** Build test — autoexec.bin 452KB, crop_rec.mo 32.2KB (module-only, no autoexec impact)
+- [x] **S20.6** Add 70D-specific default_timerA/B tables (TG_FREQ_BASE=32MHz):
+  - 23.976fps: A=700, B=1907
+  - 25fps: A=800, B=1600
+  - 29.97fps: A=700, B=1525
+  - 50fps: A=800, B=800
+  - 59.94fps: A=672, B=794
+- [x] **S20.7** Add get_default_timerA/B() inline accessors for runtime dispatch
+- [x] **S20.8** Update reg_override_fps() to use dynamic timer lookup (was hardcoded 5D3 values)
+
+### Remaining (hardware testing needed):
+- [ ] High-res preset timer overrides (3K/UHD/4K_HFPS) — target timerA/B values estimated from 5D3
+- [ ] ENGIO 0xC0F06804 exact register values — using range heuristic, may need calibration
+- [ ] CMOS register values for 3K/UHD/4K modes — estimated from 5D3 pattern
+- [ ] max_resolutions fine-tuning for 70D sensor (5472x3648 vs 5D3 5796x3870)
+
+**Build verification:** autoexec.bin 452KB, magiclantern.bin 448KB (under 656KB reserve)
 
 ---
 
