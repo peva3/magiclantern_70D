@@ -604,6 +604,17 @@ static void FAST cmos_hook(uint32_t* regs, uint32_t* stack, uint32_t pc)
     {
         switch (crop_preset)
         {
+        case CROP_PRESET_3X_TALL:
+            cmos_new[7] = /* vertical centering (from 5D3 CMOS[1], needs 70D calibration) */
+                (video_mode_fps == 24) ? PACK12(8,13) :
+                (video_mode_fps == 25) ? PACK12(8,12) :
+                (video_mode_fps == 30) ? PACK12(9,11) :
+                (video_mode_fps == 50) ? PACK12(12,10) :
+                (video_mode_fps == 60) ? PACK12(13,10) :
+                (uint32_t) -1 ;
+            cmos_new[2] = 0x10E; /* horizontal centering (from 5D3, needs 70D calibration) */
+            cmos_new[6] = 0x170; /* pink highlights without this */
+            break;
         case CROP_PRESET_3x3_1X:
         case CROP_PRESET_3x3_1X_48p:
             if (is_720p())
@@ -1134,12 +1145,15 @@ static inline uint32_t reg_override_3X_tall(uint32_t reg, uint32_t old_val)
     /* change FPS timers to increase vertical resolution */
     if (video_mode_fps >= 50)
     {
-        int timerA = 400;
+        /* 5D3: timerA=400 (reduced from default 480 for 1:1 readout)
+         * 70D: scaled from default 800 by same ratio (400/480=0.833) → 667
+         * timerB = TG_FREQ_BASE / (timerA * target_fps) */
+        int timerA = is_70D ? 667 : 400;
 
         int timerB =
-            (video_mode_fps == 50) ? 1200 :
-            (video_mode_fps == 60) ? 1001 :
-                                       -1 ;
+            (video_mode_fps == 50) ? (is_70D ? 960 : 1200) :
+            (video_mode_fps == 60) ? (is_70D ? 799 : 1001) :
+            -1 ;
 
         int a = reg_override_fps(reg, timerA, timerB, old_val);
         if (a) return a;
@@ -1181,12 +1195,14 @@ static inline uint32_t reg_override_3x3_tall(uint32_t reg, uint32_t old_val)
     /* change FPS timers to increase vertical resolution */
     if (video_mode_fps >= 50)
     {
-        int timerA = 400;
+        /* 5D3: timerA=400 (reduced from default 480 for 3x3 binning)
+         * 70D: scaled from default 800 by same ratio → 667 */
+        int timerA = is_70D ? 667 : 400;
 
         int timerB =
-            (video_mode_fps == 50) ? 1200 :
-            (video_mode_fps == 60) ? 1001 :
-                                       -1 ;
+            (video_mode_fps == 50) ? (is_70D ? 960 : 1200) :
+            (video_mode_fps == 60) ? (is_70D ? 799 : 1001) :
+            -1 ;
 
         int a = reg_override_fps(reg, timerA, timerB, old_val);
         if (a) return a;
@@ -1233,14 +1249,16 @@ static inline uint32_t reg_override_3x3_48p(uint32_t reg, uint32_t old_val)
     /* change FPS timers to increase vertical resolution */
     if (video_mode_fps >= 50)
     {
+        /* 5D3: timerA=401/400 for 45p/48p targets
+         * 70D: scaled from default 800 by same ratio → 668/667 */
         int timerA =
-            (video_mode_fps == 50) ? 401 :
-            (video_mode_fps == 60) ? 400 :
-                                      -1 ;
+            (video_mode_fps == 50) ? (is_70D ? 668 : 401) :
+            (video_mode_fps == 60) ? (is_70D ? 667 : 400) :
+            -1 ;
         int timerB =
-            (video_mode_fps == 50) ? 1330 : /* 45p */
-            (video_mode_fps == 60) ? 1250 : /* 48p */
-                                       -1 ;
+            (video_mode_fps == 50) ? (is_70D ? 1065 : 1330) : /* 45p */
+            (video_mode_fps == 60) ? (is_70D ? 999 : 1250) : /* 48p */
+            -1 ;
 
         int a = reg_override_fps(reg, timerA, timerB, old_val);
         if (a) return a;
@@ -1274,16 +1292,18 @@ static inline uint32_t reg_override_3x3_48p(uint32_t reg, uint32_t old_val)
 static inline uint32_t reg_override_3K(uint32_t reg, uint32_t old_val)
 {
     /* FPS timer A, for increasing horizontal resolution */
-    /* 25p uses 480 (OK), 24p uses 440 (too small); */
+    /* 25p uses 480/800 (OK), 24p uses 440/700 (too small); */
     /* only override in 24p, 30p and 60p modes */
-    if (video_mode_fps != 25 && video_mode_fps !=  50)
+    if (video_mode_fps != 25 && video_mode_fps != 50)
     {
-        int timerA = 455;
+        /* 5D3: timerA=455 (wider than default 440 for 3072px)
+         * 70D: scaled from default 700 by same ratio (455/440=1.034) → 724 */
+        int timerA = is_70D ? 724 : 455;
         int timerB =
-            (video_mode_fps == 24) ? 2200 :
-            (video_mode_fps == 30) ? 1760 :
-            (video_mode_fps == 60) ?  880 :
-                                       -1 ;
+            (video_mode_fps == 24) ? (is_70D ? 1841 : 2200) :
+            (video_mode_fps == 30) ? (is_70D ? 1472 : 1760) :
+            (video_mode_fps == 60) ? (is_70D ? 735 : 880) :
+            -1 ;
 
         int a = reg_override_fps(reg, timerA, timerB, old_val);
         if (a) return a;
@@ -1306,18 +1326,20 @@ static inline uint32_t reg_override_4K_hfps(uint32_t reg, uint32_t old_val)
     /* FPS timer A, for increasing horizontal resolution */
     /* trial and error to allow 4096; 572 is too low, 576 looks fine */
     /* pick some values with small roundoff error */
-    int timerA =
-        (video_mode_fps < 30)  ?  585 : /* for 23.976/2 and 25/2 fps */
-                                  579 ; /* for all others */
+    /* 5D3: timerA=585/579 (wider than default 440 for 4096px)
+     * 70D: scaled from default 700 by ratio (585/440=1.33) → 931/921 */
+    int timerA = is_70D ?
+        ((video_mode_fps < 30) ? 931 : 921) :
+        ((video_mode_fps < 30) ? 585 : 579) ;
 
     /* FPS timer B, tuned to get half of the frame rate from Canon menu */
     int timerB =
-        (video_mode_fps == 24) ? 3422 :
-        (video_mode_fps == 25) ? 3282 :
-        (video_mode_fps == 30) ? 2766 :
-        (video_mode_fps == 50) ? 1658 :
-        (video_mode_fps == 60) ? 1383 :
-                                   -1 ;
+        (video_mode_fps == 24) ? (is_70D ? 2640 : 3422) :
+        (video_mode_fps == 25) ? (is_70D ? 2531 : 3282) :
+        (video_mode_fps == 30) ? (is_70D ? 2134 : 2766) :
+        (video_mode_fps == 50) ? (is_70D ? 1266 : 1658) :
+        (video_mode_fps == 60) ? (is_70D ? 1057 : 1383) :
+        -1 ;
 
     int a = reg_override_fps(reg, timerA, timerB, old_val);
     if (a) return a;
@@ -1337,17 +1359,20 @@ static inline uint32_t reg_override_UHD(uint32_t reg, uint32_t old_val)
 {
     /* FPS timer A, for increasing horizontal resolution */
     /* trial and error to allow 3840; 536 is too low */
-    int timerA = 
-        (video_mode_fps == 25) ? 547 :
-        (video_mode_fps == 50) ? 546 :
-                                 550 ;
+    /* 5D3: timerA=550/547/546 (wider than default 440 for 3840px)
+     * 70D: scaled from default 700 by ratio (550/440=1.25) → 875/869/867 */
+    int timerA = is_70D ?
+        ((video_mode_fps == 25) ? 869 :
+         (video_mode_fps == 50) ? 867 : 875) :
+        ((video_mode_fps == 25) ? 547 :
+         (video_mode_fps == 50) ? 546 : 550) ;
     int timerB =
-        (video_mode_fps == 24) ? 1820 :
-        (video_mode_fps == 25) ? 1755 :
-        (video_mode_fps == 30) ? 1456 :
-        (video_mode_fps == 50) ?  879 :
-        (video_mode_fps == 60) ?  728 :
-                                   -1 ;
+        (video_mode_fps == 24) ? (is_70D ? 1403 : 1820) :
+        (video_mode_fps == 25) ? (is_70D ? 1348 : 1755) :
+        (video_mode_fps == 30) ? (is_70D ? 1121 : 1456) :
+        (video_mode_fps == 50) ? (is_70D ? 676 : 879) :
+        (video_mode_fps == 60) ? (is_70D ? 560 : 728) :
+        -1 ;
 
     int a = reg_override_fps(reg, timerA, timerB, old_val);
     if (a) return a;
@@ -1453,19 +1478,23 @@ static inline uint32_t reg_override_fps_nocheck(uint32_t reg, uint32_t timerA, u
 static inline uint32_t reg_override_zoom_fps(uint32_t reg, uint32_t old_val)
 {
     /* attempt to reconfigure the x5 zoom at the FPS selected in Canon menu */
-    int timerA = 
-        (video_mode_fps == 24) ? 512 :
-        (video_mode_fps == 25) ? 512 :
-        (video_mode_fps == 30) ? 520 :
-        (video_mode_fps == 50) ? 512 :  /* cannot get 50, use 25 */
-        (video_mode_fps == 60) ? 520 :  /* cannot get 60, use 30 */
-                                  -1 ;
+    /* 5D3: timerA=512/520 (x5 zoom mode, different from normal default)
+     * 70D: scaled from 70D x5 zoom defaults (timerA=672 at 60p)
+     *      using ratio 512/440≈1.164 → 700*1.164≈815 for 24/25p
+     *      and 520/440≈1.182 → 700*1.182≈827 for 30/60p */
+    int timerA =
+        (video_mode_fps == 24) ? (is_70D ? 815 : 512) :
+        (video_mode_fps == 25) ? (is_70D ? 815 : 512) :
+        (video_mode_fps == 30) ? (is_70D ? 827 : 520) :
+        (video_mode_fps == 50) ? (is_70D ? 815 : 512) : /* cannot get 50, use 25 */
+        (video_mode_fps == 60) ? (is_70D ? 827 : 520) : /* cannot get 60, use 30 */
+        -1 ;
     int timerB =
-        (video_mode_fps == 24) ? 1955 :
-        (video_mode_fps == 25) ? 1875 :
-        (video_mode_fps == 30) ? 1540 :
-        (video_mode_fps == 50) ? 1875 :
-        (video_mode_fps == 60) ? 1540 :
+        (video_mode_fps == 24) ? (is_70D ? 1505 : 1955) :
+        (video_mode_fps == 25) ? (is_70D ? 1444 : 1875) :
+        (video_mode_fps == 30) ? (is_70D ? 1188 : 1540) :
+        (video_mode_fps == 50) ? (is_70D ? 1444 : 1875) :
+        (video_mode_fps == 60) ? (is_70D ? 1188 : 1540) :
                                    -1 ;
 
     return reg_override_fps_nocheck(reg, timerA, timerB, old_val);

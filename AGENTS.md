@@ -19,6 +19,7 @@
       | 2026-04-22 | 441KB | 437KB | +CONFIG_LV_FOCUS_INFO (focus confirmation via PROP_LV_LENS) |
 | 2026-04-25 | 462KB | 459KB | +FEATURE_FPS_OVERRIDE (Timer A-only via HiJello/FastTv) |
 | 2026-04-26 | 452KB | 448KB | crop_rec 70D timer tables (module-only change, no autoexec impact) |
+| 2026-04-26 | 452KB | 448KB | S5: crop_rec 70D CMOS/ENGIO fixes + Timer A/B recalculation (module-only) |
 
 2. **Documentation Updates:** Keep AGENTS.md and README.md files continuously updated with all findings, changes, and discoveries
 3. **Task Tracking:** Maintain TODO.md with current task status, marking completed items and adding new tasks as discovered
@@ -593,3 +594,23 @@ MPU Stats: 250+ messages, 93 complete spell cycles, 0 hangs
 - Real ROM dumps obtained from physical 70D camera: ROM0.BIN (8MB), ROM1.BIN (16MB), SFDATA.BIN (16MB)
 - ROM1 re-dumped with corrected ROM1_SIZE=16MB build
 - All ROM files committed to `/app/70d/roms/70D/`
+
+### Sprint 5 — crop_rec 70D Hardware Calibration Prep (2026-04-26)
+
+**Comprehensive register audit** identified ~35+ hardcoded 5D3 values needing 70D calibration. Three bugs fixed:
+
+1. **3X_TALL missing CMOS override** — `is_70D` switch block had NO case for CROP_PRESET_3X_TALL. Fixed by adding CMOS[7] (vertical centering from 5D3 CMOS[1] values), CMOS[2]=0x10E, CMOS[6]=0x170.
+
+2. **center_canon_preview() bug** — Duplicate block (lines 1834-1851) redeclared `raw_xc`/`raw_yc` with 5D3 hardcoded values (146, 3744, 60, 1380), overwriting the camera-aware computation at lines 1806-1831. Fixed by removing the duplicate 5D3 block entirely.
+
+3. **Timer A/B recalculated for 70D (TG_FREQ_BASE=32MHz)** in all reg_override functions. Timer A was scaled by ratio of 70D/5D3 defaults at same fps. timerB = 32000000 / (timerA * target_fps). These are theoretical values — need hardware verification.
+
+**Remaining issues (NOT fixed, need hardware calibration):**
+- CROP_PRESET_3X has NO ENGIO override (commented out: "fixme: corrupted image")
+- ADTG readout_end uses `shamem_read(0xC0F06804) >> 16` noted as "fixme: D5 only"
+- ADTG 0x8806 register only written for is_5D3 (artifact prevention) — 70D may need equivalent
+- All CMOS[2], CMOS[6], CMOS[7] values are still copied from 5D3 (marked as needs 70D calibration)
+- ENGIO 0xC0F06800 top-bar offsets (0x1F0017, 0x1D0017) are hardcoded 5D3
+- ENGIO 0xC0F06804 end-column values (0x1AA, 0x20A, 0x22A) use 5D3 offset formula
+- 3x3_48p HEAD3/4 base values (0x2B4, 0x26D) are 5D3 60p hardcoded
+- head_adj values (-30, -20, -10) are 5D3 trial-and-error

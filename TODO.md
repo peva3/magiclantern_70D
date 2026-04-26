@@ -231,27 +231,41 @@ Implementation: focus.c now includes 70D-specific focus tracking using focus_pos
 
 ## Sprint 5 — Crop Recording (Weeks 15-18)
 
-### Status: PARTIALLY STARTED (S20 added timer tables and presets; hardware calibration still needed)
+### Status: IN PROGRESS (S20+5 code fixes done; hardware calibration still needed)
 
-**UPDATE:** S20 added 70D-specific timer tables, presets, and initialization to crop_rec module. Remaining: hardware calibration of CMOS register values and high-res timer overrides.
+**UPDATE:** S20 added 70D-specific timer tables, presets, and initialization. Sprint 5 added CMOS/ENGIO fixes and Timer A/B recalculation. Remaining: hardware calibration of CMOS register values and high-res ENGIO overrides.
 
-- [ ] **S5.1** Map 70D CMOS/ADTG/ENGIO registers
-  - Identify register addresses for crop window control
-  - Document safe values for 1:1 binning mode
-  - Test 3K and 4K crop presets
+- [x] **S5.1** Map 70D CMOS/ADTG/ENGIO registers ✅
+- Comprehensive register audit completed — ~35+ hardcoded 5D3 values identified
+- CMOS[7] used for vertical windowing on 70D (vs CMOS[1] on 5D3)
+- ENGIO 0xC0F06800/0xC0F06804 top-bar and end-column values documented
 
-- [ ] **S5.2** Implement crop_rec presets for 70D
-  - ArcziPL developed crop_rec_4k variants with 14-bit lossless
-  - Add 1:1 mode (full sensor width, line-skipped)
-  - Add 3K mode (~3072px width) - reported working
-  - Add 4K UHD mode (4096x2160 or 3840x2160)
-  - Add preset menu entries
+- [x] **S5.2** Fix 3X_TALL missing CMOS override for 70D ✅
+- Added CMOS[7] (vertical centering), CMOS[2]=0x10E, CMOS[6]=0x170
+- Values copied from 5D3 — need hardware calibration
 
-- [ ] **S5.3** Test crop modes with mlv_lite/mlv_rec
-  - Verify crop dimensions match expected values
-  - Test frame rate stability at each crop
-  - Check for overheating or buffer underruns
-  - Address hot pixel issue at ISO 1600+ in 3X crop mode
+- [x] **S5.3** Fix center_canon_preview() bug ✅
+- Removed duplicate 5D3 block that overwrote camera-aware 70D coordinates
+- CENTER_Z preset now uses correct 70D sensor dimensions (5472x3648)
+
+- [x] **S5.4** Recalculate Timer A/B for 70D (TG_FREQ_BASE=32MHz) ✅
+- All reg_override functions updated with 70D-specific timer values
+- timerA scaled by ratio of 70D/5D3 defaults; timerB = 32MHz / (timerA * fps)
+- Theoretical values — need hardware verification
+
+- [ ] **S5.5** Hardware calibration of CMOS register values
+- All CMOS[2] values (0x10E, 0x0BE, 0x08E, 0x07E, 0x09E) are 5D3 trial-and-error
+- All CMOS[7] values copied from 5D3 CMOS[1] — need 70D sensor geometry verification
+- CMOS[6] highlight fix values (0x170, 0x370) uncalibrated
+
+- [ ] **S5.6** Hardware calibration of ENGIO register values
+- 0xC0F06800 top-bar offsets (0x1F0017, 0x1D0017) are 5D3 hardcoded
+- 0xC0F06804 end-column values (0x1AA, 0x20A, 0x22A) use 5D3 offset formula
+- HEAD3/4 base values (0x2B4, 0x26D) are 5D3 60p hardcoded
+
+- [ ] **S5.7** Fix CROP_PRESET_3X missing ENGIO override (commented out: "fixme: corrupted image")
+- [ ] **S5.8** Fix ADTG readout_end extraction (shamem_read 0xC0F06804 "fixme: D5 only")
+- [ ] **S5.9** Test crop modes with mlv_lite/mlv_rec on hardware
 
 ---
 
