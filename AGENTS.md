@@ -585,10 +585,29 @@ MPU Stats: 250+ messages, 93 complete spell cycles, 0 hangs
 
 ### Remaining QEMU Gaps vs 6D (low priority)
 - PROP_LV_FOCUS_DATA spell missing (firmware limitation, not fixable)
-- NotifyGUIEvent spells commented out (lines 256-265 in 70D.h)
 - HDMI GPIO address uses default 0x0138 (6D uses 0x0158)
 - SD card partition detection — QEMU SD emulation accuracy issue
 - I2C peripheral emulation — warnings (no I2C devices in QEMU)
+
+### Sprint 21 — QEMU 70D Emulation Improvements (2026-04-27)
+
+**MPU spell fixes — 0 unknown messages achieved:**
+- Added PROP_GUI_SWITCH (spell #62a) and PROP_ACTIVE_SWEEP_STATUS (spell #62b)
+- Added PROP_LV_LENS class 09 handler (spell #70)
+- Fixed PROP 80030071 spell #6: ARG0+ARG1 wildcards for data bytes
+- Fixed PROP_AVAIL_SHOT spell #7: ARG0/ARG1 wildcards for variable shot count
+- Fixed PROP 8002000D spell #17: ARG0 wildcard for value byte
+- Fixed PROP_BURST_COUNT spells #10/#14: ARG0 wildcard for count value
+- Result: 0 unknown MPU messages (was 6 during Canon boot, 26 during ML boot)
+
+**ML test infrastructure:**
+- Added 70D to known_cams in test.py (ROM1 MD5: b33d874d9cd0934eea1537effd677ebd)
+- Added 70D boot strings to LogTest (K325 READY, ICU Firmware 1.1.2, startupInitializeComplete)
+- Added 70D MenuTest key sequence (basic menu navigation)
+- Created `platform/70D.112/create_sd_image.sh` for building QEMU SD images with ML
+- Improved `test_70d_qemu.sh`: auto-create SD image in --boot mode, better analysis
+
+**Boot verification:** startupInitializeComplete at ~608ms, ML GUI factory registered at ~633ms
 
 ### ROM Dump Requirement — RESOLVED
 - Real ROM dumps obtained from physical 70D camera: ROM0.BIN (8MB), ROM1.BIN (16MB), SFDATA.BIN (16MB)
