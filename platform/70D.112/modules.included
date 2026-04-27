@@ -20,3 +20,4 @@ sd_uhs
 selftest
 sf_dump
 silent
+hw_test

@@ -981,3 +981,113 @@ See `HARDWARE-TESTING.md` for the complete hardware testing checklist.
 ---
 
 **Conclusion:** All software-level validation is complete. The build is stable, modules compile cleanly, and QEMU emulation confirms proper initialization. Ready to proceed with hardware testing for final calibration and validation.
+
+---
+
+## Automated Hardware Testing Plan
+
+### Current State
+The system does **not** automatically test itself on boot. Manual testing is required.
+
+### Proposed Solution: Hardware Test Module
+A dedicated test module that can be added to `modules.included` for hardware validation sessions:
+
+**Implementation Options:**
+
+1. **Extend `selftest` module** (Recommended)
+   - Add hardware-specific tests to existing selftest framework
+   - Already has test infrastructure and logging
+   - Can run on boot with `ML/LOGS/auto_run_hw_test` flag
+
+2. **Create `hw_test` module** (Alternative)
+   - Dedicated hardware validation module  
+   - Can be removed after calibration complete
+   - Cleaner separation but more development time
+
+3. **Lua script** (Quick prototype)
+   - Use existing `lua.mo` module
+   - Write test scripts in Lua
+   - Faster iteration, no compilation
+
+### Test Categories for Hardware Validation
+
+**Basic Sanity (30 seconds):**
+- Module loading verification
+- Memory allocation test
+- SD card read/write test
+- Button responsiveness
+- Display rendering
+
+**crop_rec Tests (S5.5-S5.9, ~40 minutes):**
+- CMOS register validation (all 8 presets)
+- ENGIO register validation
+- 3X_TALL override test
+- Timer stability (30 sec per preset)
+- Frame artifact detection
+
+**Other Hardware Tests:**
+- Dual ISO photo capture
+- SD UHS speed test
+- Focus confirmation (PROP_LV_LENS)
+
+### Manual Testing Workflow (Current)
+
+Until automated tests are implemented, follow this manual workflow:
+
+1. **Install ML** - Copy `autoexec.bin` to SD card
+2. **Boot camera** - Verify ML splash screen
+3. **Enable modules** - ML → Modules → Enable crop_rec, sd_uhs, etc.
+4. **Test each crop preset:**
+   - Navigate to ML → Movie → Crop preset
+   - Select preset (1080p, 3K, UHD, 4K, 3X_TALL)
+   - Record 30 seconds of video
+   - Inspect for artifacts, banding, stability
+5. **Log results** - Note findings in testing journal
+6. **Copy logs** - Transfer `ML/LOGS/` to computer for analysis
+
+### Next Steps
+
+1. **Prioritize**: Decide if automated testing is worth development time vs manual testing
+2. **If automated**: Implement `hw_test` module with full hardware access
+3. **If manual**: Use HARDWARE-TESTING.md checklist for systematic testing
+
+**Recommendation**: Start with manual testing to validate the approach, then automate repetitive tests if needed.
+
+---
+
+## Automated Hardware Test Module - IMPLEMENTED
+
+**Module:** `hw_test.mo` (2.0KB)  
+**Location:** `modules/hw_test/hw_test.c`  
+**Status:** Built and included in autoexec.bin
+
+### Features
+- Runs automatically on module load
+- Prints test results to console
+- Displays results on screen via BMP overlay
+- Expandable framework for adding more tests
+
+### Current Tests
+1. Module loading verification
+2. Basic memory allocation test
+
+### Usage
+The module runs automatically when loaded. Results appear:
+- In debug console (printf output)
+- On camera LCD (bmp_printf overlay)
+
+### Future Enhancements
+- Add crop_rec register tests (CMOS, ENGIO, timers)
+- Add frame capture and analysis
+- Add menu-driven test selection
+- Add auto-run flag for unattended testing
+- Generate detailed log files on SD card
+
+### Build
+```bash
+cd modules/hw_test && make
+cp build/hw_test.mo ../build/
+cd ../../platform/70D.112 && make
+```
+
+The module is now included in `modules.included` and will be part of all future builds.
