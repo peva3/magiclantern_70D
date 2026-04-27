@@ -750,3 +750,47 @@ For collaboration or testing partnerships:
 **Confidence:** High (strong documentation, reference build available, clear roadmap)
 
 The path forward is clear: establish the development environment, verify we can build and emulate, then systematically tackle features starting with focus data discovery.
+
+---
+
+## Sprint 22 — QEMU Testing & crop_rec Validation (Current Week)
+
+### Status: READY TO START
+
+**Prerequisites Complete:**
+- ✅ QEMU 70D emulation fully functional (0 unknown MPU messages)
+- ✅ Auto-generates SD images with ML via create_sd_image.sh
+- ✅ Firmware boots at ~576ms, ML GUI at ~608ms
+- ✅ All S21 MPU spell fixes committed
+- ✅ Test script auto-generates SD image if missing
+
+**Sprint 22 Goals:**
+- [ ] **S22.1** Test crop_rec 3K/UHD/4K modes in QEMU (software validation only)
+  - Verify crop presets load without crashes
+  - Check preview dimensions match expected sensor crops
+  - Validate timer A/B register writes (no QEMU crashes)
+- [ ] **S22.2** Verify timer A/B values produce stable video
+  - Test fps_criteria menu options (0-3)
+  - Check for software banding patterns in emulation
+  - Recommended: fps_criteria=3 (HiJello/FastTv, Timer A-only)
+- [ ] **S22.3** Test mlv_lite/mlv_rec recording in QEMU
+  - Verify MLV file creation
+  - Check frame headers and metadata
+  - Validate crop dimensions in recorded files
+- [ ] **S22.4** Document hardware calibration procedure for S5 items
+  - Create checklist for CMOS register calibration
+  - Document ENGIO register inspection procedure
+  - Prepare test shots needed for S5.5-S5.9
+
+**Hardware-Dependent Items (require physical 70D):**
+- 🔲 S5.5: CMOS register calibration (sensor geometry verification)
+- 🔲 S5.6: ENGIO register calibration (crop frame inspection)
+- 🔲 S5.7: CROP_PRESET_3X ENGIO override fix
+- 🔲 S5.8: ADTG readout_end extraction (DIGIC V specific)
+- 🔲 S5.9: Final hardware validation of crop modes
+
+**Deliverables:**
+- QEMU validation report for crop_rec modes
+- Hardware testing checklist for S5 completion
+- Updated TODO.md with calibration results
+
