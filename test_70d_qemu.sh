@@ -128,6 +128,7 @@ fi
 
 # If --boot mode, copy ML build to SD image
 if [[ $BOOT_MODE -eq 1 ]]; then
+    echo " Installing ML on SD card image..."
     BUILD_DIR="$ML_DIR/platform/70D.112/build"
     CREATE_SCRIPT="$ML_DIR/platform/70D.112/create_sd_image.sh"
     if [[ ! -f "$BUILD_DIR/sd.qcow2" ]]; then
@@ -135,24 +136,19 @@ if [[ $BOOT_MODE -eq 1 ]]; then
             echo " Creating ML SD card image..."
             "$CREATE_SCRIPT" 2>&1 | tail -5
         else
-            echo " No boot SD image found. Run $CREATE_SCRIPT first"
+            echo " ⚠ No boot SD image and no create script"
             BOOT_MODE=0
         fi
     fi
-    if [[ -f "$BUILD_DIR/sd.qcow2" ]]; then
+    if [[ $BOOT_MODE -eq 1 ]] && [[ -f "$BUILD_DIR/sd.qcow2" ]]; then
         SD_IMG="$BUILD_DIR/sd.qcow2"
         CF_IMG="$BUILD_DIR/cf.qcow2"
         echo " Using ML boot SD image: $SD_IMG"
-    else
+    elif [[ $BOOT_MODE -eq 1 ]]; then
         BOOT_MODE=0
         echo " ⚠ ML boot mode disabled (no SD image)"
     fi
 fi
-fi
-
-# ── Step 4: Build QEMU command ───────────────────────────────────────────────
-echo "═══ Launching QEMU 70D... ═══"
-
 QEMU_BIN="$QEMU_DIR/build/arm-softmmu/qemu-system-arm"
 if [[ ! -x "$QEMU_BIN" ]]; then
     echo "  ⚠ QEMU binary not found at $QEMU_BIN"
@@ -252,25 +248,10 @@ fi
 echo ""
 echo "═══ Quick Analysis ═══"
 if [[ -f "$DEBUGMSG_LOG" ]]; then
-    UNK_COUNT=$(grep -c "unknown" "$DEBUGMSG_LOG" 2>/dev/null || echo "0")
-    echo " MPU unknown messages: $UNK_COUNT"
-    if [[ "$UNK_COUNT" -gt 0 ]]; then
-        grep "unknown" "$DEBUGMSG_LOG" | sort -u | head -5 | sed 's/^/ /'
+    # Check for key boot events
+    if grep -q "init_task\|Startup\|CreateTask" "$DEBUGMSG_LOG" 2>/dev/null; then
+        echo "  ✓ Firmware boot detected (init_task/Startup found)"
     fi
-fi
-if [[ -f "$SERIAL_LOG" ]]; then
-    SERIAL_STR=$(strings "$SERIAL_LOG")
-    if echo "$SERIAL_STR" | grep -q "startupInitializeComplete"; then
-        echo " ✓ Firmware boot complete (startupInitializeComplete)"
-    fi
-    if echo "$SERIAL_STR" | grep -q "GuiFactoryRegisterEventCommissionProcedure"; then
-        echo " ✓ ML GUI factory registered"
-    fi
-    if echo "$SERIAL_STR" | grep -qi "assert\|crash\|prefetch"; then
-        echo " ⚠ Crash/assert detected!"
-        echo "$SERIAL_STR" | grep -i "assert\|crash\|prefetch" | head -5 | sed 's/^/ /'
-    fi
-fi
     if grep -q "GUI\|menu\|display" "$DEBUGMSG_LOG" 2>/dev/null; then
         echo "  ✓ GUI initialization detected"
     fi
