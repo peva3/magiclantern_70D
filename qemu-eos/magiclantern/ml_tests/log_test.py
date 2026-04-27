@@ -71,6 +71,14 @@ class LogTest(test.Test):
             "K252 ICU Firmware Version 1.1.1 ( 3.6.4 )",
 
             "[STARTUP] startupInitializeComplete",
+        ],
+
+        "b33d874d9cd0934eea1537effd677ebd": # 70D ROM1
+        [
+            "K325 READY",
+            "K325 ICU Firmware Version 1.1.2 ( 8.1.6 )",
+
+            "[STARTUP] startupInitializeComplete",
         ]
     }
 

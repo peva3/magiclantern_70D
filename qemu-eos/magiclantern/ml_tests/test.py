@@ -26,13 +26,14 @@ class Test(abc.ABC):
     # It's a list of ROMs so we can support different ROM
     # dumps if required.
     known_cams = {
-                  "5D3": ["e6a90e8497c2c1187e0322010a42b9b5"],
-                  "50D": ["424545a5cfe10b1a5d8cefffe9fe5297"],
-                  "60D": ["d266ce304585952fb3a05a9f6c304f2f"],
-                  "100D": ["e06a0e3919ac4d4ef609a864e937a5d3"],
-                  "500D": ["0a9fce1e4ef6d2ac2c3bc63eb96d3c34"],
-                  "700D": ["f6c20df071b3514fa65f35dc5d71b484"],
-                 }
+        "5D3": ["e6a90e8497c2c1187e0322010a42b9b5"],
+        "50D": ["424545a5cfe10b1a5d8cefffe9fe5297"],
+        "60D": ["d266ce304585952fb3a05a9f6c304f2f"],
+        "70D": ["b33d874d9cd0934eea1537effd677ebd"],
+        "100D": ["e06a0e3919ac4d4ef609a864e937a5d3"],
+        "500D": ["0a9fce1e4ef6d2ac2c3bc63eb96d3c34"],
+        "700D": ["f6c20df071b3514fa65f35dc5d71b484"],
+    }
 
     def __init__(self, cam, qemu_dir, test_dir, job_ID=0,
                  lock=None,

@@ -61,13 +61,19 @@ class MenuTest(test.Test):
                  # no wheel controls on this cam?  PgUp / PgDown are unmapped.
                  "left", "spc", "down", "down", "up", "spc", # test up/down in grid display sub-menu
                 ],
-                "0a9fce1e4ef6d2ac2c3bc63eb96d3c34": # 500D ROM1
-                ["f1", "m", "l", "l", "m", # inital info screen, menu and LV
-                 "left", "left", "left", "left", "left", "left", "left", "left", # cycle through menus
-                 "right", "spc", "right", "spc", # sub-menu test, change screen brightness
-                 "right", "spc", "up", "up", "down", "spc", # up/down test.  Unsure on sub-menu, it's Polish lang
-                ],
-                }
+        "0a9fce1e4ef6d2ac2c3bc63eb96d3c34": # 500D ROM1
+        ["f1", "m", "l", "l", "m", # inital info screen, menu and LV
+         "left", "left", "left", "left", "left", "left", "left", "left", # cycle through menus
+         "right", "spc", "right", "spc", # sub-menu test, change screen brightness
+         "right", "spc", "up", "up", "down", "spc", # up/down test. Unsure on sub-menu, it's Polish lang
+        ],
+        "b33d874d9cd0934eea1537effd677ebd": # 70D ROM1
+        ["f1", "m", "l", "l", "m", # initial info screen, menu and LV
+         "left", "left", "left", "left", "left", "left", "left", # cycle through menus
+         "up", "spc", "down", "spc", # check sub-menus; LCD brightness
+         "right", "spc", "up", "down", "spc", # check wheel controls
+        ],
+    }
 
     def run(self, lock):
         self.lock = lock
