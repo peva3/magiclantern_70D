@@ -41,6 +41,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 | 2026-04-28 | 452KB | 448KB | Audio RE: SetAudioVolumeIn at 0xFF11970C verified (PUSH prologue), all ASIF stubs documented; NO DIGIC V has CONFIG_AUDIO_CONTROLS enabled (codec unknown); S4 root cause: Dual Pixel AF pixels cause false zebra readings; documentation updates |
 | 2026-04-28 | 452KB | 448KB | PTPIP wrappers: 8 NSTUBs added to stubs.S at 0xFF7AEE00-0xFF7AF500; wifi_test enhanced with PTPIP + NW command tests |
 | 2026-04-28 | 452KB | 448KB | raw_vidx: 70D enabled (MLV v3 port), crop 1280x720 for 40MB/s SD limit; event_pusher 70D offsets; modules.included updated; PTPIP NSTUBs persist
+| 2026-04-28 | 452KB | 448KB | hw_test v2: comprehensive hardware diagnostics - firmware, memory, SD speed, 25+ props, ENGIO regs, EDMAC, timers, eventprocs, audio
 
 2. **Documentation Updates:** Keep AGENTS.md and README.md files continuously updated with all findings, changes, and discoveries
 3. **Task Tracking:** Maintain TODO.md with current task status, marking completed items and adding new tasks as discovered
