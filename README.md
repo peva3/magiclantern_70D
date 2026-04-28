@@ -1,6 +1,6 @@
 # Magic Lantern 70D - Canon EOS 70D Development
 
-[![Status](https://img.shields.io/badge/status-Week%201%20Foundation-blue)](https://github.com/peva3/magiclantern_70D)
+[![Status](https://img.shields.io/badge/status-Software%20Complete-brightgreen)](https://github.com/peva3/magiclantern_70D)
 [![Camera](https://img.shields.io/badge/camera-Canon%2070D-red)](https://github.com/peva3/magiclantern_70D)
 [![Firmware](https://img.shields.io/badge/firmware-1.1.2-green)](https://github.com/peva3/magiclantern_70D)
 
@@ -18,107 +18,54 @@ Magic Lantern is a firmware enhancement for Canon DSLR cameras that adds video a
 
 ## Current Status
 
-**Phase:** Week 1 - Foundation Setup  
-**Build Status:** Reference build available, source build working  
-**Testing:** QEMU emulation setup in progress  
+**Phase:** All non-hardware software complete — awaiting physical 70D testing  
+**Build:** 452KB autoexec.bin (656KB limit), 25+ modules  
+**QEMU:** Full boot verified — `startupInitializeComplete` at ~595ms, 0 unknown MPU messages  
+**Last updated:** 2026-04-28
 
-### What Works (Reference Build - June 2025)
-✅ RAW video recording (MLV Lite)  
-✅ Dual ISO photography (still mode only)  
-✅ Crop recording (basic 3x3_1X preset)  
-✅ ETTR (Expose To The Right)  
-✅ Lua scripting (11 scripts included)  
-✅ 19 modules loaded and functional  
+### What's Implemented (Software Complete)
+- ✅ **QEMU 70D emulation** — Full boot, ML GUI, 0 MPU errors, auto SD image generation
+- ✅ **crop_rec** — 70D timer tables (TG_FREQ_BASE=32MHz), 8 crop presets, CMOS/ADTG/ENGIO hooks
+- ✅ **MLV v3 port** — raw_vidx enabled, 1280x720 crop for 40MB/s SD limit
+- ✅ **WiFi discovery** — All socket addresses found (RAM-loaded 0x0005xxxx), 8 PTPIP ROM1-safe NSTUBs
+- ✅ **FPS override** — Timer A-only (HiJello/FastTv mode), QEMU boot confirmed
+- ✅ **Focus confirmation** — Via PROP_LV_LENS focus_pos with stability detection
+- ✅ **Audio RE** — All 14 ASIF stubs active, SetAudioVolumeIn verified at 0xFF11970C
+- ✅ **RAW zebras root cause** — Dual Pixel CMOS AF pixels identified as cause
+- ✅ **Dual ISO** — Photo mode working; movie mode pipeline documented
+- ✅ **sd_uhs** — 160MHz preset for 70D with safety warnings
+- ✅ **hw_test module** — Automated hardware diagnostic framework (3.2KB)
+- ✅ **wifi_test module** — Socket/PTPIP discovery framework (4.4KB)
+- ✅ **Code cleanup** — 12+ sprints of dead code removal, config consolidation
 
-### Known Issues
-🟡 **LV_FOCUS_DATA partially fixed** - Focus confirmation via PROP_LV_LENS stability detection  
-🔴 **FPS Override broken** - Cannot change frame rates  
-🔴 **RAW Zebras disabled** - Causes display corruption  
-🔴 **Dual ISO movie mode broken** - Photo mode only  
-🟡 **Audio controls missing** - Cannot adjust gain  
-🟡 **FlexInfo flickering** - Bottom bar unstable  
+### Known Issues (Software Verified)
+- 🔴 **RAW Zebras** — Intentionally disabled; Dual Pixel AF pixels cause false readings
+- 🔴 **Audio Controls** — CONFIG_AUDIO_CONTROLS commented out; codec type unknown (not AK4646?)
+- 🟡 **FPS Timer B** — Causes vertical banding; Timer A-only workaround recommended
+- 🟡 **Level indicator** — Freezes after ~1 min in LV; press INFO to reset
+- 🟡 **FlexInfo** — Bottom bar flickers
 
-## Development Progress
-
-### Week 1 Tasks (Current Week: 2026-04-22)
-- [x] Analyze reference build structure
-- [x] Create comprehensive documentation (AGENTS.md, FUTURE-WORK.md, TODO.md)
-- [x] Set up testing framework documentation
-- [x] Install ARM toolchain and verify build
-- [ ] Configure QEMU for 70D emulation
-- [x] Create first host-side test suite
-
-### Completed
-- ✅ Repository created and cloned
-- ✅ Reference build analyzed (19 modules, 11 scripts)
-- ✅ Documentation complete (4 technical docs)
-- ✅ Testing framework documented
-
-### In Progress
-- 🔧 Build environment setup
-- 🔧 QEMU 70D configuration
-- 🔧 Host-side test framework
-
-### Next Up
-- Build autoexec.bin from source
-- Run first QEMU emulation
-- Start LV_FOCUS_DATA investigation
+### Hardware Calibration Still Needed
+| Component | Status | Why |
+|-----------|--------|-----|
+| CMOS registers | 🔲 Needs hardware | All values copied from 5D3 |
+| ENGIO registers | 🔲 Needs hardware | Top-bar/end-column values uncalibrated |
+| CROP_PRESET_3X | 🔲 Needs hardware | ENGIO override commented out (corrupted image) |
+| Wireless | 🔲 Needs hardware | Socket/PTPIP stubs need runtime verification |
+| Audio codec | 🔲 Needs hardware | AK4646 register map may not match 70D |
 
 ## Repository Structure
 
 ```
 magiclantern_70D/
-├── AGENTS.md              # Technical architecture documentation
-├── FUTURE-WORK.md         # Improvement roadmap (20 items)
-├── TODO.md                # Development sprint planning
-├── TESTING_FRAMEWORK.md   # Testing without physical camera
-├── NEXT_STEPS.md          # Immediate action plan
-├── 70d-dev/               # Reference build (June 2025)
-│   ├── autoexec.bin
-│   ├── ML-SETUP.FIR
-│   └── ML/
-│       ├── modules/       # 19 .mo modules
-│       └── scripts/       # 11 Lua scripts
-├── platform/70D.112/      # 70D-specific code
-├── src/                   # Core Magic Lantern source
-├── modules/               # Module source code
-└── qemu-eos/              # QEMU emulator submodule
+├── AGENTS.md                # Technical architecture (60+ pages)
+├── TODO.md                  # Development sprint planning
+├── 70d-latest/              # Deployment folder (latest autoexec.bin)
+├── platform/70D.112/        # 70D-specific code
+├── src/                     # Core Magic Lantern source
+├── modules/                 # Module source code (25+ modules)
+└── qemu-eos/                # QEMU emulator submodule
 ```
-
-## Testing Approach
-
-Since we don't have physical 70D access, we use a multi-layered testing strategy:
-
-1. **QEMU Emulation** - ARM emulation of DIGIC V hardware
-2. **Host-Side Compilation** - Test logic on x86/Linux with stubs
-3. **Simulation Framework** - Mock camera state for algorithms
-4. **Remote Testing** - Collaboration with 70D owners for field validation
-
-See [TESTING_FRAMEWORK.md](TESTING_FRAMEWORK.md) for details.
-
-## Getting Involved
-
-### For Developers
-1. Read [AGENTS.md](AGENTS.md) for architecture
-2. Check [TODO.md](TODO.md) for current tasks
-3. Follow development requirements in AGENTS.md
-4. Test changes via QEMU or host-side before commit
-
-### For 70D Owners
-- Test builds will be posted as releases
-- Feedback needed on focus features, FPS override, RAW zebras
-- See [NEXT_STEPS.md](NEXT_STEPS.md) for testing opportunities
-
-## Documentation
-
-| Document | Description |
-|----------|-------------|
-| [AGENTS.md](AGENTS.md) | Technical architecture, registers, memory maps |
-| [FUTURE-WORK.md](FUTURE-WORK.md) | 20 improvement items with severity ratings |
-| [TODO.md](TODO.md) | 10-sprint development roadmap |
-| [TESTING_FRAMEWORK.md](TESTING_FRAMEWORK.md) | Testing without physical camera |
-| [NEXT_STEPS.md](NEXT_STEPS.md) | Immediate action plan (weeks 1-16) |
-| [70d-dev/README.md](70d-dev/README.md) | Reference build analysis |
 
 ## Building
 
@@ -139,37 +86,34 @@ make -j4 70D
 
 ### Run Tests
 ```bash
-cd tests
-make
-./run_all_tests.sh
+./test_70d_qemu.sh --boot --no-build --timeout 30
 ```
 
-## Reference Build
+## Getting Involved
 
-The `70d-dev/` directory contains a working build from June 20, 2025:
-- **autoexec.bin** (437 KB)
-- **19 modules** (dual_iso, mlv_lite, crop_rec, etc.)
-- **11 Lua scripts** (api_test, pong, sokoban, etc.)
-- **Known working** on Canon 70D firmware 1.1.2
+### For 70D Owners
+- Your camera is needed for final calibration!
+- See `HARDWARE-TESTING.md` for the complete testing checklist
+- Test builds in `70d-latest/autoexec.bin`
+
+### For Developers
+1. Read [AGENTS.md](AGENTS.md) for architecture
+2. Check [TODO.md](TODO.md) for remaining tasks (hardware-required)
+3. All non-hardware work is complete — next steps need physical 70D
 
 ## Roadmap
 
-### Phase 1: Foundation (Weeks 1-2)
-- Build environment setup
-- QEMU 70D configuration
-- Host-side test suite
+### Completed (All Software Work)
+- Sprints 0-23 covering: Foundation, Focus, FPS, Zebras, crop_rec, Audio, WiFi, MLV v3
+- QEMU emulation with full MPU spell coverage
+- All socket/WiFi addresses discovered and documented
 
-### Phase 2: Core Features (Weeks 3-8)
-- LV_FOCUS_DATA discovery
-- FPS override implementation
-- RAW zebras fix
-
-### Phase 3: Advanced (Weeks 9-16)
-- Crop recording extension (1:1, 3K, 4K)
-- Dual ISO movie mode
-- MLV v3 port (raw_vidx)
-
-See [TODO.md](TODO.md) for detailed sprint planning.
+### Pending (Hardware Required)
+1. **CMOS/ENGIO calibration** for crop_rec (S5.5-S5.9)
+2. **WiFi verification** of PTPIP/socket stubs (S23.16+)
+3. **Audio codec identification** + CONFIG_AUDIO_CONTROLS (S8.2+)
+4. **Dual ISO movie mode** investigation (S6)
+5. Focus stacking fix (S2.4), FPS banding (S3), SD UHS tuning (S9)
 
 ## Related Projects
 
@@ -187,6 +131,6 @@ Magic Lantern is not affiliated with Canon Inc. Use at your own risk. We are not
 
 ---
 
-**Last Updated:** 2026-04-22  
-**Current Sprint:** Week 1 - Foundation Setup  
-**Next Milestone:** Build autoexec.bin from source
+**Last Updated:** 2026-04-28  
+**Current Phase:** All non-hardware work complete — awaiting physical 70D  
+**Next Milestone:** Hardware calibration of crop_rec CMOS/ENGIO registers
