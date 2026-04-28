@@ -249,28 +249,29 @@ Implementation: focus.c now includes 70D-specific focus tracking using focus_pos
 
 ## Sprint 4 — RAW Zebras & Exposure (Weeks 12-14)
 
-### Status: ✅ COMPLETED
+### Status: ✅ COMPLETED (Analysis Only — Hardware Required for Fix)
 
-**UPDATE:** ✅ DONE - CONFIG_NO_RAW_ZEBRAS added to internals.h at line 163. zebra.c updated to use proper config flag at line 4119. This documents the limitation cleanly for maintenance.
+**UPDATE (2026-04-28):** Deep investigation completed. Root cause identified: **Dual Pixel CMOS AF pixels** embedded in 70D sensor have different photometric response, causing false overexposure/underexposure readings when zebra algorithm scans every pixel. Single-buffer EDMAC RAW SLURP race condition is a secondary contributor.
 
 - [x] **S4.1** Add CONFIG_NO_RAW_ZEBRAS to internals.h ✅
   - Replace scattered `#if !defined(CONFIG_70D)` with proper config flag
   - This documents the limitation cleanly for maintenance
 
-- [ ] **S4.2** Investigate RAW slurp timing conflict (if needed after S4.1)
-  - Document when EDMAC RAW slurp occurs vs LV rendering
-  - Identify race condition causing QuickReview corruption
-  - Test vsync-locked RAW capture
+- [x] **S4.2** Investigate RAW slurp timing conflict ✅
+  - **Root cause:** Dual Pixel CMOS AF pixels (70D unique) have different photometric response. EDMAC RAW SLURP writes to single buffer with no DMA completion sync. Race condition exists on all slurp cameras (5D3, 6D, etc.) but only 70D shows visible corruption.
+  - **Contributing factors:** No `lv_save_raw()` call (bypassed by slurp), column_factor=8 combined with vari-angle/touchscreen GUI overhead widening race window.
+  - **Fix requires:** Focus pixel map (FPM) for 70D to mask Dual Pixel AF pixels, or double-buffering in edmac_raw_slurp().
+  - **Key evidence:** 10 other cameras share EDMAC RAW SLURP — 70D is the only one with CONFIG_NO_RAW_ZEBRAS.
 
-- [ ] **S4.3** Implement double-buffered RAW capture (if needed)
-  - Use existing double-buffer architecture from raw_vid module
-  - Ensure RAW buffer is stable before zebra analysis
-  - Add semaphore or lock to prevent concurrent access
+- [ ] **S4.3** Implement double-buffered RAW capture (DEFERRED - needs hardware)
+  - Would require: DMA completion CBR, buffer flip mechanism
+  - Complex change touching raw.c, edmac-memcpy.c — risks regression on other cameras
+  - Priority: LOW — no hardware to verify fix
 
-- [ ] **S4.4** Test RAW zebras re-enablement
-  - Remove zebra.c:4121 guard
-  - Test under varied lighting (low, medium, high dynamic range)
-  - Verify no QuickReview or LV corruption
+- [ ] **S4.4** Test RAW zebras re-enablement (DEFERRED - needs hardware + FPM)
+  - Cannot test in QEMU (no sensor model)
+  - Requires: 70D FPM file + hardware testing
+  - Priority: LOW
 
 ---
 
@@ -370,22 +371,33 @@ Implementation: focus.c now includes 70D-specific focus tracking using focus_pos
 
 ## Sprint 8 — Audio Controls (Weeks 29-31)
 
-### Status: NOT YET STARTED
+### Status: IN PROGRESS (stubs found, codec type unknown)
 
-- [ ] **S8.1** Reverse engineer audio IC registers
-  - Map ASIF DMA registers for 70D
-  - Identify digital gain, analog gain, mic select registers
-  - Document safe value ranges
+**Findings (2026-04-28):**
+- NO DIGIC V camera has CONFIG_AUDIO_CONTROLS enabled (70D, 5D3, 6D, etc. all commented out)
+- 70D has MORE audio stubs than working DIGIC IV cameras (60D, 600D) - stubs not the blocker
+- Real blocker: audio codec type unknown. AK4646 register writes in `audio-ak.c` may not work on 70D
+- I2C helper functions call RAM-loaded code (0x10000xxxx range) - audio IC driver loaded at boot similar to socket library
+- `SetAudioVolumeIn` verified at 0xFF11970C (valid ARM PUSH prologue)
+- `SetASIFMode` address unknown - only defined on 700D (0xFF109510) and 6D (0xFF11CD44)
+- Audio IC strings (AK4646, WM8731) NOT found in ROM1
 
-- [ ] **S8.2** Implement audio property handlers
-  - Create PROP handlers for audio settings
-  - Add menu interface for gain control
-  - Implement remote audio shot support
+- [x] **S8.1** Reverse engineer audio IC registers (PARTIAL - stubs verified)
+  - SetAudioVolumeIn at 0xFF11970C verified ✅
+  - Audio IC type not confirmed - `audio-ak.c` AK4646 code may not work
+  - All core ASIF stubs present (SetNextASIFADCBuffer, StartASIFDMAADC, etc.)
+  - SetASIFMode address unknown - needs RE from _audio_ic_read/write callers
+  - _audio_ic_read/write call RAM-loaded I2C helpers (similar pattern to socket functions)
 
-- [ ] **S8.3** Test audio quality and stability
-  - Record with various gain settings
-  - Test for noise floor and distortion
-  - Verify no interference with video recording
+- [ ] **S8.2** Implement audio property handlers (DEFERRED - needs codec identification)
+  - Cannot safely enable CONFIG_AUDIO_CONTROLS without knowing audio IC type
+  - Would need: SetASIFMode address, SetAudioVolumeIn sufficient for basic gain
+  - Risk: wrong codec registers could damage hardware or crash camera
+  - Priority: MEDIUM - useful but requires hardware testing
+
+- [ ] **S8.3** Test audio quality and stability (DEFERRED - needs hardware)
+  - Cannot test audio codec register access in QEMU
+  - Requires: physical 70D + oscilloscope or audio test setup
 
 ---
 

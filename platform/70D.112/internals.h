@@ -149,6 +149,12 @@
 #define CONFIG_EDMAC_RAW_SLURP
 
 /** RAW zebras cause visual glitches in QuickReview and LiveView on 70D */
+/* Investigation (2026-04-28): Root cause is likely Dual Pixel CMOS AF pixels         */
+/* embedded in sensor with different photometric response, causing false readings.    */
+/* Single-buffer EDMAC RAW SLURP race condition is secondary contributor.             */
+/* Fix requires: focus pixel map (FPM) for 70D to mask Dual Pixel AF pixels, or      */
+/* double-buffering in edmac_raw_slurp() for stable frame readout.                    */
+/* See: modules/crop_rec/crop_presets.h for focus pixel handling                      */
 #define CONFIG_NO_RAW_ZEBRAS
 
 #define CONFIG_MALLOC_STRUCT_V2

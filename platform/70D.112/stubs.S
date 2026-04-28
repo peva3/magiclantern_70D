@@ -67,7 +67,7 @@ NSTUB(0xFF0D97AC,  gui_main_task)
 /** ASIF **/
 NSTUB(0xFF14169C,  PowerAudioOutput)
 NSTUB(0xFF13FDE0,  PowerMicAmp)                             /* present on 650D.104, EOSM.202, 700D.113 */
-// NSTUB(0xFF11970C,  SetAudioVolumeIn)
+NSTUB(0xFF11970C,  SetAudioVolumeIn)
 NSTUB(0xFF13F728,  SetAudioVolumeOut)
 NSTUB(0xFF117DFC,  SetNextASIFADCBuffer)
 NSTUB(0xFF117FE4,  SetNextASIFDACBuffer)
@@ -78,7 +78,8 @@ NSTUB(0xFF117934,  StopASIFDMADAC)
 NSTUB(0xFF11758C,  StopASIFDMAADC)
 NSTUB(0xFF11936C,  SoundDevActiveIn)
 NSTUB(0xFF1195C4,  SoundDevShutDownIn)
-// NSTUB(    ???,  SetASIFMode)                             /* present on 700D.113 */
+// NSTUB(    ???,  SetASIFMode)                             /* present on 700D.113 (0xFF109510) and 6D.116 (0xFF11CD44) */
+                                                             /* 70D address unknown - need to search _audio_ic_read/write callers */
 
 /** Audio **/
 NSTUB(   0x7B1F8,  sounddev)
