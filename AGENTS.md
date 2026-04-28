@@ -38,6 +38,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 | 2026-04-26 | 452KB | 448KB | crop_rec 70D timer tables (module-only change, no autoexec impact) |
 | 2026-04-26 | 452KB | 448KB | S5: crop_rec 70D CMOS/ENGIO fixes + Timer A/B recalculation (module-only) |
 | 2026-04-27 | 452KB | 448KB | QEMU SD timing fixes, hw_test module, MPU spell completion |
+| 2026-04-28 | 452KB | 448KB | WiFi discovery: socket_create/send/recv/bind/connect/listen/setsockopt addresses found in RAM-loaded 0x0005xxxx region; socket_close_caller at 0xFF14F74C; PTPIP wrappers at 0xFF7AEE00; wifi_test module updated with direct func ptrs |
 
 2. **Documentation Updates:** Keep AGENTS.md and README.md files continuously updated with all findings, changes, and discoveries
 3. **Task Tracking:** Maintain TODO.md with current task status, marking completed items and adding new tasks as discovered

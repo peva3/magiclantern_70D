@@ -1,11 +1,15 @@
 /**
  * WiFi Discovery Module for Canon 70D
  *
- * This module attempts to initialize WiFi on the 70D and discover
- * available function addresses. It uses:
- * 1. call() for functions resolved by name
- * 2. WEAK_FUNC stubs for socket functions (fallback if stubs missing)
- * 3. Diagnostic output to identify missing addresses
+ * This module discovers and tests WiFi/socket functions on the 70D.
+ * Architecture: 70D (DIGIC V) loads socket library into RAM at 0x0005xxxx
+ * (NOT in ROM1 like 200D). Only socket_close (0xFF14F74C) is in ROM1.
+ *
+ * Approach:
+ * 1. call() for eventproc-resolved functions (NwLimeInit, etc.)
+ * 2. Direct function pointers for RAM-loaded socket functions
+ * 3. socket_close_caller via NSTUB (in ROM1)
+ * 4. Runtime address verification before calling RAM functions
  */
 
 #include <module.h>
@@ -28,43 +32,90 @@ MODULE_INFO_END()
 #define SOCK_STREAM 1
 #endif
 
+/* 70D RAM-loaded socket function addresses (loaded from firmware module space) */
+/* These are called by firmware BL instructions at runtime - validated by capstone */
+#define SOCKET_CREATE_ADDR   0x00059AF8
+#define SOCKET_BIND_ADDR     0x00059E94
+#define SOCKET_CONNECT_ADDR  0x00059DDC
+#define SOCKET_LISTEN_ADDR   0x0005A9D0
+#define SOCKET_SETSOCKOPT    0x0005A810
+#define SOCKET_RECV_ADDR     0x00059CE8
+#define SOCKET_SEND_ADDR     0x0005A09C
+
+/* Function pointer types for RAM-loaded socket library */
+typedef int (*socket_create_fn)(int domain, int type, int protocol);
+typedef int (*socket_bind_fn)(int fd, struct sockaddr_in *addr, int addrlen);
+typedef int (*socket_connect_fn)(int fd, struct sockaddr_in *addr, int addrlen);
+typedef int (*socket_listen_fn)(int fd, int backlog);
+typedef int (*socket_setsockopt_fn)(int fd, int level, int optname, const void *optval, int optlen);
+typedef int (*socket_recv_fn)(int fd, void *buf, int len, int flags);
+typedef int (*socket_send_fn)(int fd, const void *buf, int len, int flags);
+
+/* Runtime function pointers (initialized to NULL, set after verify) */
+static socket_create_fn     p_socket_create     = NULL;
+static socket_bind_fn       p_socket_bind       = NULL;
+static socket_connect_fn    p_socket_connect    = NULL;
+static socket_listen_fn     p_socket_listen     = NULL;
+static socket_setsockopt_fn p_socket_setsockopt = NULL;
+static socket_recv_fn       p_socket_recv       = NULL;
+static socket_send_fn       p_socket_send       = NULL;
+/* socket_close_caller is available via NSTUB (in ROM1 at 0xFF14F74C) */
+extern int socket_close_caller(int socket);
+
+/* WiFi management - NW command interface (discovered but not yet functional) */
+/* wlan_connect, nif_setup, set_IP_address are NOT available as NSTUB on 70D */
+
+/* call() resolves eventproc names at runtime - declared in dryos.h */
+
 static unsigned short htons_ml(unsigned short port)
 {
     return ((port & 0xFF) << 8) | ((port >> 8) & 0xFF);
 }
 
-/* ============================================================
- * Weak stubs for socket functions (one stub per unique signature)
- * Each must match the exact type of the extern declaration for alias to work
- * ============================================================ */
-static int stub_socket_create(int a, int b, int c) { (void)a; (void)b; (void)c; return -1; }
-static int stub_socket_bind(int s, struct sockaddr_in *a, int l) { (void)s; (void)a; (void)l; return -1; }
-static int stub_socket_connect(int s, struct sockaddr_in *a, int l) { (void)s; (void)a; (void)l; return -1; }
-static int stub_socket_listen(int s, int b) { (void)s; (void)b; return -1; }
-static int stub_socket_accept(int s, void *a, int l) { (void)s; (void)a; (void)l; return -1; }
-static int stub_socket_recv(int s, void *b, int l, int f) { (void)s; (void)b; (void)l; (void)f; return -1; }
-static int stub_socket_send(int s, void *b, int l, int f) { (void)s; (void)b; (void)l; (void)f; return -1; }
-static int stub_socket_close(int s) { (void)s; return -1; }
-static int stub_convertfd(int s) { (void)s; return -1; }
-static int stub_wlan_connect(struct wlan_settings *s) { (void)s; return -1; }
-static int stub_nif_setup(int i) { (void)i; return -1; }
-static int stub_set_ip(int a, uint32_t b, uint32_t c, uint32_t d) { (void)a; (void)b; (void)c; (void)d; return -1; }
+/* Verify an address contains valid ARM code (PUSH prologue) */
+static int verify_code_addr(uint32_t addr)
+{
+    if (addr < 0x1000 || addr >= 0xFFFF0000) return 0;
+    volatile uint32_t *p = (uint32_t *)addr;
+    uint32_t word = *p;
+    if ((word & 0x0FFF0000) == 0x092D0000) return 1;
+    return 0;
+}
 
-/* WEAK_FUNC - if real symbol exists in firmware, use it; otherwise use stub */
-extern WEAK_FUNC(stub_socket_create) int socket_create(int domain, int type, int protocol);
-extern WEAK_FUNC(stub_socket_bind) int socket_bind(int socket, struct sockaddr_in *addr, int addr_len);
-extern WEAK_FUNC(stub_socket_connect) int socket_connect(int socket, struct sockaddr_in *addr, int addr_len);
-extern WEAK_FUNC(stub_socket_listen) int socket_listen(int socket, int backlog);
-extern WEAK_FUNC(stub_socket_accept) int socket_accept(int socket, void *addr, int addr_len);
-extern WEAK_FUNC(stub_socket_recv) int socket_recv(int socket, void *buf, int len, int flags);
-extern WEAK_FUNC(stub_socket_send) int socket_send(int socket, void *buf, int len, int flags);
-extern WEAK_FUNC(stub_socket_close) int socket_close_caller(int socket);
-extern WEAK_FUNC(stub_convertfd) int socket_convertfd(int socket);
-extern WEAK_FUNC(stub_wlan_connect) int wlan_connect(struct wlan_settings *settings);
-extern WEAK_FUNC(stub_nif_setup) int nif_setup(int interface);
-extern WEAK_FUNC(stub_set_ip) int set_IP_address(int interface, uint32_t client_IP, uint32_t subnet_mask, uint32_t gateway_IP);
+/* Initialize function pointers with runtime address verification */
+static int init_socket_ptrs(void)
+{
+    int ok = 0;
+    p_socket_create = (socket_create_fn)SOCKET_CREATE_ADDR;
+    if (verify_code_addr(SOCKET_CREATE_ADDR)) { ok++; }
+    else { p_socket_create = NULL; printf("[WiFi] socket_create INVALID\n"); }
 
-/* call() resolves functions by name at runtime - declared in dryos.h */
+    p_socket_bind = (socket_bind_fn)SOCKET_BIND_ADDR;
+    if (verify_code_addr(SOCKET_BIND_ADDR)) { ok++; }
+    else { p_socket_bind = NULL; }
+
+    p_socket_connect = (socket_connect_fn)SOCKET_CONNECT_ADDR;
+    if (verify_code_addr(SOCKET_CONNECT_ADDR)) { ok++; }
+    else { p_socket_connect = NULL; }
+
+    p_socket_listen = (socket_listen_fn)SOCKET_LISTEN_ADDR;
+    if (verify_code_addr(SOCKET_LISTEN_ADDR)) { ok++; }
+    else { p_socket_listen = NULL; }
+
+    p_socket_setsockopt = (socket_setsockopt_fn)SOCKET_SETSOCKOPT;
+    if (verify_code_addr(SOCKET_SETSOCKOPT)) { ok++; }
+    else { p_socket_setsockopt = NULL; }
+
+    p_socket_recv = (socket_recv_fn)SOCKET_RECV_ADDR;
+    if (verify_code_addr(SOCKET_RECV_ADDR)) { ok++; }
+    else { p_socket_recv = NULL; }
+
+    p_socket_send = (socket_send_fn)SOCKET_SEND_ADDR;
+    if (verify_code_addr(SOCKET_SEND_ADDR)) { ok++; }
+    else { p_socket_send = NULL; }
+
+    return ok;
+}
 
 static void show_status(const char *msg, int ok)
 {
@@ -102,23 +153,34 @@ static void test_socket_api(void)
 {
     printf("\n=== Socket API Test ===\n");
 
-    int sock = socket_create(SOCK_FAMILY_IPv4, SOCK_STREAM, 0);
-    printf("[WiFi] socket_create returned: %d\n", sock);
+    if (!p_socket_create) {
+        printf("[WiFi] socket_create not available\n");
+        return;
+    }
+
+    int sock = p_socket_create(1, 1, 0);
+    printf("[WiFi] socket_create(1,1,0) returned: %d\n", sock);
 
     if (sock >= 0) {
         struct sockaddr_in addr;
         memset(&addr, 0, sizeof(addr));
-        addr.sin_family = SOCK_FAMILY_IPv4;
+        addr.sin_family = 1;
         addr.sin_port = htons_ml(5555);
 
-        int ret = socket_bind(sock, &addr, sizeof(addr));
-        printf("[WiFi] socket_bind returned: %d\n", ret);
-
-        ret = socket_listen(sock, 1);
-        printf("[WiFi] socket_listen returned: %d\n", ret);
-
-        ret = socket_connect(sock, &addr, sizeof(addr));
-        printf("[WiFi] socket_connect returned: %d\n", ret);
+        if (p_socket_bind) {
+            int ret = p_socket_bind(sock, &addr, sizeof(addr));
+            printf("[WiFi] socket_bind returned: %d\n", ret);
+        }
+        if (p_socket_listen) {
+            int ret = p_socket_listen(sock, 1);
+            printf("[WiFi] socket_listen returned: %d\n", ret);
+        }
+        if (p_socket_connect) {
+            int ret = p_socket_connect(sock, &addr, sizeof(addr));
+            printf("[WiFi] socket_connect returned: %d\n", ret);
+        }
+        int close_ret = socket_close_caller(sock);
+        printf("[WiFi] socket_close(%d) = %d\n", sock, close_ret);
     }
 }
 
@@ -131,34 +193,21 @@ static void wifi_discovery_task(void *unused)
 
     show_status("Starting", 0);
 
-    printf("\n=== WiFi Init Sequence ===\n");
+    printf("\n=== Address Verification ===\n");
+    int verified = init_socket_ptrs();
+    printf("[WiFi] %d/7 socket function addresses verified\n", verified);
+
+    printf("\n=== WiFi Init Sequence (call() by name) ===\n");
     int init_count = try_wifi_sequence();
-
-    printf("\n=== WLAN Connect Test ===\n");
-    int ret = wlan_connect(NULL);
-    printf("[WiFi] wlan_connect(NULL) = %d\n", ret);
-
-    ret = nif_setup(0);
-    printf("[WiFi] nif_setup(0) = %d\n", ret);
-
-    ret = set_IP_address(0, 0, 0, 0);
-    printf("[WiFi] set_IP_address(0,0,0,0) = %d\n", ret);
 
     test_socket_api();
 
     printf("\n=== Summary ===\n");
-    if (init_count > 0) {
-        printf("WiFi: %d/6 init calls succeeded\n", init_count);
-    } else {
-        printf("WiFi: Init not available (stubs needed)\n");
-    }
-    printf("\nTo add stubs, find addresses in ROM1.BIN:\n");
-    printf("  platform/70D.112/stubs.S:\n");
-    printf("  NSTUB(0xFFFFFFFF, socket_create)\n");
-    printf("  NSTUB(0xFFFFFFFF, socket_bind)\n");
-    printf("  NSTUB(0xFFFFFFFF, wlan_connect)\n\n");
+    printf("[WiFi] call() init: %d/6 names resolved\n", init_count);
+    printf("[WiFi] Socket ptrs: %d/7 verified\n", verified);
+    printf("[WiFi] socket_close_caller: NSTUB(0xFF14F74C) in ROM1\n");
 
-    show_status("Complete", init_count > 0);
+    show_status("Complete", verified > 0 || init_count > 0);
 
     printf("========================================\n");
     printf("  WiFi Discovery Complete\n");

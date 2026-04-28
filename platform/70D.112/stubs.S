@@ -122,38 +122,37 @@ NSTUB(0xFF745794,  LiveViewShutterApp_handler)
 NSTUB(0xFF7523B4, LiveViewWifiApp_handler)
 
 /** WiFi/Socket API (70D - DIGIC V) **/
-/* Note: These addresses need to be reverse-engineered from 70D firmware */
-/* Currently unknown - use WEAK_FUNC in modules so they compile without crashing */
-/* Socket API */
-/* TODO: find real addresses in firmware, e.g.: NSTUB(0xFF######, socket_create) */
-// NSTUB(0x????????, socket_create)
-// NSTUB(0x????????, socket_bind)
-// NSTUB(0x????????, socket_connect)
-// NSTUB(0x????????, socket_listen)
-// NSTUB(0x????????, socket_shutdown)
-// NSTUB(0x????????, socket_accept)
-// NSTUB(0x????????, socket_recv)
-// NSTUB(0x????????, socket_recvfrom)
-// NSTUB(0x????????, socket_send)
-// NSTUB(0x????????, socket_sendto)
-// NSTUB(0x????????, socket_setsockopt)
-// NSTUB(0x????????, socket_getsockopt)
-// NSTUB(0x????????, socket_close_caller)
-// NSTUB(0x????????, socket_convertfd)
-// NSTUB(0x????????, socket_select_caller)
-
-/* WiFi Management */
-// NSTUB(0x????????, wlan_connect)
-// NSTUB(0x????????, nif_setup)
-// NSTUB(0x????????, set_IP_address)
-
-/* Canon WiFi Init (via call()) - symbols for reference */
-// NwLimeInit
-// NwLimeOn
-// wlanpoweron
-// wlanup
-// wlanchk
-// wlanipset
+/* Architecture: Socket functions are RAM-loaded from firmware module space at 0x0005xxxx */
+/* (loaded by DryOS at boot, NOT at fixed ROM addresses). Use WEAK_FUNC + direct         */
+/* function pointers in modules. Only socket_close is in ROM1.                            */
+/* See: modules/wifi_test/wifi_test.c for runtime verification pattern                    */
+/*                                                                                        */
+/* Socket API (RAM-loaded 0x0005xxxx - use direct fn pointers with runtime verify):      */
+/*   socket_create:   0x00059AF8  (24 callers, args: domain=1, type=1, protocol=0)       */
+/*   socket_bind:     0x00059E94  (3 callers)                                            */
+/*   socket_connect:  0x00059DDC  (8 callers)                                            */
+/*   socket_listen:   0x0005A9D0  (9 callers, args: fd, backlog)                         */
+/*   socket_accept:   0x00059CE8  (13 callers - may be recvvar)                          */
+/*   socket_recv:     0x00059CE8  (13 callers)                                           */
+/*   socket_send:     0x0005A09C  (30 callers)                                           */
+/*   socket_setsockopt: 0x0005A810 (47 callers - most widely used)                       */
+/*   socket_close:    0xFF14F74C  (3 callers - CONFIRMED in ROM1!)                       */
+/*   socket():        0x00059D60  (4 callers - raw syscall)                              */
+/*                                                                                        */
+/* WiFi Management (RAM-loaded):                                                         */
+/*   nif_setup/NW commands: 0x0005D708 (6 callers)                                       */
+/*   set_IP_address: see NW command strings at 0xFF46CCD8 in ROM1                        */
+/*   wlan_connect: not found - may use NW dispatch or call() interface                   */
+/*                                                                                        */
+/* NwLimeInit/NwLimeOn: NOT found in 70D ROM1 (different arch than 200D DIGIC 8).        */
+/* Use call() to try eventprocs at runtime.                                              */
+/*                                                                                        */
+/* PTPIP socket wrappers (ROM1, safer than calling 0x0005xxxx directly):                 */
+/*   0xFF7AF220 - socket_create + setsockopt wrapper                                     */
+/*   0xFF7AEE18 - BindParam handler (calls socket() + socket_close on error)             */
+/*   0xFF7AEFCC - listen/accept/close handler                                            */
+/* Confirmed ROM1 stub:                                                                  */
+NSTUB(0xFF14F74C, socket_close_caller)
 
 NSTUB(0xFF6EEB9C, LiveViewLevelApp_handler)
 NSTUB(0xFF776250,  PlayMain_handler) // old StopPlayTouchPassFilterApp_handler
