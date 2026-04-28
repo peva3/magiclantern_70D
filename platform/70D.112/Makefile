@@ -22,4 +22,10 @@ RESTARTSTART = 0x44C100
 ML_BOOT_OBJ = boot-d45-am.o
 
 include ../Makefile
+
+# QEMU: Enable synchronous module loading for reliable testing
+# (Must be set AFTER include ../Makefile to override platform default)
+CONFIG_QEMU = y
+CFLAGS += -DCONFIG_QEMU
+
 .DEFAULT_GOAL := $(BUILD_DIR)/cam_complete

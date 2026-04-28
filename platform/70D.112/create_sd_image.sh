@@ -60,9 +60,39 @@ mmd -i "$WORK_DIR/sd.raw@@$PARTITION_OFFSET" ::ML 2>/dev/null || true
 echo "Installing ML build to SD image..."
 mcopy -i "$WORK_DIR/sd.raw@@$PARTITION_OFFSET" "$BUILD_DIR/autoexec.bin" ::AUTOEXEC.BIN
 
-if [[ -d "$BUILD_DIR/ML" ]]; then
-    echo "Copying ML directory..."
-    mcopy -s -i "$WORK_DIR/sd.raw@@$PARTITION_OFFSET" "$BUILD_DIR/ML" ::ML
+# Copy from build/zip/ML (standard location) or build/ML (legacy)
+ML_SRC=""
+if [[ -d "$BUILD_DIR/zip/ML" ]]; then
+    ML_SRC="$BUILD_DIR/zip/ML"
+elif [[ -d "$BUILD_DIR/ML" ]]; then
+    ML_SRC="$BUILD_DIR/ML"
+fi
+
+if [[ -n "$ML_SRC" ]]; then
+    # FAT filesystems are case-insensitive, but QEMU's emulation may not be
+    # Create a temporary copy with uppercase MODULES directory
+    ML_TMP="$WORK_DIR/ML"
+    cp -r "$ML_SRC" "$ML_TMP"
+    if [[ -d "$ML_TMP/modules" ]]; then
+        mv "$ML_TMP/modules" "$ML_TMP/MODULES"
+    fi
+    
+    echo "Copying ML directory from $ML_TMP..."
+    # Copy root ML files first
+    mcopy -v -i "$WORK_DIR/sd.raw@@$PARTITION_OFFSET" "$ML_TMP"/* ::ML/
+# Then copy MODULES directory explicitly
+if [[ -d "$ML_TMP/MODULES" ]]; then
+    echo "Copying MODULES directory..."
+    mcopy -s -v -i "$WORK_DIR/sd.raw@@$PARTITION_OFFSET" "$ML_TMP/MODULES" ::ML/MODULES
+fi
+
+# Copy SETTINGS directory explicitly (for module .en files)
+if [[ -d "$ML_TMP/SETTINGS" ]]; then
+    echo "Copying SETTINGS directory..."
+    mcopy -s -v -i "$WORK_DIR/sd.raw@@$PARTITION_OFFSET" "$ML_TMP/SETTINGS" ::ML/SETTINGS
+fi
+else
+    echo "WARNING: No ML directory found, modules won't be available"
 fi
 
 if [[ -f "$BUILD_DIR/MAGIC.CFG" ]]; then

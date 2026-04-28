@@ -136,6 +136,7 @@ int get_config_var(const char * name);
 
 /* return the current settings directory (usually ML/SETTINGS, but not if you use a custom preset) */
 extern char* get_config_dir();
+void config_init_early(void);
 
 /* return true if the specified config variable (identified by a pointer to its current value)
  * is no longer at its default value */

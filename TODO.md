@@ -898,3 +898,168 @@ For collaboration or testing partnerships:
 - Example client code/scripts
 
 ---
+
+---
+
+## Sprint 24 — QEMU 70D Emulation Improvements (Week 50+)
+
+### Status: IN PROGRESS
+
+**Goal:** Enhance QEMU 70D emulation for better testing and automation.
+
+**Background:** hw_test module now runs successfully in QEMU (2026-04-28). All 24 modules load with .en files. Config system initialized early for module loading.
+
+### HIGH PRIORITY (Immediate impact)
+
+- [x] **S24.1** Module loading fix ✅ COMPLETED
+  - Created .en files for all 24 modules in build/zip/ML/SETTINGS/
+  - Added config_init_early() to initialize config_dir before module loading
+  - Force-enabled all modules for QEMU testing
+  - hw_test now runs with 3 passing tests
+
+- [ ] **S24.2** BMP frame capture to files
+  - Add GDB command to dump BMP buffer to PNG
+  - Create frame dump at specific intervals
+  - Export LCD state to file for inspection
+  - Log BMP changes (region-based)
+
+- [ ] **S24.3** Automated boot verification
+  - Write "BOOT_OK.txt" on successful boot
+  - Automated boot success detection
+  - Boot time measurement
+  - Compare with expected boot sequence
+
+- [ ] **S24.4** SD card file I/O tests
+  - Write known pattern, read back and verify
+  - Test filesystem corruption scenarios
+  - Validate file allocation tables
+  - Test concurrent file access
+
+- [ ] **S24.5** Extended hw_test coverage
+  - Add QEMU-specific tests (config, file I/O, properties)
+  - Test module unload/reload cycles
+  - Generate test reports
+
+### MEDIUM PRIORITY (Significant value)
+
+- [ ] **S24.6** Property system testing
+  - Validate property handlers work
+  - Test property registration
+  - Verify property value changes
+
+- [ ] **S24.7** Config file validation
+  - Test config save/load cycles
+  - Verify config file parsing
+  - Test preset switching
+
+- [ ] **S24.8** Task scheduling verification
+  - Task execution time measurement
+  - Task priority testing
+  - Task scheduling order verification
+
+- [ ] **S24.9** Timer callback testing
+  - Timer creation and callbacks
+  - High-precision timing untested
+  - Timer interrupt behavior
+
+- [ ] **S24.10** Menu navigation testing
+  - Menu system navigation
+  - Menu rendering verification
+  - Menu item selection
+
+### LOW PRIORITY (Nice to have)
+
+- [ ] **S24.11** Display output visualization
+  - Implement VNC-like display output
+  - Real-time LCD display in QEMU
+  - Visual debugging interface
+
+- [ ] **S24.12** Performance benchmarking
+  - Module init timing
+  - Boot phase duration
+  - Function call profiling
+  - Bottleneck identification
+
+- [ ] **S24.13** Memory leak detection
+  - Heap allocation tracking
+  - Memory leak detection
+  - Buffer overflow detection
+  - Stack usage monitoring
+
+- [ ] **S24.14** Log analysis tools
+  - Real-time log streaming
+  - Log filtering by module/component
+  - Log level control (INFO/DEBUG/ERROR)
+  - Automatic log rotation
+
+- [ ] **S24.15** Regression tracking
+  - Track boot times across builds
+  - Monitor module load success rate
+  - Detect new MPU messages
+  - Track test pass/fail trends
+
+### HARDWARE-LIMITED (Cannot test in QEMU)
+
+The following require physical 70D hardware:
+
+- LiveView sensor tests
+- Actual image capture
+- Audio recording/playback
+- WiFi connectivity
+- Touch interaction
+- Physical button testing
+- CMOS register calibration
+- ENGIO register calibration
+- Dual ISO movie mode
+- FPS banding verification
+
+### Implementation Priority Matrix
+
+| Feature | Effort | Impact | Do First? |
+|---------|--------|--------|-----------|
+| BMP capture | Low | High | ✅ Yes |
+| Boot marker | Low | High | ✅ Yes |
+| SD tests | Low | Medium | ✅ Yes |
+| Property tests | Medium | Medium | Maybe |
+| Config tests | Low | Medium | ✅ Yes |
+| Task scheduling | Medium | Medium | Later |
+| Timer tests | Medium | Low | Later |
+| Menu tests | High | Low | Later |
+| Display output | High | Medium | Later |
+| Performance | Medium | Low | Later |
+
+### Quick Wins (Recommended first)
+
+1. **BMP dump on demand** - Add GDB script to dump BMP buffer
+2. **Boot success marker** - Write "BOOT_OK.txt" on successful init
+3. **Module test expansion** - Add more tests to hw_test
+4. **Log parser script** - Extract test results automatically
+5. **SD card validation** - Write/read pattern verification
+
+### Long-Term Vision
+
+#### A. Full Hardware Abstraction
+- Complete sensor emulation
+- Audio codec emulation
+- WiFi stack emulation
+- Touch screen emulation
+- Button matrix emulation
+
+#### B. Automated Testing Pipeline
+- CI/CD integration
+- Automated regression tests
+- Performance tracking
+- Issue detection
+
+#### C. Development Tools
+- Interactive debugging UI
+- Memory visualization
+- Performance profiler
+- Configuration editor
+
+#### D. Documentation
+- API documentation
+- Emulation accuracy notes
+- Known issues list
+- Best practices guide
+

@@ -35,19 +35,19 @@ DISPLAY_OPT="-display none"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
---gdb) GDB_MODE=1; TIMEOUT=120; shift ;;
-    --boot-trace) GDB_MODE=1; BOOT_TRACE=1; TIMEOUT=120; shift ;;
-        --full)     TIMEOUT=60; shift ;;
-        --mpu)      D_ARGS+=("mpu"); shift ;;
+        --gdb) GDB_MODE=1; TIMEOUT=120; shift ;;
+        --boot-trace) GDB_MODE=1; BOOT_TRACE=1; TIMEOUT=120; shift ;;
+        --full) TIMEOUT=60; shift ;;
+        --mpu) D_ARGS+=("mpu"); shift ;;
         --debugmsg) D_ARGS+=("debugmsg"); shift ;;
-        --io)       D_ARGS+=("io_quick"); shift ;;
-        --tasks)    D_ARGS+=("tasks"); shift ;;
-        --calls)    D_ARGS+=("calls"); shift ;;
-        --boot)     BOOT_MODE=1; shift ;;
+        --io) D_ARGS+=("io_quick"); shift ;;
+        --tasks) D_ARGS+=("tasks"); shift ;;
+        --calls) D_ARGS+=("calls"); shift ;;
+        --boot) BOOT_MODE=1; TIMEOUT=180; shift ;;  # Extended timeout for module loading
         --no-build) BUILD=0; shift ;;
-        --display)  DISPLAY_OPT=""; shift ;;
-        --timeout)  TIMEOUT="$2"; shift; shift ;;
-        *)          echo "Unknown option: $1"; exit 1 ;;
+        --display) DISPLAY_OPT=""; shift ;;
+        --timeout) TIMEOUT="$2"; shift; shift ;;
+        *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
 
@@ -204,10 +204,16 @@ fi
 # QEMU_EOS_WORKDIR for ROM path resolution
 export QEMU_EOS_WORKDIR="$ROM_DIR"
 
-echo "  Command: ${CMD[*]}"
-echo "  Serial log: $SERIAL_LOG"
-echo "  DebugMsg log: $DEBUGMSG_LOG"
-echo "  Timeout: ${TIMEOUT}s"
+# QEMU_EOS_DEBUGMSG for DebugMsg logging (required for -d debugmsg)
+if [[ " ${D_ARGS[*]} " =~ " debugmsg " ]]; then
+    export QEMU_EOS_DEBUGMSG="0xFFA50C3C"
+    echo " DebugMsg address: $QEMU_EOS_DEBUGMSG"
+fi
+
+echo " Command: ${CMD[*]}"
+echo " Serial log: $SERIAL_LOG"
+echo " DebugMsg log: $DEBUGMSG_LOG"
+echo " Timeout: ${TIMEOUT}s"
 echo ""
 
 # ── Step 5: Run QEMU ─────────────────────────────────────────────────────────

@@ -923,15 +923,21 @@ static struct menu_entry cfg_menus[] = {
 };
 #endif
 
+/* Early initialization of config_dir for module loading */
+void config_init_early(void)
+{
+    /* Initialize config_dir to default before config system is fully loaded */
+    snprintf(config_dir, sizeof(config_dir), "ML/SETTINGS/");
+    printf("[CONFIG] Early init: config_dir='%s'\n", config_dir);
+}
+
 /* called at startup, after init_func's */
 void config_load()
 {
 #ifdef CONFIG_CONFIG_FILE
     config_selected = 1;
     config_preset_name = config_choose_startup_preset();
-
-    if (config_preset_name)
-    {
+    if (config_preset_name) {
         NotifyBox(2000, "Config: %s", config_preset_name);
         if (!DISPLAY_IS_ON) beep();
     }

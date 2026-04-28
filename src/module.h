@@ -283,6 +283,11 @@ void module_load_all(void);
 void module_unload_all(void);
 void toggle_module_enabled(int mod_number);
 
+#ifdef CONFIG_QEMU
+/* QEMU: Synchronous module loading for testing */
+void module_load_all_for_qemu(void);
+#endif
+
 /* explicitely load a standalone module. this is comparable to an executable */
 void *module_load(char *filename);
 int module_exec(void *module, char *symbol, int count, ...);

@@ -34,17 +34,12 @@
 #include "property.h"
 #include "consts.h"
 #include "tskmon.h"
-
 #include "boot-hack.h"
 #include "ml-cbr.h"
 #include "backtrace.h"
-
-extern int uart_printf(const char * fmt, ...);
-
-extern void platform_post_init();
-
-#if defined(FEATURE_GPS_TWEAKS)
 #include "gps.h"
+#ifdef CONFIG_QEMU
+#include "module.h"
 #endif
 
 #if defined(CONFIG_HELLO_WORLD)
@@ -482,19 +477,27 @@ static void my_big_init_task()
     uart_printf("hello from ML, after early tasks");
 #endif
 
-    /**
-     * kitor FIXME: disabling rom dump for D678 as it uses different addresses
-     * and offsets. I feel those should be per generation, or maybe per camera
-     * as R has different rom size than RP in same gen...
-     */
-    #if defined(CONFIG_AUTOBACKUP_ROM) && !defined(CONFIG_QEMU)
+/* Initialize config dir early for module loading (needed before config_load) */
+config_init_early();
+
+#ifdef CONFIG_QEMU
+    /* QEMU: Load modules synchronously for reliable testing */
+    module_load_all_for_qemu();
+#endif
+
+/**
+ * kitor FIXME: disabling rom dump for D678 as it uses different addresses
+ * and offsets. I feel those should be per generation, or maybe per camera
+ * as R has different rom size than RP in same gen...
+ */
+#if defined(CONFIG_AUTOBACKUP_ROM) && !defined(CONFIG_QEMU)
     /* backup ROM first time to be prepared if anything goes wrong. choose low prio */
     /* On 5D3, this needs to run after init functions (after card tests) */
     task_create("ml_backup", 0x1f, 0x4000, backup_rom_task, 0 );
-    #endif
+#endif
 
-    /* Read ML config. if feature disabled, nothing happens */
-    config_load();
+/* Read ML config. if feature disabled, nothing happens */
+config_load();
     
     debug_init_stuff();
 

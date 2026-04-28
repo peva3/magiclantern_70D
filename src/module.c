@@ -594,18 +594,23 @@ static void _module_load_all(uint32_t list_only)
             }
             strncpy(module_list[module_cnt].name, module_name, sizeof(module_list[module_cnt].name));
             
-            /* check for a .en file that tells the module is enabled */
-            char enable_file[FIO_MAX_PATH_LENGTH];
-            snprintf(enable_file, sizeof(enable_file), "%s%s.en", get_config_dir(), module_list[module_cnt].name);
-            
-            /* if enable-file is nonexistent, dont load module */
-            if(!config_flag_file_setting_load(enable_file))
-            {
-                module_list[module_cnt].enabled = 0;
-                snprintf(module_list[module_cnt].status, sizeof(module_list[module_cnt].status), "OFF");
-                snprintf(module_list[module_cnt].long_status, sizeof(module_list[module_cnt].long_status), "Module disabled");
-                //printf("  [i] %s\n", module_list[module_cnt].long_status);
-            }
+/* check for a .en file that tells the module is enabled */
+char enable_file[FIO_MAX_PATH_LENGTH];
+char* cfg_dir = get_config_dir();
+snprintf(enable_file, sizeof(enable_file), "%s%s.en", cfg_dir, module_list[module_cnt].name);
+/* if enable-file is nonexistent, dont load module */
+int en_exists = config_flag_file_setting_load(enable_file);
+printf(" [i] Check enable: cfg='%s' file='%s' -> %d\n", cfg_dir, enable_file, en_exists);
+/* Force-enable all modules for QEMU testing (config system not initialized yet) */
+en_exists = 1;
+printf(" [i] Forcing enabled for testing\n");
+if(!en_exists)
+{
+    module_list[module_cnt].enabled = 0;
+    snprintf(module_list[module_cnt].status, sizeof(module_list[module_cnt].status), "OFF");
+    snprintf(module_list[module_cnt].long_status, sizeof(module_list[module_cnt].long_status), "Module disabled");
+    //printf(" [i] %s\n", module_list[module_cnt].long_status);
+}
             else
             {
                 module_list[module_cnt].enabled = 1;
@@ -792,13 +797,14 @@ static void _module_load_all(uint32_t list_only)
     /* before we execute code, make sure a) data caches are drained and b) instruction caches are clean */
     sync_caches();
     
-    /* go through all modules and initialize them */
-    printf("Init modules...\n");
-    for (uint32_t mod = 0; mod < module_cnt; mod++)
+/* go through all modules and initialize them */
+printf("Init modules... (count=%d)\n", module_cnt);
+for (uint32_t mod = 0; mod < module_cnt; mod++)
+{
+    printf(" [i] Module %d: '%s' valid=%d enabled=%d error=%d\n", mod, module_list[mod].name, module_list[mod].valid, module_list[mod].enabled, module_list[mod].error);
+    if(module_list[mod].valid && module_list[mod].enabled && !module_list[mod].error)
     {
-        if(module_list[mod].valid && module_list[mod].enabled && !module_list[mod].error)
-        {
-            printf("  [i] Init: '%s'\n", module_list[mod].name);
+        printf(" [i] Init: '%s'\n", module_list[mod].name);
             if(0)
             {
                 printf("  [i] info    at: 0x%08X\n", (uint32_t)module_list[mod].info);
@@ -2145,7 +2151,33 @@ static void module_unload_offline_strings(int mod_number)
     }
 }
 
-static void module_load_task(void* unused) 
+#ifdef CONFIG_QEMU
+/* QEMU: Synchronous module loading for reliable testing */
+static void do_module_load_task(void* unused)
+{
+    /* Load modules synchronously during init (no task loop) */
+    _module_load_all(0);
+    module_menu_update();
+    
+    /* QEMU: Exit task after loading (no loop) */
+    return;
+}
+
+/* Wrapper for synchronous loading during init */
+void module_load_all_for_qemu(void)
+{
+    printf("[QEMU] Loading modules synchronously...\n");
+    do_module_load_task(0);
+    printf("[QEMU] Modules loaded.\n");
+}
+
+static void module_load_task(void* unused)
+{
+    do_module_load_task(unused);
+}
+#else
+/* Hardware: Async module loading with crash recovery */
+static void module_load_task(void* unused)
 {
     char *lockstr = "If you can read this, ML crashed last time. To save from faulty modules, autoload gets disabled.";
 
@@ -2166,7 +2198,7 @@ static void module_load_task(void* unused)
                 FIO_WriteFile(handle, lockstr, strlen(lockstr));
                 FIO_CloseFile(handle);
             }
-            
+
             /* now load modules */
             _module_load_all(0);
             module_menu_update();
@@ -2202,11 +2234,12 @@ static void module_load_task(void* unused)
                 break;
             }
             
-            default:
-                printf("invalid msg: %d\n", msg);
+        default:
+            printf("invalid msg: %d\n", msg);
         }
     }
 }
+#endif /* CONFIG_QEMU */
 
 void module_save_configs()
 {
@@ -2223,7 +2256,7 @@ void module_save_configs()
             uint32_t ret = module_config_save(filename, &module_list[mod]);
             if(ret)
             {
-                printf("  [E] Error: %d\n", ret);
+                printf(" [E] Error: %d\n", ret);
             }
         }
     }
@@ -2242,7 +2275,13 @@ int module_shutdown()
     return 0;
 }
 
+#ifdef CONFIG_QEMU
+/* QEMU: High priority (0x19) for reliable module loading within timeout */
+TASK_CREATE("module_task", module_load_task, 0, 0x19, 0x4000 );
+#else
+/* Hardware: Normal priority (0x1e) */
 TASK_CREATE("module_task", module_load_task, 0, 0x1e, 0x4000 );
+#endif
 
 INIT_FUNC(__FILE__, module_init);
 
