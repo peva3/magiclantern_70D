@@ -601,7 +601,7 @@ Implementation: focus.c now includes 70D-specific focus tracking using focus_pos
 These tasks span multiple sprints:
 
 - [ ] **L1** EDMAC abstraction layer (started in S7.4)
-- [ ] **L2** MLV v3 global dependency cleanup (started in S7.3)
+- [x] **L2** MLV v3 global dependency cleanup (started in S7.3) — removed raw.h/lens.h/fps.h deps from mlv_3.c, expanded mlv_session struct, 15 FIXMEs resolved ✅
 - [ ] **L3** Cross-camera compatibility improvements
 - [ ] **L4** Performance optimization (worker priorities, buffer sizes)
 - [ ] **L5** Replace hardcoded camera lists with capability flags (S11.9 deferred)

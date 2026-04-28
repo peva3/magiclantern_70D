@@ -38,14 +38,7 @@
 #include "dryos.h"
 #include "timer.h"
 
-// FIXME: mostly, or entirely, included for global variables, that we don't
-// want to use in here, since we want to work as a library.
-// Global uses should be factored out, passed in somehow.
-#include "raw.h"
-#include "lens.h"
-#include "fps.h"
-
-#include "raw_vid.h" // FIXME only for debug logging, probably move the SEND macro to main log.h
+#include "raw_vid.h"
 #include "mlv_3.h"
 
 #define MLV_VERSION_STRING "v3.0"
@@ -160,10 +153,8 @@ typedef struct mlv_rawi_block {
     uint16_t    res_x;               /* Configured video resolution, may differ from payload resolution */
     uint16_t    res_y;               /* Configured video resolution, may differ from payload resolution */
     
-    // FIXME maybe - do we want this ugly dep on raw.h?
-    // Possibly we should have our own mlv_raw_info struct, which raw.c could populate?
-    // This code cares about MLV files, not ML internals.
-    raw_info_t  raw_info;           /* the raw_info structure delivered by raw.c of ML Core */
+    /* raw_info snapshot provided by caller at session start */
+    struct mlv_raw_info  raw_info;
 } mlv_rawi_block;
 SIZE_CHECK_STRUCT(mlv_rawi_block, 0xb4);
 
@@ -382,18 +373,11 @@ static mlv_wbal_block wbal_block = {.type = mlv_WBAL};
 static mlv_vidf_block vidf_block = {.type = mlv_VIDF};
 
 // file-global state for an MLV recording session
+static struct mlv_session session_data;
 static uint64_t session_start_timestamp = 0;
 static int session_in_progress = 0;
-static int session_fps = 0;
-static int session_res_x = 0;
-static int session_res_y = 0;
-static int session_crop_offset_x = 0;
-static int session_crop_offset_y = 0;
-static int session_pan_offset_x = 0;
-static int session_pan_offset_y = 0;
-static uint64_t session_GUID = 0;
 static int session_frame_number = 0;
-static int session_image_data_alignment = 0;
+static uint64_t session_GUID = 0;
 
 static uint64_t prng_lfsr(uint64_t value)
 {
@@ -455,10 +439,10 @@ static int init_block(mlv_block_header *orig_block)
         block_1->audio_class = 0;
         block_1->video_frame_count = 0; //autodetect
         block_1->audio_frame_count = 0;
-        if (session_fps == 0)
+        if (session_data.fps == 0)
             block_1->source_fps_nom = 1;
         else
-            block_1->source_fps_nom = session_fps;
+            block_1->source_fps_nom = session_data.fps;
         block_1->source_fps_denom = 1000;
         return 0;
 
@@ -466,20 +450,14 @@ static int init_block(mlv_block_header *orig_block)
         mlv_rawi_block *block_2 = (mlv_rawi_block *)orig_block;
         block_2->size = sizeof(mlv_rawi_block);
         block_2->timestamp = get_us_clock() - session_start_timestamp;
-        block_2->res_x = session_res_x;
-        block_2->res_y = session_res_y;
-        // FIXME I don't like that this accesses a global.  It could change
-        // between triggering getting here and starting this copy.
-        // Caller should probably copy and pass the copy somehow:
-        block_2->raw_info = raw_info;
-        // After copying from the global, MLV 2 updates (or sets??) some fields.
-        // Why?  Are these not already populated, in which case maybe they shouldn't
-        // be in the global?
-        block_2->raw_info.bits_per_pixel = BPP; // FIXME another global to remove
-        block_2->raw_info.pitch = block_2->raw_info.width * BPP / 8;
+        block_2->res_x = session_data.res_x;
+        block_2->res_y = session_data.res_y;
+        block_2->raw_info = session_data.raw_info;
+        block_2->raw_info.bits_per_pixel = session_data.bpp;
+        block_2->raw_info.pitch = block_2->raw_info.width * session_data.bpp / 8;
         int black14 = block_2->raw_info.black_level;
         int white14 = block_2->raw_info.white_level;
-        int bpp_scaling = (1 << (14 - BPP));
+        int bpp_scaling = (1 << (14 - session_data.bpp));
         block_2->raw_info.black_level = (black14 + bpp_scaling / 2) / bpp_scaling;
         block_2->raw_info.white_level = (white14 + bpp_scaling / 2) / bpp_scaling;
         return 0;
@@ -488,22 +466,72 @@ static int init_block(mlv_block_header *orig_block)
         mlv_rawc_block *block_3 = (mlv_rawc_block *)orig_block;
         block_3->size = sizeof(mlv_rawc_block);
         block_3->timestamp = get_us_clock() - session_start_timestamp;
-        // FIXME similar to RAWI above, I don't like using this global.
-        // We should pass in the values that were valid when we wanted
-        // to save this block, not whatever exists now.
-        // And maybe we can remove the raw.h dep.
-        block_3->sensor_res_x = raw_capture_info.sensor_res_x;
-        block_3->sensor_res_y = raw_capture_info.sensor_res_y;
-        // block_3->reserved
-        block_3->sensor_crop = raw_capture_info.sensor_crop;
-        block_3->binning_x = raw_capture_info.binning_x;
-        block_3->binning_y = raw_capture_info.binning_y;
-        block_3->skipping_x = raw_capture_info.skipping_x;
-        block_3->skipping_y = raw_capture_info.skipping_y;
-        block_3->offset_x = raw_capture_info.offset_x;
-        block_3->offset_y = raw_capture_info.offset_y;
+        block_3->sensor_res_x = session_data.sensor_res_x;
+        block_3->sensor_res_y = session_data.sensor_res_y;
+        block_3->sensor_crop = session_data.sensor_crop;
+        block_3->binning_x = session_data.binning_x;
+        block_3->binning_y = session_data.binning_y;
+        block_3->skipping_x = session_data.skipping_x;
+        block_3->skipping_y = session_data.skipping_y;
+        block_3->offset_x = session_data.offset_x;
+        block_3->offset_y = session_data.offset_y;
         return 0;
 
+    case mlv_EXPO:
+        mlv_expo_block *block_5 = (mlv_expo_block *)orig_block;
+        block_5->size = sizeof(mlv_expo_block);
+        block_5->timestamp = get_us_clock() - session_start_timestamp;
+        if(session_data.iso == 0)
+        {
+            block_5->iso_mode = 1;
+            block_5->iso_value = session_data.iso_auto;
+        }
+        else
+        {
+            block_5->iso_mode = 0;
+            block_5->iso_value = session_data.iso;
+        }
+        block_5->iso_analog = session_data.iso_analog_raw;
+        block_5->digital_gain = session_data.iso_digital_ev;
+        block_5->shutter_value = (uint32_t)(1000.0f * (1000000.0f / (float)session_data.shutter_reciprocal));
+        return 0;
+
+    case mlv_LENS:
+        mlv_lens_block *block_6 = (mlv_lens_block *)orig_block;
+        block_6->size = sizeof(mlv_lens_block);
+        block_6->timestamp = get_us_clock() - session_start_timestamp;
+        block_6->focal_length = session_data.focal_length;
+        block_6->focal_dist = session_data.focus_dist;
+        block_6->aperture = session_data.aperture;
+        block_6->stabilizer_mode = session_data.stabilizer_mode;
+        block_6->autofocus_mode = session_data.autofocus_mode;
+        block_6->flags = 0;
+        block_6->lens_ID = session_data.lens_ID;
+        strncpy(block_6->lens_name, session_data.lens_name, 32);
+        strncpy(block_6->lens_serial, session_data.lens_serial, 32);
+        return 0;
+
+    case mlv_IDNT:
+        mlv_idnt_block *block_7 = (mlv_idnt_block *)orig_block;
+        block_7->size = sizeof(mlv_idnt_block);
+        block_7->timestamp = get_us_clock() - session_start_timestamp;
+        block_7->camera_model = session_data.camera_model;
+        memcpy(block_7->camera_name, session_data.camera_name, 32);
+        memcpy(block_7->camera_serial, session_data.camera_serial, 32);
+        return 0;
+
+    case mlv_WBAL:
+        mlv_wbal_block *block_8 = (mlv_wbal_block *)orig_block;
+        block_8->size = sizeof(mlv_wbal_block);
+        block_8->timestamp = get_us_clock() - session_start_timestamp;
+        block_8->wb_mode = session_data.wb_mode;
+        block_8->kelvin = session_data.kelvin;
+        block_8->wbgain_r = session_data.wbgain_r;
+        block_8->wbgain_g = session_data.wbgain_g;
+        block_8->wbgain_b = session_data.wbgain_b;
+        block_8->wbs_gm = session_data.wbs_gm;
+        block_8->wbs_ba = session_data.wbs_ba;
+        return 0;
     case mlv_RTCI:
         mlv_rtci_block *block_4 = (mlv_rtci_block *)orig_block;
         block_4->size = sizeof(mlv_rtci_block);
@@ -521,75 +549,6 @@ static int init_block(mlv_block_header *orig_block)
         block_4->tm_isdst = now.tm_isdst;
         block_4->tm_gmtoff = now.tm_gmtoff;
         // block_4->tm_zone // 0 via static initialisation, doesn't really exist
-        return 0;
-
-    case mlv_EXPO:
-        mlv_expo_block *block_5 = (mlv_expo_block *)orig_block;
-        block_5->size = sizeof(mlv_expo_block);
-        block_5->timestamp = get_us_clock() - session_start_timestamp;
-        // FIXME another global to consider removing from here,
-        // lens_info.
-        //
-        // iso is zero when auto-iso is enabled
-        if(lens_info.iso == 0)
-        {
-            block_5->iso_mode = 1;
-            block_5->iso_value = lens_info.iso_auto;
-        }
-        else
-        {
-            block_5->iso_mode = 0;
-            block_5->iso_value = lens_info.iso;
-        }
-        block_5->iso_analog = lens_info.iso_analog_raw;
-        block_5->digital_gain = lens_info.iso_digital_ev;
-        block_5->shutter_value = (uint32_t)(1000.0f * (1000000.0f / (float)get_current_shutter_reciprocal_x1000()));
-        return 0;
-
-    case mlv_LENS:
-        mlv_lens_block *block_6 = (mlv_lens_block *)orig_block;
-        block_6->size = sizeof(mlv_lens_block);
-        block_6->timestamp = get_us_clock() - session_start_timestamp;
-        block_6->focal_length = lens_info.focal_len;
-        block_6->focal_dist = lens_info.focus_dist;
-        block_6->aperture = lens_info.aperture * 10;
-        block_6->stabilizer_mode = lens_info.IS;
-        block_6->autofocus_mode = af_mode;
-        block_6->flags = 0;
-        block_6->lens_ID = lens_info.lens_id;
-
-        char buf[33];
-        snprintf(buf, sizeof(buf), "%X%08X",
-                 (uint32_t)(lens_info.lens_serial >> 32),
-                 (uint32_t)(lens_info.lens_serial & 0xFFFFFFFF));
-        strncpy(block_6->lens_name, lens_info.name, 32);
-        strncpy(block_6->lens_serial, buf, 32);
-        return 0;
-
-    case mlv_IDNT:
-        mlv_idnt_block *block_7 = (mlv_idnt_block *)orig_block;
-        block_7->size = sizeof(mlv_idnt_block);
-        block_7->timestamp = get_us_clock() - session_start_timestamp;
-        // FIXME, another global to remove from this library,
-        // camera_model_id and friends.  From propvalues.c.
-        block_7->camera_model = camera_model_id;
-        memcpy(block_7->camera_name, camera_model, 32);
-        memcpy(block_7->camera_serial, camera_serial, 32);
-        return 0;
-
-    case mlv_WBAL:
-        mlv_wbal_block *block_8 = (mlv_wbal_block *)orig_block;
-        block_8->size = sizeof(mlv_wbal_block);
-        block_8->timestamp = get_us_clock() - session_start_timestamp;
-        block_8->wb_mode = lens_info.wb_mode;
-        block_8->kelvin = lens_info.kelvin;
-        block_8->wbgain_r = lens_info.WBGain_R;
-        block_8->wbgain_g = lens_info.WBGain_G;
-        block_8->wbgain_b = lens_info.WBGain_B;
-        block_8->wbs_gm = lens_info.wbs_gm;
-        block_8->wbs_ba = lens_info.wbs_ba;
-        return 0;
-
     case mlv_VIDF:
     case mlv_AUDF:
     case mlv_WAVI:
@@ -724,10 +683,10 @@ char *write_video_frame_header(uint32_t image_size, char *start, char *end)
     vidf_block.size = (image_start + image_size) - start;
     vidf_block.timestamp = get_us_clock();
     vidf_block.frame_number = session_frame_number;
-    vidf_block.crop_offset_x = session_crop_offset_x;
-    vidf_block.crop_offset_y = session_crop_offset_y;
-    vidf_block.pan_offset_x = session_pan_offset_x;
-    vidf_block.pan_offset_y = session_pan_offset_y;
+    vidf_block.crop_offset_x = session_data.crop_offset_x;
+    vidf_block.crop_offset_y = session_data.crop_offset_y;
+    vidf_block.pan_offset_x = session_data.pan_offset_x;
+    vidf_block.pan_offset_y = session_data.pan_offset_y;
     vidf_block.frame_padding = (image_start - start) - sizeof(mlv_vidf_block);
     memcpy(start, &vidf_block, sizeof(mlv_vidf_block));
     memset(((mlv_vidf_block *)start)->frame_data, 0, vidf_block.frame_padding);
@@ -757,11 +716,6 @@ int update_video_frame_count(uint32_t count, char *start, char *end)
     return 0;
 }
 
-// MLV 2.0 needed to get info from lots of external funcs, e.g.
-// to obtain FPS of recording.  To make this a cleaner lib, for MLV 3.0
-// we require these are passed in, making it the caller's responsibility.
-//
-// Note that session state is unrelated to worker.c recording_state.
 int start_mlv_session(struct mlv_session *session)
 {
     if (session_in_progress)
@@ -769,13 +723,11 @@ int start_mlv_session(struct mlv_session *session)
         SEND_LOG_DATA_STR("ERROR: attempt to start MLV session while session already in progress\n");
         return -1;
     }
-    session_fps = session->fps;
-    session_res_x = session->res_x;
-    session_res_y = session->res_y;
+
+    session_data = *session;
     session_start_timestamp = get_us_clock();
     session_GUID = get_GUID();
     session_frame_number = 0;
-    session_image_data_alignment = session->image_data_alignment;
 
     session_in_progress = 1;
     return 0;

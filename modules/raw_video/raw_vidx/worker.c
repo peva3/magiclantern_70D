@@ -4,6 +4,7 @@
 #include "raw.h"
 #include "edmac-memcpy.h"
 #include "fps.h"
+#include "lens.h"
 
 #include "raw_vid.h"
 #include "raw_vid_worker.h"
@@ -463,6 +464,54 @@ static void worker(void)
                 session.fps = fps_get_current_x1000();
                 session.res_x = event->w;
                 session.res_y = event->h;
+                session.crop_offset_x = event->x;
+                session.crop_offset_y = event->y;
+                session.pan_offset_x = event->x;
+                session.pan_offset_y = event->y;
+
+                memcpy(&session.raw_info, &raw_info, sizeof(session.raw_info));
+                session.bpp = BPP;
+
+                session.sensor_res_x = raw_capture_info.sensor_res_x;
+                session.sensor_res_y = raw_capture_info.sensor_res_y;
+                session.sensor_crop = raw_capture_info.sensor_crop;
+                session.binning_x = raw_capture_info.binning_x;
+                session.binning_y = raw_capture_info.binning_y;
+                session.skipping_x = raw_capture_info.skipping_x;
+                session.skipping_y = raw_capture_info.skipping_y;
+                session.offset_x = raw_capture_info.offset_x;
+                session.offset_y = raw_capture_info.offset_y;
+
+                session.iso = lens_info.iso;
+                session.iso_auto = lens_info.iso_auto;
+                session.iso_analog_raw = lens_info.iso_analog_raw;
+                session.iso_digital_ev = lens_info.iso_digital_ev;
+                session.shutter_reciprocal = get_current_shutter_reciprocal_x1000();
+
+                session.focal_length = lens_info.focal_len;
+                session.focus_dist = lens_info.focus_dist;
+                session.aperture = lens_info.aperture * 10;
+                session.stabilizer_mode = lens_info.IS;
+                session.autofocus_mode = af_mode;
+                session.lens_ID = lens_info.lens_id;
+                strncpy(session.lens_name, lens_info.name, 32);
+                char lens_ser_buf[33];
+                snprintf(lens_ser_buf, sizeof(lens_ser_buf), "%X%08X",
+                         (uint32_t)(lens_info.lens_serial >> 32),
+                         (uint32_t)(lens_info.lens_serial & 0xFFFFFFFF));
+                strncpy(session.lens_serial, lens_ser_buf, 32);
+
+                session.wb_mode = lens_info.wb_mode;
+                session.kelvin = lens_info.kelvin;
+                session.wbgain_r = lens_info.WBGain_R;
+                session.wbgain_g = lens_info.WBGain_G;
+                session.wbgain_b = lens_info.WBGain_B;
+                session.wbs_gm = lens_info.wbs_gm;
+                session.wbs_ba = lens_info.wbs_ba;
+
+                session.camera_model = camera_model_id;
+                memcpy(session.camera_name, camera_model, 32);
+                memcpy(session.camera_serial, camera_serial, 32);
 
                 err = start_mlv_session(&session);
                 if (err)
