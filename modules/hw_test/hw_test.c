@@ -120,14 +120,49 @@ static void hw_task(void *unused)
             if (x) { max = sz; free(x); break; }
         }
         char buf[80];
-        snprintf(buf, sizeof(buf), "fio_max=%dKB", max/1024);
-        info(buf);
-        rst(max >= 4096, "fio_malloc", "fail");
+snprintf(buf, sizeof(buf), "fio_max=%dKB", max/1024);
+info(buf);
+rst(max >= 4096, "fio_malloc", "fail");
+}
+
+blink_delay(500);
+
+/* CONFIG directory and file test */
+hdr("CONFIG");
+{
+/* Test ML/SETTINGS directory exists and is writable */
+const char *settings_file = "ML/SETTINGS/HW_TEST_CFG.txt";
+const char *test_content = "config_test=1";
+int cfg_ok = 0;
+
+/* Write config test file */
+FILE *fc = FIO_CreateFile(settings_file);
+if (fc) {
+    int w = FIO_WriteFile(fc, test_content, strlen(test_content));
+    FIO_CloseFile(fc);
+    cfg_ok = (w == (int)strlen(test_content));
+    
+    /* Read back to verify */
+    if (cfg_ok) {
+        char buf[64] = {0};
+        FILE *fr = FIO_OpenFile(settings_file, 0);  /* mode 0 = read */
+        if (fr) {
+            int r = FIO_ReadFile(fr, buf, sizeof(buf)-1);
+            FIO_CloseFile(fr);
+            cfg_ok = (r == (int)strlen(test_content)) && (strcmp(buf, test_content) == 0);
+        } else {
+            cfg_ok = 0;
+        }
     }
+    
+    /* Cleanup */
+    FIO_RemoveFile(settings_file);
+}
 
-    blink_delay(500);
+rst(cfg_ok, "config_dir", cfg_ok ? 0 : "fail");
+}
 
-    hdr("SD WRITE");
+hdr("SD WRITE");
     {
         const char *paths[] = {"PING_A.TXT","A:/PING_A.TXT","B:/PING_A.TXT","PING_B.TXT",0};
         int wrote = 0;
@@ -145,11 +180,50 @@ static void hw_task(void *unused)
             FIO_CloseFile(f);
             if (w == 4) { wrote = 1; FIO_RemoveFile(paths[i]); break; }
         }
-        if (wrote) { rst(1, "sd_write", 0); info("SD WRITE OK"); }
-        else       { rst(0, "sd_write", "no path"); }
-    }
+if (wrote) { rst(1, "sd_write", 0); info("SD WRITE OK"); }
+else { rst(0, "sd_write", "no path"); }
+}
 
-    blink_delay(500);
+/* SD Card Read/Write Verification Test */
+hdr("SD VERIFY");
+{
+const char *test_file = "ML/SETTINGS/HW_TEST.txt";
+const char *test_data = "QEMU 70D hw_test module verification\nBuild: " __DATE__ " " __TIME__;
+char read_buf[256] = {0};
+int write_ok = 0, read_ok = 0;
+
+/* Write test data */
+FILE *fw = FIO_CreateFile(test_file);
+if (fw) {
+    int w = FIO_WriteFile(fw, test_data, strlen(test_data));
+    FIO_CloseFile(fw);
+    write_ok = (w == (int)strlen(test_data));
+    info(write_ok ? " Write OK" : " Write FAIL");
+} else {
+    info(" Write CREATE FAIL");
+}
+
+/* Read back and verify */
+if (write_ok) {
+    FILE *fr = FIO_OpenFile(test_file, 0);  /* mode 0 = read */
+    if (fr) {
+        int r = FIO_ReadFile(fr, read_buf, sizeof(read_buf)-1);
+        FIO_CloseFile(fr);
+        read_buf[r] = 0;
+        read_ok = (r == (int)strlen(test_data)) && (strcmp(read_buf, test_data) == 0);
+        info(read_ok ? " Read OK" : " Read MISMATCH");
+    } else {
+        info(" Read OPEN FAIL");
+    }
+}
+
+/* Cleanup */
+if (write_ok) FIO_RemoveFile(test_file);
+
+rst(write_ok && read_ok, "sd_verify", write_ok ? 0 : "write");
+}
+
+blink_delay(500);
 
     hdr("PROPERTIES");
     val("shutter_ct", shutter_count);
