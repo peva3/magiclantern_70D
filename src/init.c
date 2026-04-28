@@ -530,12 +530,24 @@ config_load();
         ml_tasks++;
     }
     
-    msleep(500);
+msleep(500);
 #ifdef CONFIG_XF605
     uart_printf("hello from ML, after late tasks");
 #endif
+ml_started = 1;
 
-    ml_started = 1;
+/* Write boot success marker file for automated testing */
+{
+    FILE *f = FIO_CreateFile("ML/SETTINGS/BOOT_OK.txt");
+    if (f) {
+        const char *msg = "ML boot successful\n";
+        int w = FIO_WriteFile(f, msg, strlen(msg));
+        FIO_CloseFile(f);
+        printf("[BOOT] Created BOOT_OK.txt: %d bytes written\n", w);
+    } else {
+        printf("[BOOT] Failed to create BOOT_OK.txt\n");
+    }
+}
 }
 
 /** Blocks execution until config is read */
