@@ -23,9 +23,14 @@
 //#define MLV_3_CROP_WIDTH 1600
 //#define MLV_3_CROP_HEIGHT 900
 
-// This is 64.3MB/s at 24fps
-#define MLV_3_CROP_WIDTH 1792
-#define MLV_3_CROP_HEIGHT 896
+// This is 64.3MB/s at 24fps - used on fast SD cameras (200D DIGIC 8)
+//#define MLV_3_CROP_WIDTH 1792
+//#define MLV_3_CROP_HEIGHT 896
+
+// This is ~38.7MB/s at 24fps, suitable for 70D stock SD (~40MB/s)
+// 70D sensor: 5472x3648, crop to 720p center region
+#define MLV_3_CROP_WIDTH 1280
+#define MLV_3_CROP_HEIGHT 720
 
 // This is 67.8MB/s at 24fps
 //#define MLV_3_CROP_WIDTH 1888

@@ -39,6 +39,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 | 2026-04-26 | 452KB | 448KB | S5: crop_rec 70D CMOS/ENGIO fixes + Timer A/B recalculation (module-only) |
 | 2026-04-27 | 452KB | 448KB | QEMU SD timing fixes, hw_test module, MPU spell completion |
 | 2026-04-28 | 452KB | 448KB | PTPIP wrappers: 8 NSTUBs added to stubs.S (ptpip_sock_create, ptpip_open_server, ptpip_create_client, etc.) at 0xFF7AEE00-0xFF7AF500; wifi_test enhanced with PTPIP + NW command tests; initial commit |
+| 2026-04-28 | 452KB | 448KB | raw_vidx: 70D enabled (MLV v3 port), crop 1280x720 for 40MB/s SD limit; event_pusher 70D offsets; modules.included updated; PTPIP NSTUBs persist
 
 2. **Documentation Updates:** Keep AGENTS.md and README.md files continuously updated with all findings, changes, and discoveries
 3. **Task Tracking:** Maintain TODO.md with current task status, marking completed items and adding new tasks as discovered

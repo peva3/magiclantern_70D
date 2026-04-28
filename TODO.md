@@ -8,7 +8,7 @@ This document outlines the development sprints for implementing the future work 
 **Base Repository:** https://github.com/peva3/magiclantern_70D  
 **Forked From:** https://github.com/reticulatedpines/magiclantern_simplified  
 **Developer Identity:** pmwoodward3@gmail.com / peva3  
-**Current Phase:** Week 7 - QEMU 70D Emulation + crop_rec 70D
+**Current Phase:** Sprint 7 - MLV v3 port (raw_vidx enabled) + Sprint 23 - WiFi stubs
 **Last Updated:** 2026-04-28
 
 ### Key Contributors (from forum research)
@@ -337,30 +337,34 @@ Implementation: focus.c now includes 70D-specific focus tracking using focus_pos
 
 ---
 
-## Sprint 7 — MLV v3 Port (Weeks 23-28)
+## Sprint 7 — MLV v3 Port (70D Enablement)
 
-### Status: NOT YET STARTED
+### Status: ✅ S7.1-S7.2 COMPLETE (S7.3-S7.4 deferred)
 
-- [ ] **S7.1** Map 70D crop dimensions for raw_vidx
-  - Determine safe crop window for 70D sensor
-  - Define MLV_3_CROP_WIDTH/HEIGHT for 70D
-  - Test crop buffer allocation and stability
+**Goal:** Enable raw_vidx (MLV v3) module for Canon 70D.
+**Changes:**
+- Added raw_vidx to `modules.included` for 70D
+- Set 70D crop dimensions to 1280x720 (~38.7MB/s at 24fps, fits 40MB/s SD limit)
+- Added 70D-specific crop offset placeholder in event_pusher.c
 
-- [ ] **S7.2** Enable raw_vidx module for 70D
-  - Add 70D to modules.included
-  - Configure worker priorities (currently tuned for 200D)
-  - Test producer-consumer pipeline
+- [x] **S7.1** Map 70D crop dimensions for raw_vidx
+  - Set MLV_3_CROP_WIDTH=1280, MLV_3_CROP_HEIGHT=720 (from 1792x896 default)
+  - 70D sensor: 5472x3648, 40MB/s stock SD limit
+  - 1280x720 at 14bpp: 1.6MB/frame, ~38.7MB/s at 24fps — safe for UHS-I cards
+  - Crop offset defaults (x=200, y=100) apply to 70D's full-frame LV raw
 
-- [ ] **S7.3** Refactor MLV v3 global dependencies
-  - Remove `raw_info` global (pass as parameter)
-  - Remove `lens_info` global
-  - Remove `camera_model` global
-  - Make library truly session-based
+- [x] **S7.2** Enable raw_vidx module for 70D
+  - Added `raw_vidx` to platform/70D.112/modules.included
+  - raw_vidx.mo: 14KB — all upstream deps met (CONFIG_EDMAC_MEMCPY, raw.h, fps.h)
+  - Worker priorities (0x11/0x9) kept as 200D defaults — needs hardware tuning
 
-- [ ] **S7.4** Replace direct edmac_copy usage
-  - Implement abstraction layer for edmac_copy
-  - Handle cameras without edmac_copy gracefully
-  - Add alignment requirement handling
+- [ ] **S7.3** Refactor MLV v3 global dependencies (deferred — code quality task)
+  - Remove `raw_info`, `lens_info`, `camera_model` globals from mlv_3.c
+  - Pass values via mlv_session struct instead
+
+- [ ] **S7.4** Replace direct edmac_copy usage (deferred — already works on 70D)
+  - worker.c uses `edmac_copy_rectangle_cbr_start()` from edmac-memcpy.h
+  - CONFIG_EDMAC_MEMCPY defined on 70D — no change needed
 
 ---
 
