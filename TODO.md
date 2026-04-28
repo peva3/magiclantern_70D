@@ -48,6 +48,51 @@ This document outlines the development sprints for implementing the future work 
 - ✅ QEMU infrastructure cloned and ready
 - ✅ Host-side test framework operational
 
+---
+
+## Task Categorization: Hardware vs Non-Hardware
+
+**Purpose:** Separate all TODO tasks by whether they require physical 70D hardware or can be done in QEMU/emulation. Prioritize non-hardware tasks for immediate progress.
+
+### NON-HARDWARE TASKS (Can do now in QEMU)
+
+| Sprint | Tasks | Effort | Priority |
+|--------|-------|--------|----------|
+| S22 | QEMU crop_rec validation, timer testing, MLV recording (4 tasks) | Medium | HIGH |
+| S7 | MLV v3 port - remove globals, enable raw_vidx, refactor edmac_copy (4 tasks) | High | HIGH |
+| S4 | RAW zebras - investigate timing, implement double-buffer (3 tasks) | Medium | MEDIUM |
+| S8 | Audio RE - map registers, implement property handlers (2 tasks) | Medium | MEDIUM |
+| S1 | Verify PROP_LV_LENS focus_pos data quality (1 task) | Low | LOW |
+| S3 | Timer A+B hybrid analysis, FPS UI with safe mode (2 tasks) | Low | LOW |
+| S10 | A/B firmware toggle maintenance (1 task) | Low | LOW |
+| L1-L5 | Long-term architecture improvements (5 tasks) | Varied | LOW |
+| — | Testing infrastructure (4 tasks) | Medium | MEDIUM |
+
+**Total: ~22 non-hardware tasks** — Can make progress immediately without physical camera.
+
+### HARDWARE TASKS (Require physical 70D)
+
+| Sprint | Tasks | Risk | Priority |
+|--------|-------|------|----------|
+| S5 | CMOS/ENGIO calibration, CROP_PRESET_3X, ADTG readout, crop mode testing (5 tasks) | HIGH | HIGH |
+| S6 | Dual ISO movie pipeline investigation and calibration (3 tasks) | High | MEDIUM |
+| S23 | WiFi hardware verification, socket tests, latency/throughput (6 tasks) | Medium | MEDIUM |
+| S2 | Focus stacking bug fix (1 task) | Low | LOW |
+| S3 | FPS banding mitigation hardware test (1 task) | Medium | LOW |
+| S8 | Audio quality testing (1 task) | Low | LOW |
+| S9 | SD UHS tuning, METERING/AF toggle (2 tasks) | Low | LOW |
+
+**Total: ~19 hardware tasks** — Documented and ready for when hardware access becomes available.
+
+### Recommended Sprint Order
+1. **Sprint 22** — QEMU validation of crop_rec (immediate, highest value)
+2. **Sprint 7** — MLV v3 port (code cleanup, no hardware needed)
+3. **Sprint 4** — RAW zebras investigation (pure code analysis)
+4. **Sprint 8** — Audio RE (firmware analysis, registers only)
+5. Long-term architecture + testing infra (background task)
+
+Hardware tasks (S5, S6, S23 WiFi verification) deferred until physical 70D available.
+
 ### Confirmed Working Features (from forum)
 
 **Working (do not break):**
