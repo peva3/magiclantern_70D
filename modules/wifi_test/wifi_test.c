@@ -1,17 +1,3 @@
-/**
- * WiFi Discovery Module for Canon 70D
- *
- * This module discovers and tests WiFi/socket functions on the 70D.
- * Architecture: 70D (DIGIC V) loads socket library into RAM at 0x0005xxxx
- * (NOT in ROM1 like 200D). Only socket_close (0xFF14F74C) is in ROM1.
- *
- * Approach:
- * 1. call() for eventproc-resolved functions (NwLimeInit, etc.)
- * 2. Direct function pointers for RAM-loaded socket functions
- * 3. socket_close_caller via NSTUB (in ROM1)
- * 4. Runtime address verification before calling RAM functions
- */
-
 #include <module.h>
 #include <dryos.h>
 #include <bmp.h>
@@ -20,20 +6,18 @@
 #include <config.h>
 #include <ml_socket.h>
 
-/* Forward declaration needed before MODULE_INFO uses it */
 static unsigned int wifi_discovery_init(void);
 
 MODULE_INFO_START()
 MODULE_INIT(wifi_discovery_init)
 MODULE_INFO_END()
 
-/* Network constants */
 #ifndef SOCK_STREAM
 #define SOCK_STREAM 1
 #endif
 
-/* 70D RAM-loaded socket function addresses (loaded from firmware module space) */
-/* These are called by firmware BL instructions at runtime - validated by capstone */
+/* 70D RAM-loaded socket function addresses (loaded from firmware module space at boot) */
+/* Called by firmware BL instructions at runtime - verified by capstone disassembly     */
 #define SOCKET_CREATE_ADDR   0x00059AF8
 #define SOCKET_BIND_ADDR     0x00059E94
 #define SOCKET_CONNECT_ADDR  0x00059DDC
@@ -51,7 +35,7 @@ typedef int (*socket_setsockopt_fn)(int fd, int level, int optname, const void *
 typedef int (*socket_recv_fn)(int fd, void *buf, int len, int flags);
 typedef int (*socket_send_fn)(int fd, const void *buf, int len, int flags);
 
-/* Runtime function pointers (initialized to NULL, set after verify) */
+/* Runtime function pointers (RAM-loaded, verified at runtime) */
 static socket_create_fn     p_socket_create     = NULL;
 static socket_bind_fn       p_socket_bind       = NULL;
 static socket_connect_fn    p_socket_connect    = NULL;
@@ -59,20 +43,25 @@ static socket_listen_fn     p_socket_listen     = NULL;
 static socket_setsockopt_fn p_socket_setsockopt = NULL;
 static socket_recv_fn       p_socket_recv       = NULL;
 static socket_send_fn       p_socket_send       = NULL;
-/* socket_close_caller is available via NSTUB (in ROM1 at 0xFF14F74C) */
+
+/* ROM1 NSTUB stubs (always available) */
 extern int socket_close_caller(int socket);
+extern int socket_close_if_valid(int socket);
 
-/* WiFi management - NW command interface (discovered but not yet functional) */
-/* wlan_connect, nif_setup, set_IP_address are NOT available as NSTUB on 70D */
-
-/* call() resolves eventproc names at runtime - declared in dryos.h */
+/* PTPIP ROM1-safe wrapper functions */
+extern int ptpip_sock_create(void);
+extern int ptpip_open_server(void);
+extern int ptpip_create_client(void);
+extern int ptpip_listen_close(int fd);
+extern int ptpip_close_server(int fd);
+extern int ptpip_set_keepalive(int fd);
+extern int ptpip_bind_param(void);
 
 static unsigned short htons_ml(unsigned short port)
 {
     return ((port & 0xFF) << 8) | ((port >> 8) & 0xFF);
 }
 
-/* Verify an address contains valid ARM code (PUSH prologue) */
 static int verify_code_addr(uint32_t addr)
 {
     if (addr < 0x1000 || addr >= 0xFFFF0000) return 0;
@@ -82,7 +71,6 @@ static int verify_code_addr(uint32_t addr)
     return 0;
 }
 
-/* Initialize function pointers with runtime address verification */
 static int init_socket_ptrs(void)
 {
     int ok = 0;
@@ -122,6 +110,8 @@ static void show_status(const char *msg, int ok)
     bmp_printf(FONT_MED, 50, 50, "WiFi: %s [%s]", msg, ok ? "OK" : "FAIL");
 }
 
+/* --- Section 1: call() based WiFi init --- */
+
 static int call_wifi_init(const char *func_name)
 {
     printf("[WiFi] Calling '%s'... ", func_name);
@@ -149,9 +139,11 @@ static int try_wifi_sequence(void)
     return success;
 }
 
+/* --- Section 2: RAM-loaded socket API test --- */
+
 static void test_socket_api(void)
 {
-    printf("\n=== Socket API Test ===\n");
+    printf("\n=== Socket API Test (RAM-loaded 0x0005xxxx) ===\n");
 
     if (!p_socket_create) {
         printf("[WiFi] socket_create not available\n");
@@ -184,6 +176,66 @@ static void test_socket_api(void)
     }
 }
 
+/* --- Section 3: PTPIP ROM1-safe wrappers --- */
+
+static void test_ptpip_wrappers(void)
+{
+    printf("\n=== PTPIP Wrapper Test (ROM1-safe 0xFF7Axxxx) ===\n");
+
+    printf("[PTPIP] ptpip_sock_create()... ");
+    int result = ptpip_sock_create();
+    printf("returned: %d\n", result);
+
+    printf("[PTPIP] ptpip_open_server()... ");
+    result = ptpip_open_server();
+    printf("returned: %d\n", result);
+
+    printf("[PTPIP] ptpip_create_client()... ");
+    result = ptpip_create_client();
+    printf("returned: %d\n", result);
+
+    printf("[PTPIP] ptpip_set_keepalive(1)... ");
+    result = ptpip_set_keepalive(1);
+    printf("returned: %d\n", result);
+
+    printf("[PTPIP] ptpip_listen_close(-1)... ");
+    result = ptpip_listen_close(-1);
+    printf("returned: %d\n", result);
+
+    printf("[PTPIP] ptpip_close_server(-1)... ");
+    result = ptpip_close_server(-1);
+    printf("returned: %d\n", result);
+
+    printf("[PTPIP] socket_close_if_valid(-1) (should noop)... ");
+    result = socket_close_if_valid(-1);
+    printf("returned: %d\n", result);
+
+    printf("[PTPIP] socket_close_if_valid(999) (invalid fd)... ");
+    result = socket_close_if_valid(999);
+    printf("returned: %d\n", result);
+}
+
+/* --- Section 4: NW command interface test --- */
+
+static void test_nw_commands(void)
+{
+    printf("\n=== NW Command Interface Test ===\n");
+    const char *nw_funcs[] = {
+        "nif_up",
+        "nif_start",
+        "dhcpc_setup",
+        "dnsc_setup",
+        "ipset",
+        NULL
+    };
+    int success = 0;
+    for (int i = 0; nw_funcs[i]; i++) {
+        int r = call_wifi_init(nw_funcs[i]);
+        if (r >= 0) success++;
+    }
+    printf("[NW] %d/%d commands resolved\n", success, 4);
+}
+
 static void wifi_discovery_task(void *unused)
 {
     (void)unused;
@@ -201,11 +253,15 @@ static void wifi_discovery_task(void *unused)
     int init_count = try_wifi_sequence();
 
     test_socket_api();
+    test_ptpip_wrappers();
+    test_nw_commands();
 
     printf("\n=== Summary ===\n");
-    printf("[WiFi] call() init: %d/6 names resolved\n", init_count);
-    printf("[WiFi] Socket ptrs: %d/7 verified\n", verified);
-    printf("[WiFi] socket_close_caller: NSTUB(0xFF14F74C) in ROM1\n");
+    printf("[WiFi] call() init:        %d/6 names resolved\n", init_count);
+    printf("[WiFi] Socket ptrs:        %d/7 verified\n", verified);
+    printf("[WiFi] socket_close:       NSTUB(0xFF14F74C) in ROM1\n");
+    printf("[WiFi] socket_close_valid: NSTUB(0xFF7AF380) in ROM1\n");
+    printf("[PTPIP] Wrappers:          8 NSTUBs at 0xFF7AEE00-0xFF7AF500\n");
 
     show_status("Complete", verified > 0 || init_count > 0);
 

@@ -148,11 +148,22 @@ NSTUB(0xFF7523B4, LiveViewWifiApp_handler)
 /* Use call() to try eventprocs at runtime.                                              */
 /*                                                                                        */
 /* PTPIP socket wrappers (ROM1, safer than calling 0x0005xxxx directly):                 */
-/*   0xFF7AF220 - socket_create + setsockopt wrapper                                     */
-/*   0xFF7AEE18 - BindParam handler (calls socket() + socket_close on error)             */
-/*   0xFF7AEFCC - listen/accept/close handler                                            */
-/* Confirmed ROM1 stub:                                                                  */
+/* Full PTPIP SU (Socket Utility) module at 0xFF7AEE00-0xFF7AF500                      */
+/* These are ROM1-resident wrappers with error handling, logging, proper param setup.   */
+/*                                                                                       */
+/* Socket API:                                                                          */
 NSTUB(0xFF14F74C, socket_close_caller)
+NSTUB(0xFF7AF380, socket_close_if_valid)       /* close(fd) if fd != -1, else noop           */
+/*                                                                                       */
+/* PTPIP Socket Wrappers (safe, ROM1-resident, include error handling + logging):      */
+NSTUB(0xFF7AF220, ptpip_sock_create)           /* socket_create(1,1,0) + setsockopt REUSEADDR */
+NSTUB(0xFF7AEE18, ptpip_bind_param)            /* socket() + bind + socket_close on error     */
+NSTUB(0xFF7AEE80, ptpip_open_server)           /* Full TCP server: socket+bind+setopt+log     */
+NSTUB(0xFF7AF2CC, ptpip_create_client)         /* TCP client: connect from sockaddr struct     */
+NSTUB(0xFF7AEFCC, ptpip_listen_close)          /* listen(1) + socket_close_caller             */
+NSTUB(0xFF7AF344, ptpip_close_server)          /* listen(2,shutdown) + socket_close_caller    */
+NSTUB(0xFF7AF38C, ptpip_set_keepalive)         /* setsockopt(SO_KEEPALIVE=1) helper           */
+NSTUB(0xFF7AF3B4, ptpip_errno_handler)         /* Print "[PTPIP] SU: errno=%d" with DryOS errno */
 
 NSTUB(0xFF6EEB9C, LiveViewLevelApp_handler)
 NSTUB(0xFF776250,  PlayMain_handler) // old StopPlayTouchPassFilterApp_handler
