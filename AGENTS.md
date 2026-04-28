@@ -43,6 +43,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 | 2026-04-28 | 452KB | 448KB | raw_vidx: 70D enabled (MLV v3 port), crop 1280x720 for 40MB/s SD limit; event_pusher 70D offsets; modules.included updated; PTPIP NSTUBs persist
 | 2026-04-28 | 452KB | 448KB | hw_test v2: comprehensive hardware diagnostics - firmware, memory, SD speed, 25+ props, ENGIO regs, EDMAC, timers, eventprocs, audio
 | 2026-04-28 | 452KB | 448KB | L2: MLV v3 global dependency cleanup - removed raw.h/lens.h/fps.h deps from mlv_3.c, expanded mlv_session struct, 15 FIXMEs resolved |
+| 2026-04-28 | 452KB | 448KB | hw_test v3: fixed card path detection (A:/->B:/ for SD-only 70D), cleaner test framework, full build in 70d-latest/ |
 
 2. **Documentation Updates:** Keep AGENTS.md and README.md files continuously updated with all findings, changes, and discoveries
 3. **Task Tracking:** Maintain TODO.md with current task status, marking completed items and adding new tasks as discovered

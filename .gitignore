@@ -105,3 +105,4 @@ roms/*/placeholder*
 roms/**/ROM*.BIN.gz
 
 syntax: regexp
+70d-latest/
