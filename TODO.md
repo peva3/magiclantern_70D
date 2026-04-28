@@ -794,3 +794,69 @@ The path forward is clear: establish the development environment, verify we can 
 - Hardware testing checklist for S5 completion
 - Updated TODO.md with calibration results
 
+
+---
+
+## Sprint 23 — WiFi Remote Control Framework (Current Week)
+
+### Status: IN PROGRESS (stubs needed)
+
+**Goal:** Implement WiFi remote control capabilities for Canon 70D.
+
+### Background
+- Canon 70D has built-in 802.11b/g/n WiFi hardware
+- ML socket API exists (ml_socket.h) but 70D lacks stubs
+- 200D port has working WiFi implementation as reference
+- Only current stub: LiveViewWifiApp_handler at 0xFF7523B4
+
+### Required Stubs (Need Reverse Engineering)
+
+#### Socket API
+- [ ] **S23.1** Find socket_create address in 70D firmware
+- [ ] **S23.2** Find socket_bind address
+- [ ] **S23.3** Find socket_connect address
+- [ ] **S23.4** Find socket_listen address
+- [ ] **S23.5** Find socket_accept address
+- [ ] **S23.6** Find socket_recv/send addresses
+- [ ] **S23.7** Find socket_close_caller address
+- [ ] **S23.8** Find socket_convertfd address
+- [ ] **S23.9** Find socket_select_caller address
+
+#### WiFi Management
+- [ ] **S23.10** Find wlan_connect address
+- [ ] **S23.11** Find nif_setup address
+- [ ] **S23.12** Find set_IP_address address
+- [ ] **S23.13** Document Canon WiFi init sequence (NwLimeInit, etc.)
+
+### Implementation Tasks
+- [x] **S23.14** Create wifi_test module framework ✅
+- [x] **S23.15** Add WiFi stub placeholders to stubs.S ✅
+- [ ] **S23.16** Implement basic socket server
+- [ ] **S23.17** Add PING command handler
+- [ ] **S23.18** Add remote shoot command
+- [ ] **S23.19** Add live view control commands
+- [ ] **S23.20** Add file transfer capability
+- [ ] **S23.21** Create web interface (optional)
+- [ ] **S23.22** Document usage and API
+
+### Reference Implementation
+- 200D port has working WiFi stubs (platform/200D.101/stubs.S)
+- yolo.c module demonstrates usage pattern
+- ml_socket.h provides API definitions
+
+### Testing
+- [ ] Test on real 70D hardware (WiFi required)
+- [ ] Verify socket creation and binding
+- [ ] Test remote PING command
+- [ ] Test remote shoot
+- [ ] Test file transfer
+- [ ] Measure latency and throughput
+- [ ] Test range and stability
+
+### Deliverables
+- Working WiFi remote control module
+- Documentation of 70D WiFi addresses
+- Remote control API for 70D
+- Example client code/scripts
+
+---

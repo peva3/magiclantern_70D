@@ -5025,6 +5025,16 @@ static void sdio_send_command(SDIOState *sd)
 
     request.cmd = cmd;
     request.arg = param;
+
+    /* 70D SD timing workaround - 70D firmware expects SD operations to take time */
+    if (strcmp(eos_state->model->name, MODEL_NAME_70D) == 0) {
+        static int sd_70d_cmd_count = 0;
+        sd_70d_cmd_count++;
+        /* Add small delay every 5 commands to simulate realistic SD timing */
+        if (sd_70d_cmd_count % 5 == 0) {
+            usleep(50); /* 50 microseconds */
+        }
+    }
     SD_DPRINTF("Command %d %08x\n", request.cmd, request.arg);
     rlen = eos_sd_do_command(sd->card, &request, response+4);
     if (rlen < 0)
@@ -5049,12 +5059,14 @@ static void sdio_send_command(SDIOState *sd)
             sd->response[2] = RWORD(8);
             sd->response[3] = RWORD(4);
         }
-        SD_DPRINTF("Response received\n");
-        sd->status |= SDIO_STATUS_OK;
+SD_DPRINTF("Response received\n");
+ sd->status |= SDIO_STATUS_OK;
+ sd->status &= ~SDIO_STATUS_ERROR; /* 70D: Clear error flag */
 #undef RWORD
-    } else {
-        SD_DPRINTF("Command sent\n");
-        sd->status |= SDIO_STATUS_OK;
+ } else {
+ SD_DPRINTF("Command sent\n");
+ sd->status |= SDIO_STATUS_OK;
+ sd->status &= ~SDIO_STATUS_ERROR; /* 70D: Clear error flag */
     }
     return;
 
@@ -5415,12 +5427,23 @@ unsigned int eos_handle_sdio(unsigned int parm, unsigned int address, unsigned c
             msg = "SDBUFCTR: Set to 0x03 before reading";
             break;
 
-        case 0xD4:
-            msg = "Data bus monitor (?)";
-            break;
-    }
+case 0xD4:
+ msg = "Data bus monitor (?)";
+ break;
+default:
+ /* 70D: Handle unknown SD registers gracefully */
+ if (type & MODE_READ) {
+ /* Firmware is reading an unhandled register - return non-zero to avoid SDINTREP=0 errors */
+ ret = 0x00000001; /* Return OK status */
+ msg = "Unknown register (70D workaround)";
+ fprintf(stderr, "[SDIO 70D] Unknown register read: 0x%03X (returning 0x%X)\n", address & 0xFFF, ret);
+ } else {
+ fprintf(stderr, "[SDIO 70D] Unknown register write: 0x%03X = 0x%X\n", address & 0xFFF, value);
+ }
+ break;
+}
 
-    io_log("SDIO", address, type, value, ret, msg, msg_arg1, msg_arg2);
+io_log("SDIO", address, type, value, ret, msg, msg_arg1, msg_arg2);
     return ret;
 }
 

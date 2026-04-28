@@ -119,8 +119,43 @@ NSTUB(0xFF55CA40,  LiveViewApp_handler)
 NSTUB(0xFF55F1CC,  LiveViewApp_handler_end)
 NSTUB(0xFF55D838,  LiveViewApp_handler_BL_JudgeBottomInfoDispTimerState)
 NSTUB(0xFF745794,  LiveViewShutterApp_handler)
-NSTUB(0xFF7523B4,  LiveViewWifiApp_handler)
-NSTUB(0xFF6EEB9C,  LiveViewLevelApp_handler)
+NSTUB(0xFF7523B4, LiveViewWifiApp_handler)
+
+/** WiFi/Socket API (70D - DIGIC V) **/
+/* Note: These addresses need to be reverse-engineered from 70D firmware */
+/* Currently unknown - use WEAK_FUNC in modules so they compile without crashing */
+/* Socket API */
+/* TODO: find real addresses in firmware, e.g.: NSTUB(0xFF######, socket_create) */
+// NSTUB(0x????????, socket_create)
+// NSTUB(0x????????, socket_bind)
+// NSTUB(0x????????, socket_connect)
+// NSTUB(0x????????, socket_listen)
+// NSTUB(0x????????, socket_shutdown)
+// NSTUB(0x????????, socket_accept)
+// NSTUB(0x????????, socket_recv)
+// NSTUB(0x????????, socket_recvfrom)
+// NSTUB(0x????????, socket_send)
+// NSTUB(0x????????, socket_sendto)
+// NSTUB(0x????????, socket_setsockopt)
+// NSTUB(0x????????, socket_getsockopt)
+// NSTUB(0x????????, socket_close_caller)
+// NSTUB(0x????????, socket_convertfd)
+// NSTUB(0x????????, socket_select_caller)
+
+/* WiFi Management */
+// NSTUB(0x????????, wlan_connect)
+// NSTUB(0x????????, nif_setup)
+// NSTUB(0x????????, set_IP_address)
+
+/* Canon WiFi Init (via call()) - symbols for reference */
+// NwLimeInit
+// NwLimeOn
+// wlanpoweron
+// wlanup
+// wlanchk
+// wlanipset
+
+NSTUB(0xFF6EEB9C, LiveViewLevelApp_handler)
 NSTUB(0xFF776250,  PlayMain_handler) // old StopPlayTouchPassFilterApp_handler
 NSTUB(0xFF5886E0,  PlayMovieGuideApp_handler)
 NSTUB(0xFF56A160,  ShootOlcApp_handler)
