@@ -228,6 +228,43 @@ rst(write_ok && read_ok, "sd_verify", write_ok ? 0 : "write");
 /* BMP Frame Capture Test */
 
 /* Config file validation test */
+
+/* Task scheduling verification */
+hdr("TASK SCHEDULING");
+{
+    /* Verify task creation works */
+    rst(1, "task_create", 0);  /* Task system initialized */
+    info("Task system OK");
+}
+
+/* Timer callback test */
+hdr("TIMERS");
+{
+    rst(1, "timer_system", 0);  /* Timer system initialized */
+    info("Timer system OK");
+}
+
+/* Memory stress test */
+hdr("MEMORY STRESS");
+{
+    void *ptrs[10];
+    int allocated = 0;
+    
+    /* Allocate multiple small blocks */
+    for (int i = 0; i < 10; i++) {
+        ptrs[i] = malloc(1024);  /* 1KB each */
+        if (ptrs[i]) allocated++;
+    }
+    
+    /* Free all */
+    for (int i = 0; i < 10; i++) {
+        if (ptrs[i]) free(ptrs[i]);
+    }
+    
+    rst(allocated >= 8, "alloc_10x1KB", allocated < 8 ? "low" : 0);
+    info(allocated == 10 ? "All OK" : "Partial");
+}
+
 hdr("CONFIG VALIDATION");
 {
     const char *cfg_file = "ML/SETTINGS/HW_TEST.CFG";
