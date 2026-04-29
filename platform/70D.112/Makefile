@@ -23,9 +23,22 @@ ML_BOOT_OBJ = boot-d45-am.o
 
 include ../Makefile
 
-# QEMU: Enable synchronous module loading for reliable testing
+# QEMU: Enable synchronous module loading for reliable testing and set to y for QEMU builds
+# (Disabled by default n for hardware builds. Use: make CONFIG_QEMU=y for QEMU testing)
 # (Must be set AFTER include ../Makefile to override platform default)
-CONFIG_QEMU = y
-CFLAGS += -DCONFIG_QEMU
+CONFIG_QEMU ?= n
+# CFLAGS += -DCONFIG_QEMU  (handled by Makefile.globals when CONFIG_QEMU=y)
 
 .DEFAULT_GOAL := $(BUILD_DIR)/cam_complete
+
+# Deployment target - copies build to 70d-latest folder
+.PHONY: deploy
+deploy:
+	@echo "=== Deploying to 70d-latest ==="
+	@cp build/autoexec.bin ../../70d-latest/
+	@cp build/magiclantern.bin ../../70d-latest/
+	@cp build/magiclantern.zip ../../70d-latest/
+	@cp build/70D_112.sym ../../70d-latest/
+	@unzip -o ../../70d-latest/magiclantern.zip -d ../../70d-latest/ > /dev/null 2>&1
+	@echo "✓ Deployed to 70d-latest/"
+	@ls -lh ../../70d-latest/autoexec.bin

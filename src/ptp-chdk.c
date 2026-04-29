@@ -569,9 +569,28 @@ PTP_HANDLER( PTP_OC_CHDK, 0 )
             break;
 
         case PTP_CHDK_ExecuteScript:
-            bmp_printf(FONT_LARGE, 0, 0, "ExecuteScript: not implemented");
-            msleep(1000);
-            break;
+            {
+                int script_len = context->get_data_size(context->handle);
+                if (script_len > 0) {
+                    char *script = fio_malloc(script_len + 1);
+                    if (script) {
+                        if (recv_ptp_data(context, script, script_len)) {
+                            script[script_len] = 0;
+                            FILE *f = FIO_CreateFile("ML/SCRIPTS/CHDK_RUN.LUA");
+                            if (f) {
+                                FIO_WriteFile(f, script, script_len);
+                                FIO_CloseFile(f);
+                                bmp_printf(FONT_LARGE, 0, 0, "Script saved (%d bytes)", script_len);
+                            } else {
+                                bmp_printf(FONT_LARGE, 0, 0, "ExecuteScript: cannot create file");
+                            }
+                        }
+                        fio_free(script);
+                    }
+                }
+                msg.param_count = 1;
+                msg.param[0] = 0;
+            }
 
         default:
             msg.id = PTP_RC_ParameterNotSupported;

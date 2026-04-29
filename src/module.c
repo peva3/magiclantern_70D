@@ -601,9 +601,11 @@ snprintf(enable_file, sizeof(enable_file), "%s%s.en", cfg_dir, module_list[modul
 /* if enable-file is nonexistent, dont load module */
 int en_exists = config_flag_file_setting_load(enable_file);
 printf(" [i] Check enable: cfg='%s' file='%s' -> %d\n", cfg_dir, enable_file, en_exists);
+#ifdef CONFIG_QEMU
 /* Force-enable all modules for QEMU testing (config system not initialized yet) */
 en_exists = 1;
-printf(" [i] Forcing enabled for testing\n");
+printf(" [i] QEMU: forcing all modules enabled for testing\n");
+#endif
 if(!en_exists)
 {
     module_list[module_cnt].enabled = 0;
