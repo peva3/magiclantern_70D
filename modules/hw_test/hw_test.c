@@ -246,6 +246,11 @@ blink_delay(500);
     val("af_mode", af_mode);
     val("metering", metering_mode);
     val("drive", drive_mode);
+
+/* Extended property tests for QEMU */
+val("gui_state", gui_state);
+val("camera_model_id", camera_model_id);
+info(firmware_version);
     rst(shutter_count > 0, "shutter_ct", "no count");
 
     blink_delay(500);
