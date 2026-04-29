@@ -20,9 +20,10 @@ static void test_timer_callbacks(void);
 static void test_menu_navigation(void);
 static void test_display_output(void);
 
-#define VERSION "hw_test v13"
+#define VERSION "hw_test v14"
 
 static int t_total, t_pass, t_skip, t_fail, scr_y;
+static FILE *log_fp;
 #define LINE_H 10
 static const int X0 = 20;
 
@@ -34,10 +35,21 @@ static int line(void)
     return y;
 }
 
+static void log_write(const char *s)
+{
+    if (log_fp) {
+        FIO_WriteFile(log_fp, s, strlen(s));
+        FIO_WriteFile(log_fp, "\n", 1);
+    }
+}
+
 static void out(const char *s, int color)
 {
     bmp_printf(FONT_SMALL | color, X0, line(), "%s", s);
     printf("[HW_TEST] %s\n", s);
+    char log_buf[516];
+    snprintf(log_buf, sizeof(log_buf), "[HW_TEST] %s", s);
+    log_write(log_buf);
 }
 
 static void hdr(const char *s)
@@ -53,20 +65,25 @@ static void rst(int pass, const char *name, const char *why)
     t_total++;
     int y = line();
     bmp_printf(FONT_SMALL | COLOR_WHITE, X0, y, "%s", name);
+    char log_buf[516];
     if (pass) {
         t_pass++;
         bmp_printf(FONT_SMALL | COLOR_GREEN1, X0 + 140, y, "PASS");
-        printf("[HW_TEST] %s: PASS\n", name);
+        snprintf(log_buf, sizeof(log_buf), "[HW_TEST] %s: PASS", name);
+        printf("%s\n", log_buf);
     } else if (why) {
         t_skip++;
         bmp_printf(FONT_SMALL | COLOR_YELLOW, X0 + 140, y, "SKIP");
         bmp_printf(FONT_SMALL | COLOR_CYAN, X0 + 200, y, "%s", why);
-        printf("[HW_TEST] %s: SKIP (%s)\n", name, why);
+        snprintf(log_buf, sizeof(log_buf), "[HW_TEST] %s: SKIP (%s)", name, why);
+        printf("%s\n", log_buf);
     } else {
         t_fail++;
         bmp_printf(FONT_SMALL | COLOR_RED, X0 + 140, y, "FAIL");
-        printf("[HW_TEST] %s: FAIL\n", name);
+        snprintf(log_buf, sizeof(log_buf), "[HW_TEST] %s: FAIL", name);
+        printf("%s\n", log_buf);
     }
+    log_write(log_buf);
 }
 
 static void info(const char *s)
@@ -88,10 +105,39 @@ static void blink_delay(int ms)
     msleep(ms);
 }
 
+static int open_log(void)
+{
+    log_fp = FIO_CreateFile("ML/LOGS/HW_TEST.LOG");
+    if (log_fp) {
+        char hdr_buf[128];
+        snprintf(hdr_buf, sizeof(hdr_buf), "=== HW_TEST LOG ===\nModel: 0x%x %s %s\nBuild: " __DATE__ " " __TIME__ "\n",
+                 camera_model_id, camera_model, firmware_version);
+        FIO_WriteFile(log_fp, hdr_buf, strlen(hdr_buf));
+        printf("[HW_TEST] Log file opened: ML/LOGS/HW_TEST.LOG\n");
+        return 1;
+    }
+    printf("[HW_TEST] WARNING: cannot create log file\n");
+    return 0;
+}
+
+static void close_log(void)
+{
+    if (log_fp) {
+        char sum_buf[128];
+        snprintf(sum_buf, sizeof(sum_buf),
+                 "\n=== SUMMARY ===\nTotal: %d  Pass: %d  Skip: %d  Fail: %d\n",
+                 t_total, t_pass, t_skip, t_fail);
+        FIO_WriteFile(log_fp, sum_buf, strlen(sum_buf));
+        FIO_CloseFile(log_fp);
+        log_fp = NULL;
+        printf("[HW_TEST] Log file closed: ML/LOGS/HW_TEST.LOG\n");
+    }
+}
+
 static void hw_task(void *unused)
 {
     (void)unused;
-    msleep(3000);
+    open_log();
 
     hdr(VERSION);
 
@@ -526,6 +572,8 @@ info(firmware_version);
         info(buf);
     }
     rst(t_pass + t_skip + t_fail == t_total, "all_tests_run", "count mismatch");
+
+    close_log();
 
     info_led_blink(3, 100, 100);
     msleep(10000);

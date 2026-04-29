@@ -23,6 +23,7 @@
 #include "lvinfo.h"
 #include "raw.h"
 #include "rom_values.h"
+#include "propvalues.h"
 
 #ifdef CONFIG_DEBUG_INTERCEPT
 #include "dm-spy.h"
@@ -294,6 +295,98 @@ static void run_test()
     // since dm_store is more permissive than dm_print.
     call("dumpf");
 
+}
+
+static void hw_test_task(void* priv, int unused)
+{
+    int test_count = 0, pass_count = 0;
+
+    console_show();
+
+    FILE* f = FIO_CreateFile("ML/LOGS/HW_TEST.LOG");
+    if (!f)
+    {
+        bmp_printf(FONT_LARGE, 0, 60, "Cannot create HW_TEST.LOG!");
+        msleep(2000);
+        return;
+    }
+
+#define LOG(...) do { \
+    char _b[128]; \
+    int _n = snprintf(_b, sizeof(_b), __VA_ARGS__); \
+    printf("%s", _b); \
+    if (_n > 0) FIO_WriteFile(f, _b, _n); \
+} while(0)
+
+    LOG("=== HW_TEST LOG ===\n\n");
+
+#define TEST_HEADER(id, name) do { \
+    test_count = id; \
+    bmp_printf(FONT_MED, 0, 30 + id * 14, "T%d: %s...", id, name); \
+    LOG("[TEST %d] %s: ", id, name); \
+    msleep(200); \
+} while(0)
+
+#define TEST_RESULT(ok) do { \
+    if (ok) { pass_count++; } \
+    int _y = 30 + test_count * 14; \
+    bmp_printf(FONT_MED, 0, _y, "T%d: %s", test_count, ok ? "OK" : "FAIL"); \
+    LOG("%s\n", ok ? "OK" : "FAIL"); \
+    msleep(200); \
+} while(0)
+
+    TEST_HEADER(1, "model_id");
+    int ok1 = (camera_model_id == 0x80000325);
+    TEST_RESULT(ok1);
+
+    TEST_HEADER(2, "fio_malloc");
+    void* p2 = fio_malloc(4096);
+    int ok2 = (p2 != 0);
+    if (ok2) fio_free(p2);
+    TEST_RESULT(ok2);
+
+    TEST_HEADER(3, "fio_malloc big");
+    void* p3 = fio_malloc(65536);
+    int ok3 = (p3 != 0);
+    if (ok3) fio_free(p3);
+    TEST_RESULT(ok3);
+
+    TEST_HEADER(4, "call dispatch");
+    int c4a = (call("EnableBootDisk") >= 0) ? 1 : 0;
+    int c4b = (call("TurnOnDisplay") == 0) ? 1 : 0;
+    int ok4 = (c4a && c4b);
+    TEST_RESULT(ok4);
+
+    TEST_HEADER(5, "firmware version");
+    int ok5 = (strlen(firmware_version) > 0);
+    TEST_RESULT(ok5);
+
+    TEST_HEADER(6, "shamem FPS TA");
+    uint32_t ta6 = shamem_read(0xC0F06008);
+    int ok6 = (ta6 != 0 && ta6 != 0xFFFFFFFF);
+    TEST_RESULT(ok6);
+
+    TEST_HEADER(7, "shamem FPS TB");
+    uint32_t tb7 = shamem_read(0xC0F06014);
+    int ok7 = (tb7 != 0 && tb7 != 0xFFFFFFFF);
+    TEST_RESULT(ok7);
+
+    TEST_HEADER(8, "shamem ENGIO");
+    uint32_t eng8 = shamem_read(0xC0F06800);
+    int ok8 = (eng8 != 0xFFFFFFFF);
+    TEST_RESULT(ok8);
+
+    /* summary */
+    bmp_printf(FONT_LARGE, 0, 30, "HW_TEST: %d/%d PASS", pass_count, test_count);
+    LOG("\n=== SUMMARY: %d/%d passed ===\n", pass_count, test_count);
+    LOG("File: ML/LOGS/HW_TEST.LOG\n");
+#undef TEST_HEADER
+#undef TEST_RESULT
+#undef LOG
+
+    FIO_CloseFile(f);
+    NotifyBox(3000, "HW_TEST.LOG written to card");
+    msleep(3000);
 }
 
 #ifdef FEATURE_BOOTFLAG_MENU
@@ -900,6 +993,12 @@ static struct menu_entry debug_menus[] = {
         .priv        = dump_img_task,
         .select      = run_in_separate_task,
         .help = "Dump all image buffers (LV, HD, RAW) from current video mode."
+    },
+    {
+        .name   = "Generate HW_TEST.LOG",
+        .priv   = hw_test_task,
+        .select = run_in_separate_task,
+        .help   = "Run diagnostics and write ML/LOGS/HW_TEST.LOG"
     },
 #ifdef FEATURE_UNMOUNT_SD_CARD
     {

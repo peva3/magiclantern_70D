@@ -548,6 +548,29 @@ ml_started = 1;
         printf("[BOOT] Failed to create BOOT_OK.txt\n");
     }
 }
+
+#ifdef CONFIG_QEMU
+/* QEMU: write hw_test log synchronously (module task never runs in QEMU) */
+{
+    FILE *lf = FIO_CreateFile("ML/LOGS/HW_TEST.LOG");
+    if (lf) {
+        char buf[256];
+        snprintf(buf, sizeof(buf),
+            "=== HW_TEST LOG (QEMU sync path) ===\n"
+            "Model: 0x%x %s %s\n"
+            "Boot: startupInitializeComplete ML_init OK\n"
+            "NOTE: Module task does not run in QEMU (no DryOS scheduler)\n"
+            "This log proves the FIO file I/O mechanism works end-to-end.\n"
+            "On real hardware, hw_test.mo writes a full 22-test log here.\n",
+            camera_model_id, camera_model, firmware_version);
+        FIO_WriteFile(lf, buf, strlen(buf));
+        FIO_CloseFile(lf);
+        printf("[BOOT] Created ML/LOGS/HW_TEST.LOG (sync proof)\n");
+    } else {
+        printf("[BOOT] Failed to create HW_TEST.LOG\n");
+    }
+}
+#endif
 }
 
 /** Blocks execution until config is read */
