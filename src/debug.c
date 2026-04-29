@@ -299,6 +299,7 @@ static void run_test()
 
 static void hw_test_task(void* priv, int unused)
 {
+    extern int GetBatteryLevel(void);
     int test_count = 0, pass_count = 0;
 
     FILE* f = FIO_CreateFile("ML/LOGS/HW_TEST.LOG");
@@ -414,6 +415,32 @@ static void hw_test_task(void* priv, int unused)
     int ok12 = (shutter_count >= 0);
     if (ok12) LOG("[DETAIL] shutter_count=%d\n", shutter_count);
     TEST_RESULT(ok12);
+
+    TEST_HEADER(13, "battery level");
+    int batt = GetBatteryLevel();
+    int ok13 = (batt >= 0 && batt <= 100);
+    if (ok13) LOG("[DETAIL] battery=%d%%\n", batt);
+    TEST_RESULT(ok13);
+
+    TEST_HEADER(14, "SD write 256KB");
+    void* buf14 = fio_malloc(262144);
+    int ok14 = (buf14 != 0);
+    int speed = 0;
+    if (buf14) {
+        FILE* sf = FIO_CreateFile("ML/LOGS/SPEED.BIN");
+        if (sf) {
+            int t0 = get_ms_clock();
+            int n = FIO_WriteFile(sf, buf14, 262144);
+            int t1 = get_ms_clock();
+            FIO_CloseFile(sf);
+            int elapsed = t1 - t0;
+            if (elapsed > 0) speed = (256 * 1000) / elapsed;
+            LOG("[DETAIL] 256KB write: %dms, %d bytes, ~%d KB/s\n", elapsed, n, speed);
+        }
+        fio_free(buf14);
+    }
+    ok14 = (ok14 && speed > 0);
+    TEST_RESULT(ok14);
 
     /* summary */
     bmp_printf(FONT_LARGE, 0, 30, "HW_TEST: %d/%d PASS", pass_count, test_count);
