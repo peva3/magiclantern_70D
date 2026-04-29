@@ -917,37 +917,37 @@ For collaboration or testing partnerships:
   - Force-enabled all modules for QEMU testing
   - hw_test now runs with 3 passing tests
 
-- [ ] **S24.2** BMP frame capture to files
+- [x] **S24.2** BMP frame capture to files
   - Add GDB command to dump BMP buffer to PNG
   - Create frame dump at specific intervals
   - Export LCD state to file for inspection
   - Log BMP changes (region-based)
 
-- [ ] **S24.3** Automated boot verification
+- [x] **S24.3** Automated boot verification
   - Write "BOOT_OK.txt" on successful boot
   - Automated boot success detection
   - Boot time measurement
   - Compare with expected boot sequence
 
-- [ ] **S24.4** SD card file I/O tests
+- [x] **S24.4** SD card file I/O tests
   - Write known pattern, read back and verify
   - Test filesystem corruption scenarios
   - Validate file allocation tables
   - Test concurrent file access
 
-- [ ] **S24.5** Extended hw_test coverage
+- [x] **S24.5** Extended hw_test coverage
   - Add QEMU-specific tests (config, file I/O, properties)
   - Test module unload/reload cycles
   - Generate test reports
 
 ### MEDIUM PRIORITY (Significant value)
 
-- [ ] **S24.6** Property system testing
+- [x] **S24.6** Property system testing
   - Validate property handlers work
   - Test property registration
   - Verify property value changes
 
-- [ ] **S24.7** Config file validation
+- [x] **S24.7** Config file validation
   - Test config save/load cycles
   - Verify config file parsing
   - Test preset switching
@@ -974,25 +974,25 @@ For collaboration or testing partnerships:
   - Real-time LCD display in QEMU
   - Visual debugging interface
 
-- [ ] **S24.12** Performance benchmarking
+- [x] **S24.12** Performance benchmarking
   - Module init timing
   - Boot phase duration
   - Function call profiling
   - Bottleneck identification
 
-- [ ] **S24.13** Memory leak detection
+- [x] **S24.13** Memory leak detection
   - Heap allocation tracking
   - Memory leak detection
   - Buffer overflow detection
   - Stack usage monitoring
 
-- [ ] **S24.14** Log analysis tools
+- [x] **S24.14** Log analysis tools
   - Real-time log streaming
   - Log filtering by module/component
   - Log level control (INFO/DEBUG/ERROR)
   - Automatic log rotation
 
-- [ ] **S24.15** Regression tracking
+- [x] **S24.15** Regression tracking
   - Track boot times across builds
   - Monitor module load success rate
   - Detect new MPU messages
