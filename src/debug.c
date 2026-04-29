@@ -363,6 +363,16 @@ static void hw_test_task(void* priv, int unused)
     int ok6 = (eng6 != 0xFFFFFFFF);
     TEST_RESULT(ok6);
 
+    /* flush log to disk: close and reopen forces FAT driver to commit */
+    FIO_CloseFile(f);
+    msleep(50);
+    f = FIO_CreateFileOrAppend("ML/LOGS/HW_TEST.LOG");
+    if (!f)
+    {
+        bmp_printf(FONT_LARGE, 0, 60, "Log flush failed!");
+        return;
+    }
+
     TEST_HEADER(7, "get_ms_clock");
     int ok7 = (get_ms_clock() > 0);
     TEST_RESULT(ok7);
