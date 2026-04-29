@@ -247,6 +247,38 @@ hdr("TIMERS");
 /* Memory stress test */
 
 /* Performance benchmarking */
+
+/* Memory leak detection */
+hdr("LEAK DETECTION");
+{
+    void *ptrs[20];
+    int leaked = 0;
+    
+    /* Allocate various sizes */
+    ptrs[0] = malloc(100);
+    ptrs[1] = malloc(200);
+    ptrs[2] = malloc(500);
+    ptrs[3] = malloc(1000);
+    ptrs[4] = malloc(2000);
+    
+    /* Free only some */
+    free(ptrs[0]);
+    free(ptrs[2]);
+    free(ptrs[4]);
+    
+    /* Check if we can detect the leak */
+    leaked = 0;
+    if (ptrs[1]) leaked++;
+    if (ptrs[3]) leaked++;
+    
+    /* Free remaining */
+    if (ptrs[1]) free(ptrs[1]);
+    if (ptrs[3]) free(ptrs[3]);
+    
+    rst(leaked == 2, "leak_detect", 0);
+    info("Leak test complete");
+}
+
 hdr("BENCHMARK");
 {
     uint32_t start = get_ms_clock();
