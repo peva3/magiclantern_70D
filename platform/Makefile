@@ -24,7 +24,7 @@ CONFIG_GDB      = n
 CONFIG_GDBSTUB  = n
 CONFIG_CONSOLE  = y
 CONFIG_DEBUGMSG = 0
-CONFIG_CCACHE   = n
+# CONFIG_CCACHE removed - no ccache support in build
 CONFIG_TCC      = y
 CONFIG_MODULES  = y
 CONFIG_TINYPY   = n

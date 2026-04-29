@@ -1469,12 +1469,10 @@ static void menu_remove_entry(struct menu * menu, struct menu_entry * entry)
     }
     if (entry->prev)
     {
-        // printf("link %s to %x\n", entry->prev->name, entry->next);
         entry->prev->next = entry->next;
     }
     if (entry->next)
     {
-        // printf("link %s to %x\n", entry->next->name, entry->prev);
         entry->next->prev = entry->prev;
     }
     
@@ -1485,7 +1483,6 @@ static void menu_remove_entry(struct menu * menu, struct menu_entry * entry)
         struct menu * submenu = menu_find_by_name( entry->name, ICON_ML_SUBMENU);
         if (submenu)
         {
-            // printf("unlink submenu %s\n", submenu->name);
             submenu->children = 0;
         }
     }
@@ -1495,7 +1492,6 @@ static void menu_remove_entry(struct menu * menu, struct menu_entry * entry)
     {
         if (streq(placeholder->name, entry->name))
         {
-            // printf("restore placeholder %s\n", entry->name);
             struct menu_entry restored_placeholder = MENU_PLACEHOLDER(placeholder->name);
             placeholder_copy(placeholder, &restored_placeholder);
             break;

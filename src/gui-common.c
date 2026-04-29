@@ -642,8 +642,6 @@ int detect_double_click(int key, int pressed_code, int unpressed_code)
         int u1 = tp2 - tu1;
         int p2 = tu2 - tp2;
 
-        // bmp_printf(FONT_MED, 100, 100, "%d %d %d  ", p1, u1, p2);
-        
         if ((ABS(p1 - 120) < 80) && (ABS(u1 - 120) < 80) && (ABS(p2 - 120) < 80))
         {
             tp1 = tu1 = tp2 = tu2 = 0;

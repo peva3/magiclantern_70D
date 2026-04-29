@@ -73,8 +73,6 @@ static int handle_buttons(struct event * event)
     extern int ml_started;
     if (!ml_started) return 1;
 
-// SJE Want to log button presses?  Uncomment the following line
-//    DryosDebugMsg(0,15,"event: %08x", event->param);
     if (handle_common_events_by_feature(event) == 0) return 0;
 
     return 1;

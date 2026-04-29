@@ -538,23 +538,10 @@ void io_trace_cleanup()
         return;
     }
 
-#if 0
-    free(buffer);
-    buffer = 0;
-#endif
 }
 
 void io_trace_prepare()
 {
-#if 0
-    extern int ml_started;
-    if (!ml_started)
-    {
-        qprintf("[io_trace] FIXME: large allocators not available\n");
-        return;
-    }
-#endif
-
     qprintf("[io_trace] allocating memory...\n");
 
     /* allocate RAM */
@@ -562,10 +549,6 @@ void io_trace_prepare()
     buffer_count = 4*1024*1024;
     int alloc_size = (buffer_count + RECORD_SIZE) * sizeof(buffer[0]);
     ASSERT(!buffer);
-#if 0
-    /* FIXME: no large allocators yet */
-    buffer = malloc(alloc_size);
-#else
 
     #ifdef CONFIG_80D
     /* hardcoded address, model-specific, see log_start() for details */
@@ -576,8 +559,6 @@ void io_trace_prepare()
     /* let's hope it's OK; appears to be used during bursts */
     buffer = (void *) 0x20B00000;
     #endif
-
-#endif
     if (!buffer) return;
     memset(buffer, 0, alloc_size);
 }

@@ -57,8 +57,7 @@ mkdir -p "$LOG_DIR"
 if [[ $BUILD -eq 1 ]]; then
     echo "═══ Building Magic Lantern for 70D... ═══"
     cd "$ML_DIR"
-    make 70D_config 2>/dev/null || true
-    make -j"$(nproc)" CONFIG_QEMU=y 2>&1 | tail -5
+    make -C platform/70D.112 -j"$(nproc)" CONFIG_QEMU=y 2>&1 | tail -5
 
     AUTOEXEC="$ML_DIR/platform/70D.112/build/autoexec.bin"
     if [[ -f "$AUTOEXEC" ]]; then

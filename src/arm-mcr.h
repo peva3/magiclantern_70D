@@ -43,18 +43,6 @@ asm(
 typedef void (*thunk)(void);
 
 
-#if 0
-typedef signed long    int32_t;
-typedef unsigned long    uint32_t;
-typedef signed short    int16_t;
-typedef unsigned short    uint16_t;
-typedef signed char    int8_t;
-typedef unsigned char    uint8_t;
-
-typedef uint32_t    size_t;
-typedef int32_t        ssize_t;
-#endif
-
 static inline uint32_t
 read_lr( void )
 {
@@ -418,65 +406,7 @@ static inline void _sync_caches()
 /* in patch.c; this also reapplies cache patches, if needed */
 extern void sync_caches();
 
-#if 0
-// This must be a macro
-#define setup_memory_region( region, value ) \
-    asm __volatile__ ( "mcr p15, 0, %0, c6, c" #region "\n" : : "r"(value) )
 
-#define set_d_cache_regions( value ) \
-    asm __volatile__ ( "mcr p15, 0, %0, c2, c0\n" : : "r"(value) )
-
-#define set_i_cache_regions( value ) \
-    asm __volatile__ ( "mcr p15, 0, %0, c2, c0, 1\n" : : "r"(value) )
-
-#define set_d_buffer_regions( value ) \
-    asm __volatile__ ( "mcr p15, 0, %0, c3, c0\n" : : "r"(value) )
-
-#define set_d_rw_regions( value ) \
-    asm __volatile__ ( "mcr p15, 0, %0, c5, c0, 0\n" : : "r"(value) )
-
-#define set_i_rw_regions( value ) \
-    asm __volatile__ ( "mcr p15, 0, %0, c5, c0, 1\n" : : "r"(value) )
-
-static inline void
-set_control_reg( uint32_t value )
-{
-    asm __volatile__ ( "mcr p15, 0, %0, c3, c0\n" : : "r"(value) );
-}
-
-static inline uint32_t
-read_control_reg( void )
-{
-    uint32_t value;
-    asm __volatile__ ( "mrc p15, 0, %0, c3, c0\n" : "=r"(value) );
-    return value;
-}
-
-
-static inline void
-set_d_tcm( uint32_t value )
-{
-    asm( "mcr p15, 0, %0, c9, c1, 0\n" : : "r"(value) );
-}
-
-static inline void
-set_i_tcm( uint32_t value )
-{
-    asm( "mcr p15, 0, %0, c9, c1, 1\n" : : "r"(value) );
-}
-
-static inline void
-select_normal_vectors( void )
-{
-    uint32_t reg;
-    asm(
-        "mrc p15, 0, %0, c1, c0\n"
-        "bic %0, %0, #0x2000\n"
-        "mcr p15, 0, %0, c1, c0\n"
-        : "=r"(reg)
-    );
-}
-#endif
 
 /**
  * Some common instructions.

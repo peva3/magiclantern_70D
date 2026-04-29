@@ -43,11 +43,6 @@ static int patch_memory_ram(struct patch *patch)
         *(uint32_t *)(patch->addr) = patch->new_value;
     }
 
-// These don't seem to exist on D6
-//    dcache_clean((uint32_t)patch->addr, patch->size);
-//    dcache_clean_multicore((uint32_t)patch->addr, patch->size);
-//    icache_invalidate((uint32_t)patch->addr, patch->size);
-
     sei(old_int);
 
     // SJE TODO we could be more selective about the cache flush
@@ -136,11 +131,6 @@ int _unpatch_memory(uint32_t _addr)
         // size < 4 shouldn't happen, patch system shouldn't allow these to be applied
         err = E_PATCH_TOO_SMALL;
     }
-
-// These don't seem to exist on D6
-//    dcache_clean((uint32_t)addr, p->size);
-//    dcache_clean_multicore((uint32_t)phys_mem, p->size);
-//    icache_invalidate((uint32_t)addr, p->size);
 
     // remove from our data structure (shift the other array items)
     for (i = i + 1; i < num_patches; i++)

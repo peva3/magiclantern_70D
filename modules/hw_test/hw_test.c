@@ -494,7 +494,27 @@ info(firmware_version);
         rst(found > 0, "call_resolve", found ? 0 : "none");
     }
 
-    blink_delay(1500);
+    hdr("CALL DISPATCH");
+    {
+        struct { const char *name; int expect; } ck[] = {
+            {"EnableBootDisk", -1},
+            {"TurnOnDisplay", -1},
+            {"dumpf", 0},
+            {0, 0}
+        };
+        int ok = 0, tot = 0;
+        for (int i = 0; ck[i].name; i++) {
+            int r = call(ck[i].name);
+            char buf[80];
+            snprintf(buf, sizeof(buf), "%s=%d", ck[i].name, r);
+            info(buf);
+            tot++;
+            if (r >= 0) ok++;
+        }
+        rst(ok > 0, "call_dispatch", ok ? 0 : "all fail");
+    }
+
+    blink_delay(500);
 
     bmp_fill(COLOR_BLACK, 0, 0, 720, 480);
     scr_y = LINE_H;

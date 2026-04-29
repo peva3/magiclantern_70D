@@ -369,11 +369,9 @@ ok:
     {
         // SJE TODO could put some logging here, but I'm betting
         // DryosDebugMsg() may hang given the context we may be in
-        //DryosDebugMsg(0, 15, "changing prop: %x", property);
     }
     else
     { // prop not allowed
-        //DryosDebugMsg(0, 15, "prop not allowed: %x", property);
         return;
     }
     #endif

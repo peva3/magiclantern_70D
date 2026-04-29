@@ -431,7 +431,6 @@ static unsigned int memcheck_check(unsigned int ptr, unsigned int entry)
     for(int pos = sizeof(struct memcheck_hdr); pos < MEM_SEC_ZONE; pos++)
     {
         unsigned char value = ((unsigned char *)ptr)[pos];
-        // dbg_printf("free check %d %x\n ", pos, value);
         if (value != 0xA5)
         {
             failed |= 2;
@@ -442,7 +441,6 @@ static unsigned int memcheck_check(unsigned int ptr, unsigned int entry)
     {
         int pos2 = MEM_SEC_ZONE + ((struct memcheck_hdr *)ptr)->length + pos;
         unsigned char value = ((unsigned char *)ptr)[pos2];
-        // dbg_printf("free check %d %x\n ", pos2, value);
         if (value != 0xA5)
         {
             failed |= 4;

@@ -352,31 +352,6 @@ void gdb_post_task_hook(uint32_t *next_task_ctx, uint32_t *old_task_ctx, uint32_
 
     gdb_post_task_hook_cnt++;
     
-    /* wont work yet, i think parameters are incorrect */
-#if 0
-    /* check if 'current' is a debugged task and unarm all enabled breakpoints */
-    if(current->taskId == gdb_attached_pid)
-    {
-        for(pos = 0; pos < GDB_BKPT_COUNT; pos++)
-        {
-            if(gdb_breakpoints[pos].flags & GDB_BKPT_FLAG_ARMED)
-            {
-                gdb_unarm_bkpt(&gdb_breakpoints[pos]);
-            }
-        }
-    }
-    /* check if 'next' is a debugged task and arm all enabled breakpoints */
-    if(next->taskId == gdb_attached_pid)
-    {
-        for(pos = 0; pos < GDB_BKPT_COUNT; pos++)
-        {
-            if(gdb_breakpoints[pos].flags & GDB_BKPT_FLAG_ENABLED)
-            {
-                gdb_arm_bkpt(&gdb_breakpoints[pos]);
-            }
-        }
-    }
-#endif
     if(orig_post_task_hook)
     {
         orig_post_task_hook(next_task_ctx, old_task_ctx, active_task_ctx);
@@ -679,16 +654,6 @@ void gdb_exception_handler(uint32_t *ctx)
             ctx[15] = (uint32_t)&gdb_task_stall;
             return;
         }
-
-#if 0
-        if(task->currentState == GDB_TASK_STATE_STALL)
-        {
-            /* sanity check failed. that task was not rescheduled by us. stall again */
-            gdb_exceptions_handled |= 0xE4000000;
-            ctx[15] = (uint32_t)&gdb_task_stall;
-            return;
-        }
-#endif
 
         if((bkpt->flags & GDB_BKPT_FLAG_RESUME) == 0)
         {
@@ -1535,33 +1500,7 @@ void gdb_cmd_step(char *args, char *reply)
 
 void gdb_cmd_query(char *args, char *reply)
 {
-#if 0
-    if(!strncmp("fThreadInfo", args, 11))
-    {
-        char buf[8];
-        int taskId;
-        struct task_attr_str task_attr;
-        
-        strcpy(reply, "m");
-        
-        for (taskId = 1; taskId < (int)task_max; taskId++)
-        {
-            if (get_task_info_by_id(1, taskId, &task_attr) == 0)
-            {
-                sprintf(buf, "%X,", taskId);
-                strcpy(&reply[strlen(reply)], buf);
-            }
-        }
-    }
-    else if(!strncmp("C", args, 1))
-    {
-        sprintf(reply, "QC%X", gdb_attached_pid);
-    }
-    else
-#endif   
-    {
-        gdb_strncpy(reply, "", 0);
-    }
+    gdb_strncpy(reply, "", 0);
 }
 
 void gdb_main_task(void)

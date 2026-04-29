@@ -320,30 +320,7 @@ static uint32_t indexed2rgbLUT[RGB_LUT_SIZE] = {
 
 
 
-#if 0
-static uint32_t indexed2uyvyLUT[COLOR_ORANGE + 1] = {
-    0x00800080, // COLOR_EMPTY (black, but we will apply alpha later)
-    0xff80ff80, // COLOR_WHITE
-    0x00800080, // COLOR_BLACK
-    0x00800080, // COLOR_TRANSPARENT_BLACK (SJE not handled correctly in bmp_putpixel_fast: should be 50% alpha maybe?)
-    0x7f807f80, // unknown, default to 50% gray so it's probably visible
-    0xb200b2ab, // COLOR_CYAN
-    0x9515952b, // COLOR_GREEN1
-    0x7a457a51, // COLOR_GREEN2
-    0x4cff4c54, // COLOR_RED
-    0x8e758ebf, // COLOR_LIGHT_BLUE
-    0x7f807f80, // unknown, default to 50% gray so it's probably visible
-    0x1d6b1dff, // COLOR_BLUE
-    0x26c0266a, // COLOR_DARK_RED
-    0x7f807f80, // unknown, default to 50% gray so it's probably visible
-    0x69ea69d4, // COLOR_MAGENTA
-    0xe194e100, // COLOR_YELLOW
-    0x7f807f80, // unknown, default to 50% gray so it's probably visible
-    0x7f807f80, // unknown, default to 50% gray so it's probably visible
-    0x7f807f80, // unknown, default to 50% gray so it's probably visible
-    0x97c9972a  // COLOR_ORANGE
-};
-#endif
+
 
 
 uint32_t indexed2rgb(uint8_t color)
@@ -1296,34 +1273,7 @@ void bfnt_puts_utf8(int* s, int x, int y, int fg, int bg)
 }*/
 
 
-#if 0
-void
-bfnt_test()
-{
-    while(1)
-    {
-        canon_gui_disable_front_buffer();
 
-        int n = (BFNT_BITMAP_OFFSET - BFNT_CHAR_CODES) / 4;
-        int* codes = (int*) BFNT_CHAR_CODES;
-
-        int c = 0;
-        while(c <= n) {
-            for (int i = 0; i < 5; i++)
-            {
-                for (int j = 0; j < 10; j++)
-                {
-                    bfnt_draw_char(codes[c], j*70, i*80+20, COLOR_WHITE, COLOR_BLACK);
-                    bmp_printf(FONT_SMALL, j*70, i*80, "%x", codes[c]);
-                    c++;
-                }
-            }
-            msleep(2000);
-            clrscr();
-        }
-    }
-}
-#endif
 
 void bmp_flip(uint8_t* dst, uint8_t* src, int voffset)
 {

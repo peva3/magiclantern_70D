@@ -27,20 +27,7 @@
     /* stack walker configuration */
     #define BKT_ASSUME_TAIL_CALL_AFTER_POP_LR
     #define BKT_BRUTE_FORCE_STACK
-    //#define BKT_HANDLE_UNLIKELY_CASES
-    //#define BKT_RANDOM_BRANCHES             /* slow, minor improvement */
-
-    /* self-tests */
-    //#define BKT_CROSSCHECK_EXEC
-    //#define BKT_CROSSCHECK_CALLSTACK
-
-    #ifdef BKT_CROSSCHECK_CALLSTACK
-    #define BKT_TRACK_STATS
-    #endif
-
     /* debugging */
-    //#define BKT_LOG_VERBOSE EOS_LOG_VERBOSE
-    //#define BKT_LOG_DISAS EOS_LOG_VERBOSE
     #define BKT_LOG_VERBOSE 0
     #define BKT_LOG_DISAS 0
 

@@ -1888,11 +1888,6 @@ static int autodetect_black_level(int* black_mean, int* black_stdev_x100)
     int mean2 = 0;
     int stdev2 = 0;
 
-//    bmp_printf(FONT_MED, 30, 210, "a_b_l: %d, %d, %d, %d",
-//               raw_info.active_area.x1,
-//               raw_info.active_area.x2,
-//               raw_info.active_area.y1,
-//               raw_info.active_area.y2);
     if (raw_info.active_area.x1 > 50) /* use the left black bar for black calibration */
     {
         // FIXME SJE are these magic numbers still appropriate for all cams?
