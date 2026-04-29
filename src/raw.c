@@ -112,9 +112,13 @@ static int (*dual_iso_get_dr_improvement)() = MODULE_FUNCTION(dual_iso_get_dr_im
 // please remove this part of the comment.
 
 #ifndef DEFAULT_RAW_BUFFER_SIZE
+#ifdef CONFIG_EDMAC_RAW_SLURP
+/* EDMAC raw slurp: buffer allocated from SRM (see RAW_LV_BUFFER_ALLOC_SIZE below) */
+#define DEFAULT_RAW_BUFFER_SIZE (SRM_BUFFER_SIZE - 0x1000)
+#else
 /* todo: figure out how much Canon code allocates for their LV RAW buffer - how? */
-#pragma message "FIXME: using dummy DEFAULT_RAW_BUFFER_SIZE"
 #define DEFAULT_RAW_BUFFER_SIZE (9*1024*1024)
+#endif
 #endif
 
 /* for higher resolutions we'll allocate a new buffer, as needed */

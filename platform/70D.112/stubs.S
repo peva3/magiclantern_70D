@@ -230,7 +230,7 @@ NSTUB(    0x8094,  SetHPTimerNextTick)
 
 /** H264 Encoder **/
 NSTUB(   0x946E0,  mvr_config)
-NSTUB(0xFF2BB65C,  mvrFixQScale)                            // FIXME: use call()
+NSTUB(0xFF2BB65C,  mvrFixQScale)                            // verified ROM address; also works via call("mvrFixQScale")
 NSTUB(0xFF2BB154,  mvrSetDefQScale)
 NSTUB(0xFF2BB18C,  mvrSetFullHDOptSize)
 NSTUB(0xFF2BB370,  mvrSetGopOptSizeFULLHD)
