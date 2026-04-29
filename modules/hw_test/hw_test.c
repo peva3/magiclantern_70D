@@ -226,6 +226,40 @@ rst(write_ok && read_ok, "sd_verify", write_ok ? 0 : "write");
 }
 
 /* BMP Frame Capture Test */
+
+/* Config file validation test */
+hdr("CONFIG VALIDATION");
+{
+    const char *cfg_file = "ML/SETTINGS/HW_TEST.CFG";
+    const char *cfg_data = "test_key=test_value\nmodule=hw_test\n";
+    char cfg_read[128] = {0};
+    int cfg_ok = 0;
+    
+    /* Write config file */
+    FILE *fw = FIO_CreateFile(cfg_file);
+    if (fw) {
+        int w = FIO_WriteFile(fw, cfg_data, strlen(cfg_data));
+        FIO_CloseFile(fw);
+        
+        if (w == (int)strlen(cfg_data)) {
+            /* Read back */
+            FILE *fr = FIO_OpenFile(cfg_file, 0);
+            if (fr) {
+                int r = FIO_ReadFile(fr, cfg_read, sizeof(cfg_read)-1);
+                FIO_CloseFile(fr);
+                cfg_read[r] = 0;
+                cfg_ok = (r == (int)strlen(cfg_data)) && (strcmp(cfg_read, cfg_data) == 0);
+            }
+        }
+        
+        /* Cleanup */
+        FIO_RemoveFile(cfg_file);
+    }
+    
+    rst(cfg_ok, "config_file", cfg_ok ? 0 : "fail");
+    if (cfg_ok) info("Config OK");
+}
+
 hdr("BMP DUMP");
 {
     const char *bmp_file = "ML/SETTINGS/LCD_DUMP.BMP";
