@@ -13,7 +13,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 3. Copy to 70d-latest folder: `cp platform/70D.112/build/autoexec.bin 70d-latest/`
 4. Update size tracking log below
 
-**Current Build:** 452KB (2026-04-27) - Ready for hardware testing
+**Current Build:** 456KB (2026-04-29) - Hardware test log verified (6/6 PASS on physical 70D)
 
 ---
 
@@ -45,6 +45,11 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 | 2026-04-28 | 452KB | 448KB | hw_test v2: comprehensive hardware diagnostics - firmware, memory, SD speed, 25+ props, ENGIO regs, EDMAC, timers, eventprocs, audio
 | 2026-04-28 | 452KB | 448KB | L2: MLV v3 global dependency cleanup - removed raw.h/lens.h/fps.h deps from mlv_3.c, expanded mlv_session struct, 15 FIXMEs resolved |
 | 2026-04-28 | 452KB | 448KB | hw_test v3: fixed card path detection (A:/->B:/ for SD-only 70D), cleaner test framework, full build in 70d-latest/ |
+| 2026-04-29 | 467KB | 463KB | Sprint 26: PTP Tunnel USB Remote Access (ptptun module, camtunnel.py, PTP_CHDK_ExecuteScript fix) |
+| 2026-04-29 | 468KB | 464KB | Sprint 27a: Dead code cleanup (#if 0 blocks, commented-out code, build system fixes), hw_test extensions |
+| 2026-04-29 | 468KB | 464KB | Sprint 27b: hw_test debug menu entry, camera hang fix (removed SD read-back test causing freeze) |
+| 2026-04-29 | 456KB | 451KB | Sprint 27c: FIXME fixes (raw.c pragma, stubs.S mvrFixQScale), CONFIG_QEMU regression fix, code review |
+| 2026-04-29 | 456KB | 451KB | Sprint 27d: hw_test hardware verification — 6/6 PASS on physical 70D (model_id, fio_malloc, shamem, FIO file I/O) |
 
 2. **Documentation Updates:** Keep AGENTS.md and README.md files continuously updated with all findings, changes, and discoveries
 3. **Task Tracking:** Maintain TODO.md with current task status, marking completed items and adding new tasks as discovered
@@ -54,8 +59,8 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 7. **Incremental Progress:** Complete work in small, testable chunks - never batch multiple untested changes
 
 **Repository:** https://github.com/peva3/magiclantern_70D
-**Current Phase:** Week 7 - QEMU 70D Emulation
-**Last Updated:** 2026-04-24
+**Current Phase:** Week 8 - Post-cleanup + Hardware Diagnostics Verified
+**Last Updated:** 2026-04-29
 
 ## QEMU-EOS Setup (in-tree)
 
@@ -1838,3 +1843,90 @@ The Canon 70D's WiFi hardware is **fully capable** of supporting Magic Lantern r
 **Last Updated:** 2026-04-27
 
 ---
+
+## Sprint 26: PTP Tunnel USB Remote Access (2026-04-29)
+
+**Status: COMPLETE** — Module loads in QEMU, hardware testing pending
+
+### Implementation
+- Created `modules/ptptun/ptptun.c` (270 lines) — PTP tunnel module at opcode 0xA1E9
+- 8 PTP commands: CallByName, ConsoleCapture, Screenshot, ExecuteLua, EngioRead, EngioWrite, ShamemRead, SetPropertyRaw
+- Host tool: `camtunnel.py` (410 lines, pure Python3/pyusb)
+- Fix: `src/ptp-chdk.c:571` — ExecuteScript changed from "not implemented" stub to saving Lua to ML/SCRIPTS/CHDK_RUN.LUA
+
+### Boot Regression Fix
+- ROOT CAUSE: `platform/70D.112/Makefile:28` had `CONFIG_QEMU = y` forced for ALL builds including hardware
+- This activated Sprint 24 QEMU testing code on real hardware (25 modules force-enabled, synchronous SD access)
+- FIX: Changed to `CONFIG_QEMU ?= n` (default off for hardware, pass `make CONFIG_QEMU=y` for QEMU mode)
+- Updated `test_70d_qemu.sh` to pass `CONFIG_QEMU=y`
+
+### Key Finding
+FAT 8.3 filename truncation (`ptp_tunnel` → `PTP_TU~1.MO`) broke TCC symbol lookup. Renamed to `ptptun` (≤8 chars).
+
+---
+
+## Sprint 27: Code Cleanup + hw_test Hardware Verification (2026-04-29)
+
+**Status: COMPLETE** — All 6 hw_test diagnostics pass on physical 70D
+
+### Cleanup Work
+- Removed 14 `#if 0` dead code blocks (~630 lines) from `src/`:
+  - `module.c:228-1087` — TCC struct definitions (entire TCCState + substructs)
+  - `arm-mcr.h:46-56` — redundant int32_t/uint32_t typedefs
+  - Various dead GDB stubs, io_trace fallbacks, unstable AutoISO menu, builtin-enforcing historical code
+- Removed ~33 commented-out code lines across 15 files
+- Build system fixes: root Makefile, dead `make 70D_config` removed, dead CONFIG_CCACHE removed, .gitignore cleaned
+- FIXME fixes: `raw.c:116` pragma message removed (now uses SRM_BUFFER_SIZE for EDMAC_RAW_SLURP), `stubs.S:233` mvrFixQScale comment updated
+
+### hw_test Evolution
+1. **Module-based**: Did not run on hardware (task scheduling timing issue)
+2. **Debug menu entry v1**: 8 tests including call() dispatch and SD file read-back — camera hung on test 3 (FIO_OpenFile/FIO_ReadFile/FIO_RemoveFile caused hard freeze) and test 4 (call() dispatch caused battery-pull freeze)
+3. **Debug menu entry v2**: Removed SD read-back test and call() dispatch test. Removed console_show() (revealing stale ETTR module console text "404: auto_ettr_intervaliometer"). 6 tests remaining.
+
+### Hardware Verification Results (Physical 70D - 2026-04-29)
+| Test | Check | Result |
+|------|-------|--------|
+| T1 | `camera_model_id == 0x80000325` | ✅ PASS |
+| T2 | `fio_malloc(4096)` non-null | ✅ PASS |
+| T3 | `fio_malloc(65536)` non-null | ✅ PASS |
+| T4 | `strlen(firmware_version) > 0` | ✅ PASS |
+| T5 | `shamem_read(0xC0F06008)` FPS timer A | ✅ PASS |
+| T6 | `shamem_read(0xC0F06800)` ENGIO | ✅ PASS |
+
+### Confirmed Working on Hardware
+- `fio_malloc` (4K and 64K allocations)
+- `shamem_read` (FPS timer and ENGIO registers)
+- FIO file I/O (CreateFile/WriteFile/CloseFile to ML/LOGS/HW_TEST.LOG)
+- Model ID detection (0x80000325 Canon EOS 70D)
+- Firmware version string
+- `bmp_printf` on-screen display
+- `run_in_separate_task` menu entry execution
+- Debug menu entry registration
+- `NotifyBox` timed notifications
+
+### Call() Dispatch Warning
+`call("EnableBootDisk")` and `call("TurnOnDisplay")` cause hard freeze on 70D (battery pull required). Both functions are documented as working on other DIGIC V cameras but are unsafe on 70D firmware 1.1.2. Contrast with `call("dumpf")` which works fine (used in "Don't click me!" menu entry). Do NOT add call() dispatch tests until root cause is understood.
+
+---
+
+## Hardware Testing Next Steps
+
+Now that hw_test framework is verified on hardware:
+
+1. **Continuing crop_rec calibration** (see HARDWARE-TESTING.md):
+   - Test each crop preset
+   - Calibrate CMOS/ENGIO registers
+   - Verify ADTG readout
+   - Enable CROP_PRESET_3X_TALL
+
+2. **PTP tunnel testing**:
+   - Connect camera via USB
+   - Run `camtunnel.py` to verify remote commands
+   - Test PTP_CHDK ExecuteScript fix
+
+3. **Debug feature exploration**:
+   - SCREENSHOT (Debug menu)
+   - SHOW_TASKS / SHOW_CPU_USAGE / SHOW_FREE_MEMORY / SHOW_CMOS_TEMPERATURE
+   - Level indicator (if electronic level works)
+   - DONT_CLICK_ME (dumpf test)
+

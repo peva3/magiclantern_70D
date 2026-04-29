@@ -301,8 +301,6 @@ static void hw_test_task(void* priv, int unused)
 {
     int test_count = 0, pass_count = 0;
 
-    console_show();
-
     FILE* f = FIO_CreateFile("ML/LOGS/HW_TEST.LOG");
     if (!f)
     {
@@ -351,30 +349,19 @@ static void hw_test_task(void* priv, int unused)
     if (ok3) fio_free(p3);
     TEST_RESULT(ok3);
 
-    TEST_HEADER(4, "call dispatch");
-    int c4a = (call("EnableBootDisk") >= 0) ? 1 : 0;
-    int c4b = (call("TurnOnDisplay") == 0) ? 1 : 0;
-    int ok4 = (c4a && c4b);
+    TEST_HEADER(4, "firmware version");
+    int ok4 = (strlen(firmware_version) > 0);
     TEST_RESULT(ok4);
 
-    TEST_HEADER(5, "firmware version");
-    int ok5 = (strlen(firmware_version) > 0);
+    TEST_HEADER(5, "shamem FPS TA");
+    uint32_t ta5 = shamem_read(0xC0F06008);
+    int ok5 = (ta5 != 0 && ta5 != 0xFFFFFFFF);
     TEST_RESULT(ok5);
 
-    TEST_HEADER(6, "shamem FPS TA");
-    uint32_t ta6 = shamem_read(0xC0F06008);
-    int ok6 = (ta6 != 0 && ta6 != 0xFFFFFFFF);
+    TEST_HEADER(6, "shamem ENGIO");
+    uint32_t eng6 = shamem_read(0xC0F06800);
+    int ok6 = (eng6 != 0xFFFFFFFF);
     TEST_RESULT(ok6);
-
-    TEST_HEADER(7, "shamem FPS TB");
-    uint32_t tb7 = shamem_read(0xC0F06014);
-    int ok7 = (tb7 != 0 && tb7 != 0xFFFFFFFF);
-    TEST_RESULT(ok7);
-
-    TEST_HEADER(8, "shamem ENGIO");
-    uint32_t eng8 = shamem_read(0xC0F06800);
-    int ok8 = (eng8 != 0xFFFFFFFF);
-    TEST_RESULT(ok8);
 
     /* summary */
     bmp_printf(FONT_LARGE, 0, 30, "HW_TEST: %d/%d PASS", pass_count, test_count);

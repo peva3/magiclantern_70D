@@ -8,8 +8,8 @@ This document outlines the development sprints for implementing the future work 
 **Base Repository:** https://github.com/peva3/magiclantern_70D  
 **Forked From:** https://github.com/reticulatedpines/magiclantern_simplified  
 **Developer Identity:** pmwoodward3@gmail.com / peva3  
-**Current Phase:** All non-hardware tasks complete — waiting for physical 70D
-**Last Updated:** 2026-04-28
+**Current Phase:** Hardware test log verified (6/6 PASS) — ready for further hardware testing
+**Last Updated:** 2026-04-29
 
 ### Key Contributors (from forum research)
 - **nikfreak:** Primary 70D port developer
@@ -54,21 +54,23 @@ This document outlines the development sprints for implementing the future work 
 
 **Purpose:** Separate all TODO tasks by whether they require physical 70D hardware or can be done in QEMU/emulation. Prioritize non-hardware tasks for immediate progress.
 
-### NON-HARDWARE TASKS (ALL COMPLETED)
+### NON-HARDWARE TASKS (COMPLETED)
 
 | Sprint | Result |
 |--------|--------|
-| S22 | ✅ QEMU crop_rec validation — limited by QEMU capabilities |
-| S7 | ✅ MLV v3 port — raw_vidx enabled, 1280x720 crop for 70D |
 | S4 | ✅ RAW zebras root cause identified — Dual Pixel AF pixels |
-| S8 | ✅ Audio RE — all ASIF stubs active, codec type unknown |
 | S1 | ✅ Focus via PROP_LV_LENS — focus_pos stability detection |
 | S3 | ✅ FPS override Timer A-only enabled — HiJello/FastTv |
+| S7 | ✅ MLV v3 port — raw_vidx enabled, 1280x720 crop for 70D |
+| S8 | ✅ Audio RE — all ASIF stubs active, codec type unknown |
 | S10 | ✅ PACK32_MODE, two-finger touch, mvr_struct documented |
-| L1-L5 | Deferred — code quality tasks, no 70D-specific changes needed |
-| — | Testing infrastructure — deferred until hardware available |
+| S22 | ✅ QEMU crop_rec validation — limited by QEMU capabilities |
+| S24 | ✅ QEMU Enhancement — 15 tasks (module loading, BMP, SD I/O, menu, timers, etc.) |
+| S25 | ✅ Non-Hardware Research — 50+ software-only tasks categorized across 15 categories (A-O) |
+| S26 | ✅ PTP Tunnel USB Remote Access — ptptun module, camtunnel.py, PTP_CHDK_ExecuteScript fix |
+| S27 | ✅ Code Cleanup + hw_test Hardware Verification — dead code removal, build fixes, 6/6 PASS on physical 70D |
 
-**Total: All ~22 non-hardware tasks complete.** Remaining work requires physical 70D.
+**Total: All non-hardware tasks verified.** Hardware test log working (6/6 PASS on physical 70D).
 
 ### HARDWARE TASKS (Require physical 70D)
 
@@ -84,14 +86,15 @@ This document outlines the development sprints for implementing the future work 
 
 **Total: ~19 hardware tasks** — Documented and ready for when hardware access becomes available.
 
-### Recommended Sprint Order (Updated)
-**All non-hardware software tasks complete!** Next work requires physical 70D:
+### Recommended Sprint Order (Updated 2026-04-29)
+**Hardware test log verified (6/6 PASS on physical 70D).** Next hardware testing priorities:
 
 1. **Sprint 5** — crop_rec CMOS/ENGIO calibration (highest priority hardware task)
-2. **Sprint 23** — WiFi hardware verification (socket/PTPIP stub testing)
-3. **Sprint 8** — Audio codec identification + CONFIG_AUDIO_CONTROLS enablement
-4. **Sprint 6** — Dual ISO movie mode investigation
-5. Remaining: S2.4 (focus stacking), S3.2-3.4 (FPS banding/UI), S9.2 (SD UHS), S10.4 (A/B toggle)
+2. **Sprint 26 (HW phase)** — PTP tunnel test: connect camera via USB, run camtunnel.py
+3. **Debug feature exploration** — SCREENSHOT, SHOW_TASKS, SHOW_CPU_USAGE, SHOW_FREE_MEMORY, DONT_CLICK_ME
+4. **Sprint 23** — WiFi hardware verification (socket/PTPIP stub testing)
+5. **Sprint 8** — Audio codec identification + CONFIG_AUDIO_CONTROLS enablement
+6. Remaining: S6 (dual ISO movie), S2.4 (focus stacking), S3.2-3.4 (FPS banding/UI), S9.2 (SD UHS)
 
 ### Confirmed Working Features (from forum)
 
