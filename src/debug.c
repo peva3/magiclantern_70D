@@ -363,6 +363,35 @@ static void hw_test_task(void* priv, int unused)
     int ok6 = (eng6 != 0xFFFFFFFF);
     TEST_RESULT(ok6);
 
+    TEST_HEADER(7, "get_ms_clock");
+    int ok7 = (get_ms_clock() > 0);
+    TEST_RESULT(ok7);
+
+    TEST_HEADER(8, "msleep(100) timing");
+    int t0 = get_ms_clock();
+    msleep(100);
+    int t1 = get_ms_clock();
+    int elapsed = t1 - t0;
+    int ok8 = (elapsed >= 50 && elapsed <= 500);
+    TEST_RESULT(ok8);
+    if (ok8) LOG("[DETAIL] msleep(100) took %dms\n", elapsed);
+
+    TEST_HEADER(9, "bmp_vram ptr");
+    uint8_t* vram = bmp_vram();
+    int ok9 = (vram != 0);
+    TEST_RESULT(ok9);
+
+    TEST_HEADER(10, "semaphore");
+    struct semaphore* sem = create_named_semaphore("hw_test", SEM_CREATE_UNLOCKED);
+    int sem_ok = (sem != 0);
+    if (sem_ok) {
+        int took = take_semaphore(sem, 0);  /* 0 = wait forever */
+        sem_ok = (took == 0);
+        if (sem_ok) give_semaphore(sem);
+    }
+    int ok10 = sem_ok;
+    TEST_RESULT(ok10);
+
     /* summary */
     bmp_printf(FONT_LARGE, 0, 30, "HW_TEST: %d/%d PASS", pass_count, test_count);
     LOG("\n=== SUMMARY: %d/%d passed ===\n", pass_count, test_count);
