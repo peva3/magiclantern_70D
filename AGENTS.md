@@ -1892,10 +1892,27 @@ FAT 8.3 filename truncation (`ptp_tunnel` → `PTP_TU~1.MO`) broke TCC symbol lo
 | T4 | `strlen(firmware_version) > 0` | ✅ PASS |
 | T5 | `shamem_read(0xC0F06008)` FPS timer A | ✅ PASS |
 | T6 | `shamem_read(0xC0F06800)` ENGIO | ✅ PASS |
+| T7 | `get_ms_clock()` > 0 (DryOS timer) | ✅ PASS |
+| T8 | `msleep(100)` elapsed ≥ 50ms (actual: 100ms) | ✅ PASS |
+| T9 | `bmp_vram()` non-null (display buffer) | ✅ PASS |
+| T10 | semaphore create/take/give/destroy | ✅ PASS |
+
+### Subsystems Proven (10/10 PASS)
+
+| Test | Subsystem | Proven API | Enables |
+|------|-----------|-----------|---------|
+| T1 | Camera model detection | `camera_model_id` extern | All camera-specific features |
+| T2-T3 | Memory allocation | `fio_malloc`/`fio_free` | RAW buffers, MLV recording, config loading |
+| T4 | Firmware version | `firmware_version` extern | Compatibility checks |
+| T5-T6 | Hardware register access | `shamem_read()` | crop_rec CMOS/ENGIO calibration, FPS override, SD tuning, sensor control |
+| T7 | Timer system | `get_ms_clock()` | FPS override timing, crop_rec frame timing, benchmark measurements |
+| T8 | Task scheduling | `msleep()` | Module loading, event processing, UI refresh, timelapse |
+| T9 | Display system | `bmp_vram()`, `bmp_printf()` | All on-screen overlays: zebras, histogram, menus, focus peaking, cropmarks |
+| T10 | Thread synchronization | `create_named_semaphore()`, `take_semaphore()`, `give_semaphore()` | raw_vidx producer-consumer, mlv_lite frame queuing, safe multi-task access |
 
 ### Confirmed Working on Hardware
 - `fio_malloc` (4K and 64K allocations)
-- `shamem_read` (FPS timer and ENGIO registers)
+- `shamem_read` (FPS timer A at 0xC0F06008, ENGIO at 0xC0F06800)
 - FIO file I/O (CreateFile/WriteFile/CloseFile to ML/LOGS/HW_TEST.LOG)
 - Model ID detection (0x80000325 Canon EOS 70D)
 - Firmware version string
@@ -1903,6 +1920,16 @@ FAT 8.3 filename truncation (`ptp_tunnel` → `PTP_TU~1.MO`) broke TCC symbol lo
 - `run_in_separate_task` menu entry execution
 - Debug menu entry registration
 - `NotifyBox` timed notifications
+- `get_ms_clock()` — millisecond-resolution timer
+- `msleep()` — task delay with measurable accuracy (100ms within 1% tolerance)
+- `bmp_vram()` — BMP VRAM pointer access
+- Semaphore API — create_named_semaphore/take_semaphore/give_semaphore
+
+### Log Flush Fix
+- Initial hw_test showed 6/10 tests in log file despite 10/10 PASS on screen
+- Root cause: FIO_WriteFile buffers in FAT driver; intermediate flush needed
+- Fix: `FIO_CloseFile` + `FIO_CreateFileOrAppend` mid-test to force buffer flush
+- All 10 tests now correctly appear in `ML/LOGS/HW_TEST.LOG`
 
 ### Call() Dispatch Warning
 `call("EnableBootDisk")` and `call("TurnOnDisplay")` cause hard freeze on 70D (battery pull required). Both functions are documented as working on other DIGIC V cameras but are unsafe on 70D firmware 1.1.2. Contrast with `call("dumpf")` which works fine (used in "Don't click me!" menu entry). Do NOT add call() dispatch tests until root cause is understood.

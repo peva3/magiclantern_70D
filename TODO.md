@@ -68,9 +68,9 @@ This document outlines the development sprints for implementing the future work 
 | S24 | ✅ QEMU Enhancement — 15 tasks (module loading, BMP, SD I/O, menu, timers, etc.) |
 | S25 | ✅ Non-Hardware Research — 50+ software-only tasks categorized across 15 categories (A-O) |
 | S26 | ✅ PTP Tunnel USB Remote Access — ptptun module, camtunnel.py, PTP_CHDK_ExecuteScript fix |
-| S27 | ✅ Code Cleanup + hw_test Hardware Verification — dead code removal, build fixes, 6/6 PASS on physical 70D |
+| S27 | ✅ Code Cleanup + hw_test Hardware Verification — dead code removal, build fixes, all 10/10 PASS on physical 70D. Proven: timer, display, semaphore, FIO, shamem, task scheduling APIs |
 
-**Total: All non-hardware tasks verified.** Hardware test log working (6/6 PASS on physical 70D).
+**Total: All non-hardware tasks verified.** Hardware test log working (10/10 PASS on physical 70D). Core DryOS subsystems proven: memory, register access, timer, scheduling, display, thread sync.
 
 ### HARDWARE TASKS (Require physical 70D)
 
@@ -87,13 +87,14 @@ This document outlines the development sprints for implementing the future work 
 **Total: ~19 hardware tasks** — Documented and ready for when hardware access becomes available.
 
 ### Recommended Sprint Order (Updated 2026-04-29)
-**Hardware test log verified (6/6 PASS on physical 70D).** Next hardware testing priorities:
+**10/10 hardware test PASS on physical 70D.** Core subsystems proven: timer, display, semaphore, register access, FIO, task scheduling. Next priorities:
 
 1. **Sprint 5** — crop_rec CMOS/ENGIO calibration (highest priority hardware task)
-2. **Sprint 26 (HW phase)** — PTP tunnel test: connect camera via USB, run camtunnel.py
-3. **Debug feature exploration** — SCREENSHOT, SHOW_TASKS, SHOW_CPU_USAGE, SHOW_FREE_MEMORY, DONT_CLICK_ME
-4. **Sprint 23** — WiFi hardware verification (socket/PTPIP stub testing)
-5. **Sprint 8** — Audio codec identification + CONFIG_AUDIO_CONTROLS enablement
+2. **PTP tunnel HW test** — Connect camera via USB, run `camtunnel.py` for remote control
+3. **Debug feature exploration** — SCREENSHOT, DONT_CLICK_ME, SHOW_TASKS, SHOW_CPU_USAGE, SHOW_FREE_MEMORY
+4. **hwinfo/temperature probe** — read CMOS temperature, battery level, shutter count via proven shamem API
+5. **Sprint 23** — WiFi hardware verification (socket/PTPIP stub testing)
+6. **Sprint 8** — Audio codec identification + CONFIG_AUDIO_CONTROLS enablement
 6. Remaining: S6 (dual ISO movie), S2.4 (focus stacking), S3.2-3.4 (FPS banding/UI), S9.2 (SD UHS)
 
 ### Confirmed Working Features (from forum)
