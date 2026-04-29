@@ -13,6 +13,8 @@
 #include <exmem.h>
 #include <fio-ml.h>
 
+static int bmp_dump_to_file(const char *filename);
+
 #define VERSION "hw_test v9"
 
 static int t_total, t_pass, t_skip, t_fail, scr_y;
@@ -223,6 +225,17 @@ if (write_ok) FIO_RemoveFile(test_file);
 rst(write_ok && read_ok, "sd_verify", write_ok ? 0 : "write");
 }
 
+/* BMP Frame Capture Test */
+hdr("BMP DUMP");
+{
+    const char *bmp_file = "ML/SETTINGS/LCD_DUMP.BMP";
+    int dumped = bmp_dump_to_file(bmp_file);
+    rst(dumped > 0, "bmp_capture", dumped <= 0 ? "fail" : 0);
+    if (dumped > 0) {
+        info("BMP capture OK");
+    }
+}
+
 blink_delay(500);
 
     hdr("PROPERTIES");
@@ -351,6 +364,47 @@ blink_delay(500);
     info_led_blink(3, 100, 100);
     msleep(10000);
     bmp_off();
+}
+
+
+/* BMP Frame Capture - dumps current LCD buffer to file for QEMU analysis */
+static int bmp_dump_to_file(const char *filename)
+{
+    extern uint8_t* bmp_vram(void);
+    uint8_t *vram = bmp_vram();
+    if (!vram) {
+        printf("[HW_TEST] BMP dump failed: no VRAM\n");
+        return -1;
+    }
+    
+    /* Dump 70D LCD: 640x306 RGB888 = 587,520 bytes (half width for speed) */
+    const int width = 640;
+    const int height = 306;
+    const int bytes_per_pixel = 3; /* RGB888 */
+    const int stride = 1280 * bytes_per_pixel; /* Full line stride */
+    
+    FILE *f = FIO_CreateFile(filename);
+    if (!f) {
+        printf("[HW_TEST] BMP dump: cannot create %s\n", filename);
+        return -1;
+    }
+    
+    int total = 0;
+    for (int y = 0; y < height; y++) {
+        uint8_t *line = vram + y * stride;
+        int w = FIO_WriteFile(f, line, width * bytes_per_pixel);
+        if (w != width * bytes_per_pixel) {
+            FIO_CloseFile(f);
+            FIO_RemoveFile(filename);
+            printf("[HW_TEST] BMP dump: write error at line %d\n", y);
+            return -1;
+        }
+        total += w;
+    }
+    
+    FIO_CloseFile(f);
+    printf("[HW_TEST] BMP dump: %s (%d bytes, %dx%d)\n", filename, total, width, height);
+    return total;
 }
 
 static unsigned int hw_init(void)
