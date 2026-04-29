@@ -245,6 +245,39 @@ hdr("TIMERS");
 }
 
 /* Memory stress test */
+
+/* Performance benchmarking */
+hdr("BENCHMARK");
+{
+    uint32_t start = get_ms_clock();
+    volatile int sum = 0;
+    
+    /* Simple CPU benchmark - 1000 iterations */
+    for (int i = 0; i < 1000; i++) {
+        sum += i;
+    }
+    
+    uint32_t elapsed = get_ms_clock() - start;
+    
+    char buf[80];
+    snprintf(buf, sizeof(buf), "1K iter: %dms", elapsed);
+    info(buf);
+    rst(elapsed < 100, "cpu_1k", elapsed >= 100 ? "slow" : 0);
+    
+    /* Memory bandwidth test */
+    start = get_ms_clock();
+    void *test_mem = malloc(10240);  /* 10KB */
+    if (test_mem) {
+        memset(test_mem, 0xAA, 10240);
+        free(test_mem);
+    }
+    elapsed = get_ms_clock() - start;
+    
+    snprintf(buf, sizeof(buf), "Mem 10KB: %dms", elapsed);
+    info(buf);
+    rst(elapsed < 50, "mem_10KB", elapsed >= 50 ? "slow" : 0);
+}
+
 hdr("MEMORY STRESS");
 {
     void *ptrs[10];
