@@ -402,6 +402,19 @@ static void hw_test_task(void* priv, int unused)
     int ok10 = sem_ok;
     TEST_RESULT(ok10);
 
+    TEST_HEADER(11, "CMOS temp raw");
+    int ok11 = (efic_temp != 0);
+    if (ok11) {
+        int celsius = efic_temp * 50 / 100 - 57;
+        LOG("[DETAIL] efic_temp=%d raw, ~%d C\n", efic_temp, celsius);
+    }
+    TEST_RESULT(ok11);
+
+    TEST_HEADER(12, "shutter count");
+    int ok12 = (shutter_count >= 0);
+    if (ok12) LOG("[DETAIL] shutter_count=%d\n", shutter_count);
+    TEST_RESULT(ok12);
+
     /* summary */
     bmp_printf(FONT_LARGE, 0, 30, "HW_TEST: %d/%d PASS", pass_count, test_count);
     LOG("\n=== SUMMARY: %d/%d passed ===\n", pass_count, test_count);
