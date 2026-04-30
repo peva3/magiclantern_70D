@@ -203,6 +203,49 @@ and `reticulatedpines/qemu-eos`.
 - Canon WiFi initialization traced: WFT, DP, RMT, PTPCOM all initialize
 - `PROP_WIFI_SETTING [0]` and `PROP_NETWORK_SYSTEM [0]` at boot (WiFi off by default)
 
+### QEMU Enhancement (Sprint 24)
+- 15 tasks completed: module loading fix, BMP capture, boot marker, SD I/O tests,
+  property system testing, config validation, task scheduling, timer callbacks,
+  menu navigation, display visualization, performance benchmarking, memory leak
+  detection, log analysis tools, regression tracking
+
+---
+
+## 2026-04-27 — SD UHS Analysis & Module Audit (Sprints 12-15)
+
+### Dead Code Purges (Sprints 12-13)
+- **S12**: Removed 318 lines of `#if 0` dead code across the codebase (debug
+  blocks, unused implementations, stale function prototypes). Fixed bitwise vs
+  logical operator in `raw.c`. Cleaned `gui-common.c` redundant logic.
+  Build: 444KB.
+- **S13**: Deleted `bitrate-6d.c` (656 lines, entirely dead). Removed 420+ more
+  lines of dead code. Build: 436KB (8KB saved).
+
+### Module Audit (Sprint 14)
+- **sd_uhs**: 160MHz1 explicitly broken on 70D (acts like 192MHz). No GPIO
+  register overrides for 70D. SDR50 baseline borrowed from 700D — may not match.
+  Menu shows unstable presets (192/240MHz) without warning — potential data
+  corruption risk.
+- **dual_iso**: Photo mode works (user-confirmed). Movie mode deliberately
+  disabled (FRAME_CMOS_ISO_START = 0). CMOS bit parameters (BITS=3, FLAG_BITS=2,
+  EXPECTED_FLAG=3) copied from 7D, unverified for 70D.
+- **mlv_lite**: Well-supported. Only 70D-specific: `dialog_refresh_timer_addr`.
+  Lossless compression works with proper 70D register handling.
+- **crop_rec**: No 70D initialization block existed — added in S20.
+  Skip offsets, timer tables, and presets all needed per-camera calibration.
+
+### sd_uhs Safety Hardening (Sprint 15)
+- 70D-only menu now exposes only OFF/160MHz with warning text about unstable
+  higher presets. 160MHz2 preset used (~70MB/s stable), 160MHz1 blocked.
+  Build: 439KB.
+
+### Cross-Port Features Enabled
+- FEATURE_ZOOM_TRICK_5D3, FEATURE_KEN_ROCKWELL_ZOOM_5D3 (double-click zoom)
+- FEATURE_SWAP_INFO_PLAY (info display in playback)
+- FEATURE_LV_FOCUS_BOX_SNAP_TO_X5_RAW
+- FEATURE_FOCUS_PEAK_DISP_FILTER
+- Fixed `arrow_key_mode_toggle` guard in `tweaks.c`
+
 ---
 
 ## 2026-04-26 — Dual ISO Breakthrough & FPS Override
@@ -241,6 +284,12 @@ and `reticulatedpines/qemu-eos`.
 - Set crop dimensions: 1280×720 (~38.7MB/s at 24fps, under 40MB/s SD limit)
 - MLV v3 session API: binary compatible with MLV 2.0, enum-based block types
 - Worker priorities (0x11/0x9) kept as 200D defaults
+- Added 70D crop offset placeholder in `event_pusher.c`
+
+### L2: MLV v3 Global Dependency Cleanup
+- Removed `#include` dependencies on `raw.h`, `lens.h`, `fps.h` from `mlv_3.c`
+- Expanded `mlv_session` struct to carry camera-specific state
+- Resolved 15 FIXMEs related to global variable access
 
 ### FPS Override QEMU Boot Confirmed
 - Previous QEMU crash was INVALID — stale 25KB autoexec.bin on SD image
