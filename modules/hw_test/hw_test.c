@@ -594,7 +594,7 @@ static void hw_task(void *unused)
                                 uint32_t vk = MEM(trial + k * 0x14) & 0xFFFF;
                                 snprintf(b, sizeof(b), "  +0x%02x: ISO %d = 0x%04x",
                                          k * 0x14, iso_stops[k], vk);
-                                info(b);
+                            info(b);
                             }
                             found++;
                         }
@@ -1359,13 +1359,12 @@ static void hw_task(void *unused)
         snprintf(b, sizeof(b), "  FPS_TA: min=%u max=%u avg=%u range=%u",
                  min_val, max_val, avg, max_val - min_val);
         info(b);
-        snprintf(b, sizeof(b), "  Samples: ");
-        for (int i = 0; i < n && i < 10; i++) {
-            char t[8];
-            snprintf(t, sizeof(t), "%s%u", i ? "," : "", samples[i]);
-            strncat(b, t, sizeof(b) - strlen(b) - 1);
+        char samp[80];
+        int pos = snprintf(samp, sizeof(samp), "  Samples: ");
+        for (int i = 0; i < n && i < 10 && pos < (int)sizeof(samp) - 8; i++) {
+            pos += snprintf(samp + pos, sizeof(samp) - pos, "%s%u", i ? "," : "", samples[i]);
         }
-        info(b);
+        info(samp);
         rst(max_val - min_val <= 2, "fps_stability", "FPS_TA range > 2");
         info("");
     }
