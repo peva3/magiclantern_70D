@@ -42,7 +42,7 @@
  * NO call() to known-dangerous functions (EnableBootDisk, TurnOnDisplay).
  */
 
-#define VERSION "hw_test v18 — Movie stride probe + adtglog2"
+#define VERSION "hw_test v19 — RAM dump for offline RE"
 
 static int t_total, t_pass, t_skip, t_fail, scr_y;
 static FILE *log_fp;
@@ -1006,6 +1006,102 @@ static void hw_task(void *unused)
         snprintf(b, sizeof(b), "Baseline: %d/%d match", match, total);
         info(b);
         rst(match == total, "register_baseline", match > 0 ? "partial" : "all mismatch");
+    }
+
+    log_flush();
+    blink_delay(500);
+
+    /* ════════════════════════════════════════
+     * S29: RAM DUMP — dump regions to binary files for offline RE
+     * Dumps raw RAM contents to ML/LOGS/RAM_*.BIN for analysis with
+     * strings(1), hexdump, IDA Pro, etc.
+     * Each file is raw binary; first byte corresponds to region start.
+     * ════════════════════════════════════════ */
+    hdr("RAM DUMP (S29)");
+    {
+        typedef struct {
+            const char *label;
+            uint32_t start;
+            uint32_t size;
+        } ram_region;
+
+        const ram_region regions[] = {
+            {"LOWER",  0x40000000, 0x01000000},  /* 16MB — primary firmware data */
+            {"ISO",    0x40400000, 0x00100000},  /*  1MB — ISO tables region */
+            {"UPPER",  0x4E000000, 0x01000000},  /* 16MB — upper RAM / ML pool */
+            {0, 0, 0}
+        };
+
+        int dumps_ok = 0, total = 0;
+        for (int r = 0; regions[r].label; r++) {
+            total++;
+            char b[80];
+            snprintf(b, sizeof(b), "Dumping %s (0x%08x, %dMB)...",
+                     regions[r].label, regions[r].start, regions[r].size >> 20);
+            info(b);
+            info("(this may take a few seconds)");
+
+            char fname[32];
+            snprintf(fname, sizeof(fname), "RAM_%s.BIN", regions[r].label);
+            char path[64];
+            snprintf(path, sizeof(path), "ML/LOGS/%s", fname);
+
+            FILE *fp = FIO_CreateFile(path);
+            if (!fp) {
+                warn("  create failed");
+                continue;
+            }
+
+            /* Allocate 256KB write buffer */
+            uint8_t *buf = fio_malloc(262144);
+            if (!buf) {
+                warn("  alloc failed");
+                FIO_CloseFile(fp);
+                continue;
+            }
+
+            uint32_t remaining = regions[r].size;
+            uint32_t offset = 0;
+            int total_written = 0;
+            int ok = 1;
+
+            while (remaining > 0 && ok) {
+                uint32_t chunk = (remaining > 262144) ? 262144 : remaining;
+                uint32_t src = regions[r].start + offset;
+
+                /* Safety probe — skip if first word looks unmapped (all Fs) */
+                uint32_t probe = *(volatile uint32_t*)(uintptr_t)src;
+                if (probe == 0xFFFFFFFF) {
+                    offset += chunk;
+                    remaining -= chunk;
+                    continue;
+                }
+
+                memcpy(buf, (void*)(uintptr_t)src, chunk);
+                int written = FIO_WriteFile(fp, buf, chunk);
+                if (written <= 0) {
+                    ok = 0;
+                    break;
+                }
+                total_written += written;
+                offset += chunk;
+                remaining -= chunk;
+            }
+
+            fio_free(buf);
+            FIO_CloseFile(fp);
+
+            if (ok) {
+                dumps_ok++;
+                snprintf(b, sizeof(b), "  %s: %dMB written", fname, total_written >> 20);
+                info(b);
+            } else {
+                snprintf(b, sizeof(b), "  %s: FAIL at offset 0x%x", fname, offset);
+                warn(b);
+            }
+        }
+        rst(dumps_ok == total, "ram_dump", dumps_ok > 0 ? "partial" : "all failed");
+        info("RAM dumps in ML/LOGS/RAM_*.BIN — copy to PC for strings/hexdump/IDA");
     }
 
     log_flush();
