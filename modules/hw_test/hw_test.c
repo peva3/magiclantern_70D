@@ -43,7 +43,7 @@
  * NO call() to known-dangerous functions (EnableBootDisk, TurnOnDisplay).
  */
 
-#define VERSION "hw_test v21 — Audio IC + SD clock register probes"
+#define VERSION "hw_test v21 — Audio IC + SD clock regs; safe defect probe"
 
 static int t_total, t_pass, t_skip, t_fail, scr_y;
 static FILE *log_fp;
@@ -1109,72 +1109,58 @@ static void hw_task(void *unused)
     blink_delay(500);
 
     /* ════════════════════════════════════════
-     * S30.2: GPS PROBE
+     * S30.2: GPS PROBE (info only — not in call() table)
      * ════════════════════════════════════════ */
     hdr("GPS PROBE (S30.2)");
     {
-        struct { const char *name; int arg; } gps_tests[] = {
-            {"GPS_Initialize", 0},
-            {"GetGPSTime", 0},
-            {"GetGPSListRecvCapability", 0},
-            {"GetGPSCaptureTimeList", 0},
-            {"GPSList", 0},
-            {"GPSClearList", 0},
-            {"NwLimeInit", 0},
-            {"NwLimeOn", 0},
-            {0, 0}
+        const char *gps_tests[] = {
+            "GPS_Initialize",
+            "GetGPSTime",
+            "GetGPSListRecvCapability",
+            "GetGPSCaptureTimeList",
+            "GPSList",
+            "GPSClearList",
+            "NwLimeInit",
+            "NwLimeOn",
+            0
         };
-        int gps_ok = 0, gps_total = 0;
-        for (int i = 0; gps_tests[i].name; i++) {
-            gps_total++;
+        for (int i = 0; gps_tests[i]; i++) {
             char b[80];
-            int r = call(gps_tests[i].name);
+            int r = call(gps_tests[i]);
             snprintf(b, sizeof(b), "  call(\"%s\") = %d%s",
-                     gps_tests[i].name, r, r == 0 ? "" : r < 0 ? " NOT_FOUND" : "");
+                     gps_tests[i], r, r == 0 ? "" : r < 0 ? " NOT_FOUND" : "");
             info(b);
-            if (!r) gps_ok++;
         }
-        rst(gps_ok == gps_total, "gps_probe", "some GPS calls failed");
+        info("  GPS & NwLime functions expected to be absent from call() table.");
+        rst(0, "gps_probe", "info-only — GPS/NwLime not in call()");
         info("");
     }
 
     /* ════════════════════════════════════════
-     * S30.3: DEFECT PROBE
+     * S30.3: DEFECT PROBE (SAFE ONLY)
      * ════════════════════════════════════════ */
     hdr("DEFECT PROBE (S30.3)");
     {
         struct { const char *name; int arg; int has_arg; } defect_tests[] = {
-            {"FA_LvDetectDefectsFull", 0, 0},
-            {"FA_LvDetectDefectsMagnify", 0, 0},
-            {"FA_LvDetectDefectsMovieCrop", 0, 0},
-            {"FA_LvDefectMaxCountFull", 0, 1},
             {"ExecuteDefectMarge1", 0, 0},
             {"ExecuteDefectMarge2", 0, 0},
             {"ExecuteDefectMarge3", 0, 0},
-            {"FA_LvMargeDefectsMagnify", 0, 0},
-            {"FA_SetMergeDefParameter", 0, 1},
-            {"FA_DefectsTestImage", 0, 0},
-            {"FA_DefectsMergeTestImage", 0, 0},
-            {"FA_DetectDefTestImage", 0, 0},
-            {"FA_ProjectionTestImage", 0, 0},
-            {"FA_CreateTestImage", 0, 1},
             {0, 0, 0}
         };
         int def_ok = 0, def_total = 0;
         for (int i = 0; defect_tests[i].name; i++) {
             def_total++;
             char b[80];
-            int r;
-            if (defect_tests[i].has_arg)
-                r = call(defect_tests[i].name, defect_tests[i].arg);
-            else
-                r = call(defect_tests[i].name);
+            int r = call(defect_tests[i].name);
             snprintf(b, sizeof(b), "  call(\"%s\") = %d%s",
                      defect_tests[i].name, r, r == 0 ? "" : r < 0 ? " NOT_FOUND" : "");
             info(b);
             if (!r) def_ok++;
         }
-        rst(def_ok > 0, "defect_probe", "all defect calls failed");
+        info("  LV-dependent calls: FA_LvDetectDefects*, FA_CreateTestImage,");
+        info("  FA_DefectsTestImage, FA_ProjectionTestImage, FA_SetMergeDefParameter");
+        info("  SKIPPED — require active LiveView and may crash camera.");
+        rst(def_ok > 0, "defect_probe_safe", "all safe defect calls failed");
         info("");
     }
 
