@@ -1560,7 +1560,6 @@ static void FAST engio_write_hook(uint32_t* regs, uint32_t* stack, uint32_t pc)
             }
         }
     }
-    }
 
     if (!is_supported_mode() || !engio_vidmode_ok)
     {
@@ -1859,9 +1858,6 @@ static void center_canon_preview()
         raw_yc = COERCE(raw_yc, y_min, y_max);
         dbg_printf("-> %d,%d using focus box position\n", raw_xc, raw_yc);
     }
-
-    int raw_xc = (146 + 3744) / 2 / 4;  /* hardcoded for 5D3 */
-    int raw_yc = ( 60 + 1380) / 2;      /* values from old raw.c */
 
     if (1)
     {

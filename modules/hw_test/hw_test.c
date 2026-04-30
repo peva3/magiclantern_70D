@@ -43,7 +43,7 @@
  * NO call() to known-dangerous functions (EnableBootDisk, TurnOnDisplay).
  */
 
-#define VERSION "hw_test v22 — Defect probe info-only (not PASS/FAIL)"
+#define VERSION "hw_test v23 — config_rw fix (get_config_dir instead of hardcoded path)"
 
 static int t_total, t_pass, t_skip, t_fail, scr_y;
 static FILE *log_fp;
@@ -461,13 +461,15 @@ static void hw_task(void *unused)
     }
     /* Config file write/read-back */
     {
-        const char *f = "ML/SETTINGS/HW_CFG.TST";
+        char f[64];
+        snprintf(f, sizeof(f), "%sHW_CFG.TST", get_config_dir());
         int ok = 0;
         FILE *fw = FIO_CreateFile(f);
         if (fw) {
             int w = FIO_WriteFile(fw, "hw_test=1", 9);
             FIO_CloseFile(fw);
             if (w == 9) {
+                msleep(50);
                 char rb[16] = {0};
                 FILE *fr = FIO_OpenFile(f, 0);
                 if (fr) {

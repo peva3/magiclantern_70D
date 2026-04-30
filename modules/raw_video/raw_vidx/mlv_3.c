@@ -549,6 +549,7 @@ static int init_block(mlv_block_header *orig_block)
         block_4->tm_isdst = now.tm_isdst;
         block_4->tm_gmtoff = now.tm_gmtoff;
         // block_4->tm_zone // 0 via static initialisation, doesn't really exist
+        return 0;
     case mlv_VIDF:
     case mlv_AUDF:
     case mlv_WAVI:
@@ -670,7 +671,7 @@ char *write_video_frame_header(uint32_t image_size, char *start, char *end)
         return NULL;
 
     char *image_start = (char *)(ALIGN_UP(((uint32_t)start + sizeof(mlv_vidf_block)),
-                                          session_image_data_alignment));
+                                           session_data.image_data_alignment));
     if ((image_start < start)
         || (image_start + image_size < start))
     {   // overflow

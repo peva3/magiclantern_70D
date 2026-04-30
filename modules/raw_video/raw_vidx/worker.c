@@ -1,5 +1,6 @@
 #include "module.h"
 #include "dryos.h"
+#include <string.h>
 
 #include "raw.h"
 #include "edmac-memcpy.h"

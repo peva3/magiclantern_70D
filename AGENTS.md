@@ -60,6 +60,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 | 2026-04-30 | 457KB | 457KB | S6: Dual ISO BREAKTHROUGH — addresses ARE correct (hw_test bug was using shamem_read for RAM). 3 ISO tables found in RAM: 0x404e5664 (photo, stride 20), 0x404e5704 (mirror), 0x404e7248 (LV). FRAME_CMOS_ISO_START uncommented for movie mode. Movie stride 46 probe added. 28 modules. |
 | 2026-04-30 | 457KB | 457KB | hw_test v19: RAM dump for offline RE (LOWER 16MB, ISO 1MB, UPPER 16MB). RAM dumps analyzed: found Canon DLNA Media Server, WiFi SDIO driver, remote shot functions, AF remote control, ADTG register patterns. |
 | 2026-04-30 | 457KB | 457KB | FULL 512MB RAM dump (0x40000000-0x5FFFFFFF) extracted via ramdump module. 509MB data, ~12K strings, 520+ callable functions, full symbol table (270+ ML symbols), 30+ PROP_ IDs mapped, 55 source file paths found. |
+| 2026-04-30 | 457KB | 457KB | S30: WiFi TCP server (wifisrv v2), GPS/defect/dual-ISO probes. hw_test v20-v23: unified probes, config_rw fix, all latent build bugs fixed (crop_rec brace, mlv_3 session/falthrough, worker.c strncpy). Build system fix: hw_test added to ML_MODULES, stale .mo prevention. |
 
 2. **Documentation Updates:** Keep AGENTS.md and README.md files continuously updated with all findings, changes, and discoveries
 3. **Task Tracking:** Maintain TODO.md with current task status, marking completed items and adding new tasks as discovered
@@ -69,7 +70,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 7. **Incremental Progress:** Complete work in small, testable chunks - never batch multiple untested changes
 
 **Repository:** https://github.com/peva3/magiclantern_70D
-**Current Phase:** hw_test v19 VALIDATED on physical 70D (25 PASS, 2 SKIP, 0 FAIL). RAM dumps analyzed offline: found Canon DLNA Media Server, WiFi SDIO driver (`WlanSdcomDrv.c`), remote shot functions (`schedule_remote_shot`, `remote_shot`), AF remote control (`AfCtrl_Act_*Remote`), ADTG register patterns (0x8172/0x8173/0x8178/0x8179). UPPER RAM (0x4E000000) confirmed uninitialized heap. Next: Canon WiFi stack RE, PTP tunnel HW test
+**Current Phase:** hw_test v23 — 31/5/0 PASS/SKIP/FAIL on physical 70D. All software tasks built out: WiFi TCP server (wifisrv), GPS/defect/dual-ISO probes, audio IC probe, SD clock regs, config_rw fix. All latent build bugs fixed (crop_rec extra brace, mlv_3 session var + fallthrough, worker.c strncpy). 32 modules. Next: hardware testing of WiFi, PTP tunnel, Dual ISO
 **Last Updated:** 2026-04-30
 
 ## QEMU-EOS Setup (in-tree)
