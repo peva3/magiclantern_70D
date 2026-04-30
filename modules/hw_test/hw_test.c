@@ -12,6 +12,7 @@
 #include <mem.h>
 #include <exmem.h>
 #include <fio-ml.h>
+#include <config.h>
 
 /*
  * hw_test — Comprehensive Hardware Proving Ground for Canon 70D
@@ -1143,7 +1144,10 @@ static void hw_task(void *unused)
 
 static unsigned int hw_init(void)
 {
-    hw_task(0);
+    if (config_flag_file_setting_load("ML/SETTINGS/HW_TEST.RUN"))
+    {
+        hw_task(0);
+    }
     return 0;
 }
 

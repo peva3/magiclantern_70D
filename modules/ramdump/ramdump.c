@@ -3,6 +3,7 @@
 #include <bmp.h>
 #include <stdio.h>
 #include <string.h>
+#include <config.h>
 
 static void ramdump_auto(void)
 {
@@ -108,7 +109,10 @@ static void ramdump_auto(void)
 
 static unsigned int ramdump_init(void)
 {
-    ramdump_auto();
+    if (config_flag_file_setting_load("ML/SETTINGS/RAMDUMP.RUN"))
+    {
+        ramdump_auto();
+    }
     return 0;
 }
 
