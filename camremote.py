@@ -10,12 +10,13 @@ Usage:
   python3 camremote.py <command> [options]
 
 Commands:
-  status            Get camera status (battery, shutter, temp, LV)
+  status            Get camera status (battery, shutter, temp, LV, remote flag)
   ping              Ping the camera (returns PONG)
-  shutter           Trigger remote shutter release
+  shutter           Trigger remote shutter release (call("FA_RemoteRelease"))
   lv                Toggle LiveView on/off
-  bootdisk          Enable bootdisk mode (for card reader)
-  shell             Interactive shell mode (repeated commands)
+  bootdisk          Enable bootdisk mode
+  screenshot        Save screenshot to ML/LOGS/WIFI_SCRN.BMP
+  shell             Interactive shell mode (persistent connection, multiple cmds)
 
 Options:
   --ip IP           Camera IP address (default: 192.168.1.20)
@@ -42,36 +43,41 @@ CMD_MAP = {
     "shutter": "R",
     "lv": "L",
     "bootdisk": "B",
+    "screenshot": "C",
+    "quit": "Q",
 }
 
 
-def send_command(ip, port, cmd_byte):
-    """Send a single-byte command, return the response string."""
+def recv_resp(sock):
+    """Read response from socket: 2-byte length prefix + payload."""
+    raw_len = sock.recv(2)
+    if len(raw_len) < 2:
+        return None
+    resp_len = struct.unpack("!H", raw_len)[0]
+    resp = b""
+    while len(resp) < resp_len:
+        chunk = sock.recv(resp_len - len(resp))
+        if not chunk:
+            break
+        resp += chunk
+    return resp.decode("utf-8", errors="replace")
+
+
+def send_one(ip, port, cmd_byte):
+    """Open connection, send command, read response, close."""
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(10)
         sock.connect((ip, port))
         sock.send(bytes([ord(cmd_byte)]))
-
-        raw_len = sock.recv(2)
-        if len(raw_len) < 2:
-            sock.close()
-            return None
-        resp_len = struct.unpack("!H", raw_len)[0]
-        resp = b""
-        while len(resp) < resp_len:
-            chunk = sock.recv(resp_len - len(resp))
-            if not chunk:
-                break
-            resp += chunk
+        resp = recv_resp(sock)
         sock.close()
-        return resp.decode("utf-8", errors="replace")
+        return resp
     except Exception as e:
         return f"ERROR: {e}"
 
 
 def print_status(resp):
-    """Parse and display a STATUS response."""
     if not resp:
         print("No response from camera")
         return
@@ -86,30 +92,42 @@ def print_status(resp):
         print(f"  Temperature:  {parts.get('t', '?')}")
         print(f"  LiveView:     {'ON' if parts.get('lv') == '1' else 'OFF'}")
         print(f"  Remote shot:  {parts.get('rmt', '?')}")
+        print(f"  Camera:       {parts.get('cam', '?')} fw {parts.get('fw', '?')}")
     else:
-        print(f"  Response: {resp}")
+        print(f"  {resp}")
 
 
 def interactive_shell(ip, port):
-    """Interactive command loop."""
+    """Interactive shell with persistent connection (one TCP session)."""
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(30)
+        sock.connect((ip, port))
+    except Exception as e:
+        print(f"Connection failed: {e}")
+        return
+
     print(f"camremote shell — connected to {ip}:{port}")
-    print("Commands: status, shutter, lv, ping, bootdisk, quit")
-    while True:
-        try:
+    print("Commands: status, shutter, lv, ping, bootdisk, screenshot, quit")
+    try:
+        while True:
             cmd = input("> ").strip().lower()
-        except (EOFError, KeyboardInterrupt):
-            print()
-            break
-        if cmd in ("quit", "exit", "q"):
-            break
-        if cmd in CMD_MAP:
-            resp = send_command(ip, port, CMD_MAP[cmd])
-            if cmd == "status":
-                print_status(resp)
-            else:
-                print(f"  {resp}")
-        elif cmd:
-            print(f"  Unknown command. Try: {'/'.join(CMD_MAP.keys())}")
+            if cmd in ("quit", "exit", "q"):
+                sock.send(b"Q")
+                break
+            if cmd in CMD_MAP:
+                sock.send(bytes([ord(CMD_MAP[cmd])]))
+                resp = recv_resp(sock)
+                if cmd == "status":
+                    print_status(resp)
+                else:
+                    print(f"  {resp}")
+            elif cmd:
+                print(f"  Unknown. Try: {'/'.join(CMD_MAP.keys())}")
+    except (EOFError, KeyboardInterrupt):
+        print()
+    finally:
+        sock.close()
 
 
 def main():
@@ -118,7 +136,6 @@ def main():
     repeat = 1
     args = sys.argv[1:]
 
-    # Parse arguments
     cmds = []
     i = 0
     while i < len(args):
@@ -146,7 +163,7 @@ def main():
             for r in range(repeat):
                 if repeat > 1:
                     print(f"[{r+1}/{repeat}] ", end="")
-                resp = send_command(ip, port, CMD_MAP[cmd])
+                resp = send_one(ip, port, CMD_MAP[cmd])
                 if cmd == "status":
                     print_status(resp)
                 else:

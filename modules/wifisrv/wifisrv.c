@@ -113,60 +113,87 @@ static int init_socket_ptrs(void)
     return ok;
 }
 
-/* ── Handle one client ── */
+/* ── Send response: 2-byte length prefix + payload ── */
+
+static int send_resp(int fd, const char *data, int len)
+{
+    uint16_t net_len = htons_ml((uint16_t)len);
+    int sent = p_socket_send(fd, &net_len, 2, 0);
+    if (sent != 2) return -1;
+    if (len > 0) {
+        sent = p_socket_send(fd, data, len, 0);
+        if (sent != len) return -1;
+    }
+    return 0;
+}
+
+/* ── Handle one client (read-eval loop) ── */
 
 static void handle_client(int client_fd)
 {
-    uint8_t buf[256];
-    int n = p_socket_recv(client_fd, buf, sizeof(buf) - 1, 0);
-    if (n <= 0) return;
+    char resp[2048];
+    int rlen;
 
-    buf[n] = 0;
-    char cmd = buf[0];
-    char resp[256];
-    int rlen = 0;
+    for (;;) {
+        uint8_t buf[512];
+        int n = p_socket_recv(client_fd, buf, sizeof(buf) - 1, 0);
+        if (n <= 0) break;
 
-    switch (cmd) {
-    case 'P':
-        rlen = snprintf(resp, sizeof(resp), "PONG");
-        break;
-    case 'S': {
-        int batt = GetBatteryLevel();
-        int shutter = shutter_count;
-        int temp = efic_temp;
-        int lv = 0;
-        uint32_t *evf = (uint32_t *)0x7CFEC;
-        if (evf) lv = (*evf != 0);
-        rlen = snprintf(resp, sizeof(resp),
-                        "STAT b=%d s=%d t=%d lv=%d rmt=%d",
-                        batt, shutter, temp, lv, remote_shot_flag);
-        break;
-    }
-    case 'R':
-        call("FA_RemoteRelease");
-        rlen = snprintf(resp, sizeof(resp), "REMOTE_OK");
-        break;
-    case 'L': {
-        uint32_t *evf = (uint32_t *)0x7CFEC;
-        if (evf && *evf)
-            call("FA_StopLiveView");
-        else
-            call("FA_StartLiveView");
-        rlen = snprintf(resp, sizeof(resp), "LV_TOGGLE");
-        break;
-    }
-    case 'B':
-        call("EnableBootDisk");
-        rlen = snprintf(resp, sizeof(resp), "BOOTDISK_OK");
-        break;
-    default:
-        rlen = snprintf(resp, sizeof(resp), "ERR_UNKNOWN_CMD");
-        break;
-    }
+        buf[n] = 0;
+        char cmd = buf[0];
 
-    uint16_t net_len = htons_ml((uint16_t)rlen);
-    p_socket_send(client_fd, &net_len, 2, 0);
-    p_socket_send(client_fd, resp, rlen, 0);
+        switch (cmd) {
+        case 'P':
+            rlen = snprintf(resp, sizeof(resp), "PONG");
+            send_resp(client_fd, resp, rlen);
+            break;
+
+        case 'S': {
+            int batt = GetBatteryLevel();
+            int shutter = shutter_count;
+            int temp = efic_temp;
+            int lv = 0;
+            uint32_t *evf = (uint32_t *)0x7CFEC;
+            if (evf) lv = (*evf != 0);
+            rlen = snprintf(resp, sizeof(resp),
+                "STAT b=%d s=%d t=%d lv=%d rmt=%d cam=70D fw=1.1.2",
+                batt, shutter, temp, lv, remote_shot_flag);
+            send_resp(client_fd, resp, rlen);
+            break;
+        }
+
+        case 'R':
+            call("FA_RemoteRelease");
+            rlen = snprintf(resp, sizeof(resp), "REMOTE_OK");
+            send_resp(client_fd, resp, rlen);
+            break;
+
+        case 'L': {
+            uint32_t *evf = (uint32_t *)0x7CFEC;
+            if (evf && *evf)
+                call("FA_StopLiveView");
+            else
+                call("FA_StartLiveView");
+            rlen = snprintf(resp, sizeof(resp), "LV_TOGGLE");
+            send_resp(client_fd, resp, rlen);
+            break;
+        }
+
+        case 'B':
+            call("EnableBootDisk");
+            rlen = snprintf(resp, sizeof(resp), "BOOTDISK_OK");
+            send_resp(client_fd, resp, rlen);
+            break;
+
+        case 'Q':
+            return;
+
+        default:
+            rlen = snprintf(resp, sizeof(resp), "ERR_UNKNOWN_CMD");
+            send_resp(client_fd, resp, rlen);
+            break;
+        }
+    }
 }
 
 /* ── Server task ── */
