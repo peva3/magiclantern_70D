@@ -79,9 +79,9 @@ This document outlines the development sprints for implementing the future work 
 | S28 | Dual ISO address RE — hw_test proved all 7 addresses are WRONG (read 0x00000000). Find correct CMOS ISO register locations for 70D | HIGH | HIGH |
 | S28 | WiFi server development — socket APIs RAM-resident, PTPIP stubs valid. Build yolo.c-pattern TCP server | Medium | HIGH |
 | S28 | PTP tunnel hardware test — USB connection with camtunnel.py | Low | HIGH |
+| S6 | Dual ISO — addresses CONFIRMED CORRECT (hw_test bug was using shamem_read for RAM). Movie mode FRAME_CMOS_ISO_START uncommented. | High | HIGH |
 | S5 | CMOS/ENGIO calibration, CROP_PRESET_3X, ADTG readout, crop mode testing (5 tasks) | HIGH | MEDIUM |
 | S28 | Debug feature exploration — SCREENSHOT, SHOW_TASKS, SHOW_FREE_MEMORY, level indicator | Low | MEDIUM |
-| S6 | Dual ISO movie pipeline investigation and calibration (3 tasks) | High | MEDIUM |
 | S2 | Focus stacking bug fix (1 task) | Low | LOW |
 | S3 | FPS banding mitigation hardware test (1 task) | Medium | LOW |
 | S8 | Audio quality testing (1 task) | Low | LOW |

@@ -1369,9 +1369,13 @@ static unsigned int dual_iso_init()
 
         is_70d = 1;
 
-        /* FRAME_CMOS_ISO_START = 0x404e77d6; // CMOS register 0000 - for LiveView, ISO 100 (check in movie mode, not photo!)
+        /* EXPERIMENTAL: Movie mode Dual ISO (uncommented for 70D hw_test v17 validation)
+         * NOTE: Original code said "WE DO NOT SEEM TO BE ABLE TO USE DUAL ISO IN MOVIE MODE"
+         * but the addresses were confirmed correct by hw_test v17 RAM scanner.
+         * Movie mode may require CMOS[3] instead of CMOS[0] — see the TRIPLE ISO comment. */
+        FRAME_CMOS_ISO_START = 0x404e77d6; // CMOS register 0000 - for LiveView, ISO 100 (check in movie mode, not photo!)
         FRAME_CMOS_ISO_COUNT =          7; // from ISO 100 to 6400 (last real iso!)
-        FRAME_CMOS_ISO_SIZE  =         46; // distance between ISO 100 and ISO 200 addresses, in bytes */
+        FRAME_CMOS_ISO_SIZE  =         46; // distance between ISO 100 and ISO 200 addresses, in bytes
 
         /* WE DO NOT SEEM TO BE ABLE TO USE DUAL ISO IN MOVIE MODE */
         /* MORE CONFUSING IS THAT WE ARE INDEED ABLE TO USE */

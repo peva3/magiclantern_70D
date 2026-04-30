@@ -554,49 +554,35 @@ static void hw_task(void *unused)
      * ════════════════════════════════════════ */
     hdr("DUAL ISO REGISTERS (S6)");
     {
-        /* FIXED: Use MEM() for RAM reads (was using shamem_read which only works for MMIO 0xC0Fxxxxx) */
-        /* The known ISO addresses from dual_iso.c: 0x404E5664 + i*0x14 (copied from 7D, UNVERIFIED) */
-        /* hw_test v15 proved all read 0x00000000 with shamem_read — addresses may be WRONG */
+        /* Use MEM() for RAM reads (NOT shamem_read — that only works for MMIO 0xC0Fxxxxx) */
         uint32_t iso_base = 0x404E5664;
         int iso_stops[] = {100, 200, 400, 800, 1600, 3200, 6400, 0};
         char b[80];
         for (int i = 0; iso_stops[i]; i++) {
             uint32_t addr = iso_base + i * 0x14;
-            /* NOTE: MEM() reads 32-bit; only low 16 bits are the ISO entry per dual_iso.c read_value() */
             uint32_t val = MEM(addr) & 0xFFFF;
             snprintf(b, sizeof(b), "ISO_%d (0x%08x)=0x%04x", iso_stops[i], addr, val);
             info(b);
         }
-        /* Also try a wider RAM scan for the ISO value pattern */
-        hdr("ISO TABLE RAM SCAN (S28.1)");
+        /* RAM region scan for ISO value pattern at stride 0x14 (photo mode) */
+        hdr("ISO TABLE RAM SCAN — stride 0x14 (S28.1)");
         {
-            /* The ISO 16-bit values expected at correct addresses:
-             * base+0x00: 0x0003  base+0x14: 0x0027  base+0x28: 0x004b
-             * base+0x3C: 0x006f  base+0x50: 0x0093  base+0x64: 0x00b7
-             * base+0x78: 0x00db
-             * Scan RAM 0x40400000-0x40500000 at coarse granularity
-             * looking for any ISO value as first-match indicator, then validate stride. */
-            int found = 0;
-            /* Expected ISO values in the low 16 bits */
             uint16_t expected[7] = {0x0003, 0x0027, 0x004b, 0x006f, 0x0093, 0x00b7, 0x00db};
-            /* Scan range: 0x40400000 to 0x40500000 (1MB) */
             uint32_t scan_start = 0x40400000;
             uint32_t scan_end   = 0x40500000;
-            /* Step by 64 bytes */
+            int found = 0;
             for (uint32_t base = scan_start; base < scan_end; base += 64) {
-                /* Try each 4-byte alignment within the 64-byte block */
                 for (int a = 0; a < 64; a += 4) {
                     uint32_t trial = base + a;
                     uint32_t v0 = MEM(trial) & 0xFFFF;
                     if (v0 == expected[0]) {
-                        /* Candidate found — validate remaining values at stride 20 */
                         int match = 1;
                         for (int k = 1; k < 7; k++) {
                             uint32_t vk = MEM(trial + k * 0x14) & 0xFFFF;
                             if (vk != expected[k]) { match = 0; break; }
                         }
                         if (match) {
-                            snprintf(b, sizeof(b), "ISO TABLE FOUND at 0x%08x", trial);
+                            snprintf(b, sizeof(b), "TABLE (stride 0x14) at 0x%08x", trial);
                             info(b);
                             for (int k = 0; k < 7; k++) {
                                 uint32_t vk = MEM(trial + k * 0x14) & 0xFFFF;
@@ -604,14 +590,55 @@ static void hw_task(void *unused)
                                          k * 0x14, iso_stops[k], vk);
                                 info(b);
                             }
-                            found = 1;
+                            found++;
                         }
                     }
                 }
             }
+            snprintf(b, sizeof(b), "Found %d table(s) at stride 0x14", found);
+            info(b);
+        }
+        /* Movie mode scan at stride 0x2E (46) — documented address 0x404e77d6 */
+        hdr("ISO TABLE RAM SCAN — stride 0x2E (movie mode)");
+        {
+            uint16_t expected[7] = {0x0003, 0x0027, 0x004b, 0x006f, 0x0093, 0x00b7, 0x00db};
+            int found = 0;
+            /* Check the documented movie mode base address */
+            uint32_t movie_base = 0x404e77d6;
+            int m = 1;
+            for (int k = 0; k < 7; k++) {
+                uint32_t vk = MEM(movie_base + k * 0x2E) & 0xFFFF;
+                if (vk != expected[k]) { m = 0; break; }
+            }
+            if (m) {
+                snprintf(b, sizeof(b), "MOVIE TABLE at 0x%08x (stride 0x2E)", movie_base);
+                info(b);
+                for (int k = 0; k < 7; k++) {
+                    uint32_t vk = MEM(movie_base + k * 0x2E) & 0xFFFF;
+                    snprintf(b, sizeof(b), "  +0x%02x: ISO %d = 0x%04x",
+                             k * 0x2E, iso_stops[k], vk);
+                    info(b);
+                }
+                found++;
+            }
+            /* Also check if the LV table is at 0x404e7248 with stride 0x2E */
+            uint32_t lv_base = 0x404e7248;
+            int l = 1;
+            for (int k = 0; k < 7; k++) {
+                uint32_t vk = MEM(lv_base + k * 0x2E) & 0xFFFF;
+                if (vk != expected[k]) { l = 0; break; }
+            }
+            if (l) {
+                snprintf(b, sizeof(b), "LV TABLE at 0x%08x (stride 0x2E)", lv_base);
+                info(b);
+                found++;
+            }
             if (!found) {
-                info("ISO table NOT found in 0x40400000-0x40500000 range");
-                info("Enable adtglog2 module and change ISO to discover correct addresses");
+                info("Movie mode table (stride 0x2E) NOT found at documented addresses");
+                info("Enable adtglog2 module and change ISO in movie mode to find addresses");
+            } else {
+                snprintf(b, sizeof(b), "Found %d movie mode table(s)", found);
+                info(b);
             }
         }
         /* ISO push register */

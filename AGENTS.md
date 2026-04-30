@@ -14,7 +14,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 4. Extract modules: `unzip -o platform/70D.112/build/magiclantern.zip -d 70d-latest/`
 5. Update size tracking log below
 
-**Current Build:** 457KB (2026-04-30) - S28: wifisrv module + hw_test v16 (register baselines). WiFi TCP client using RAM-loaded sockets. 28 modules in build including adtglog2.
+**Current Build:** 457KB (2026-04-30) - S6: Dual ISO BREAKTHROUGH. hw_test v18 with movie stride 46, adtglog2 module, FRAME_CMOS_ISO_START uncommented. 28 modules in build.
 **CRITICAL:** Build with `make -j$(nproc)` (no CONFIG_QEMU=y) for hardware deployment. QEMU builds include testing code that causes red LED on physical 70D.
 
 ---
@@ -57,6 +57,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 | 2026-04-30 | 457KB | 457KB | S28: wifisrv module + hw_test v16 (register baselines). WiFi TCP client using RAM-loaded sockets. 27 modules in build. **HARDWARE BUILD** (no CONFIG_QEMU=y). |
 | 2026-04-30 | 457KB | 457KB | hw_test v16 validated on physical 70D: 26 total, 23 PASS, 3 SKIP, 0 FAIL. Register baselines captured (idle GUI vs LV). All PTPIP/socket stubs re-validated. Shutter: 12349. ENGIO: last_line=1252, last_col=263. |
 | 2026-04-30 | 457KB | 457KB | S28.1: Fixed hw_test dual ISO read (was using shamem_read for RAM). Added RAM scanner 0x40400000-0x40500000. Added adtglog2 module (hooks CMOS_write at 0x26B54). 28 modules in build. |
+| 2026-04-30 | 457KB | 457KB | S6: Dual ISO BREAKTHROUGH — addresses ARE correct (hw_test bug was using shamem_read for RAM). 3 ISO tables found in RAM: 0x404e5664 (photo, stride 20), 0x404e5704 (mirror), 0x404e7248 (LV). FRAME_CMOS_ISO_START uncommented for movie mode. Movie stride 46 probe added. 28 modules. |
 
 2. **Documentation Updates:** Keep AGENTS.md and README.md files continuously updated with all findings, changes, and discoveries
 3. **Task Tracking:** Maintain TODO.md with current task status, marking completed items and adding new tasks as discovered
