@@ -56,7 +56,8 @@ ML_MODULES = \
 	dev_tools/adtglog2 \
 	sd_uhs \
 	raw_video/raw_vidx \
-	yolo
+	yolo \
+	hw_test
 
 .PHONY: clean $(BUILD_DIR)
 
