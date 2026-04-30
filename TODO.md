@@ -93,17 +93,29 @@ This document outlines the development sprints for implementing the future work 
 **Total: ~18 hardware tasks** — S29 (WiFi RE) COMPLETE. Priority shifted to WiFi server, GPS, and defect integration.
 
 ### Recommended Sprint Order (Updated 2026-04-30)
-**All software-layer RE COMPLETE.** Full 512MB RAM dump comprehensively analyzed. WiFi stack fully documented (DLNA/UPnP, SDIO, PTPIP). 520+ call() functions, 270+ ML symbols, 30+ PROP_ IDs mapped. GPS, touch, defect systems identified. Priorities shift from RE to implementation:
+**All software-layer RE COMPLETE.** Full 512MB RAM dump comprehensively analyzed. All identified tasks built and deployed to `70d-latest/`.
 
-1. **S30.1** — WiFi TCP server (use validated socket APIs + known PTPIP wrappers + camremote.py companion)
-2. **S30.2** — GPS data exposure (GPS functions exist, can show in ML overlays)
-3. **S30.3** — Defect/hot pixel suppression (defect management system mapped)
-4. **S28.3** — PTP tunnel hardware test (camtunnel.py via USB)
-5. **S6** — Dual ISO hardware test (photo mode addresses confirmed, test movie with FRAME_CMOS_ISO_START)
-6. **S28.2** — WiFi server hardware test (wifisrv module — depends on companion app first)
-7. **S5** — crop_rec CMOS/ENGIO calibration (requires LV access)
-8. **S28.4** — Debug feature exploration (SCREENSHOT, DONT_CLICK_ME, SHOW_TASKS, SHOW_FREE_MEMORY)
-9. Remaining: S2.4 (focus stacking), S3.2-3.4 (FPS banding/UI), S9.2 (SD UHS), S8.2 (audio codec)
+**COMPLETED (S30 batch):**
+1. ✅ **S30.1** — WiFi TCP server (wifisrv TCP server + camremote.py companion) — built, deployed
+2. ✅ **S30.2** — GPS probe (gpsprobe module — flag-gated, dumps GPS call() results)
+3. ✅ **S30.3** — Defect/hot pixel probe (defectprobe module — flag-gated, tests Canon defect API)
+4. ✅ **S28.3** — PTP tunnel (ptptun.mo + camtunnel.py — compiled, ready for hardware test)
+5. ✅ **S6** — Dual ISO movie mode probe (diprobe module — dumps CMOS[0]/CMOS[3] tables, FLAG=3)
+6. ✅ **S28.4** — Debug features (Screenshot, Show Tasks, Show Free Memory — already compiled via all_features.h)
+7. ✅ **S28.2** — WiFi server companion app (camremote.py — all commands: status/shutter/lv/ping/bootdisk/shell)
+
+**Remaining (hardware testing required):**
+1. 🔲 **S5** — crop_rec CMOS/ENGIO calibration (requires LV access — hw_test ENGIO/CMOS dump tests ready)
+2. 🔲 S2.4 (focus stacking), S3.2-3.4 (FPS banding/UI), S9.2 (SD UHS), S8.2 (audio codec)
+
+**Modules in build (32):** adv_int, adtglog2, arkanoid, autoexpo, bench, crop_rec, deflick, defectprobe, diprobe, dot_tune, dual_iso, edmac, ettr, file_man, gpsprobe, hw_test, img_name, lua, mlv_lite, mlv_play, mlv_snd, pic_view, ptptun, ramdump, raw_vidx, sd_uhs, selftest, sf_dump, silent, wifi_test, wifisrv
+
+**Flag files pre-created in 70d-latest/ML/SETTINGS/:**
+- `HW_TEST.RUN` — run hw_test diagnostic suite
+- `RAMDUMP.RUN` — dump full 512MB RAM
+- `GPS.RUN` — probe GPS call() functions
+- `DEFECT.RUN` — probe defect/pixel management
+- `DIPROBE.RUN` — probe Dual ISO CMOS[0]/CMOS[3] tables
 
 ### Confirmed Working Features (from forum)
 
