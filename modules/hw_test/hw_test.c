@@ -554,15 +554,65 @@ static void hw_task(void *unused)
      * ════════════════════════════════════════ */
     hdr("DUAL ISO REGISTERS (S6)");
     {
-        /* Read CMOS ISO register values at 70D addresses */
+        /* FIXED: Use MEM() for RAM reads (was using shamem_read which only works for MMIO 0xC0Fxxxxx) */
+        /* The known ISO addresses from dual_iso.c: 0x404E5664 + i*0x14 (copied from 7D, UNVERIFIED) */
+        /* hw_test v15 proved all read 0x00000000 with shamem_read — addresses may be WRONG */
         uint32_t iso_base = 0x404E5664;
         int iso_stops[] = {100, 200, 400, 800, 1600, 3200, 6400, 0};
         char b[80];
         for (int i = 0; iso_stops[i]; i++) {
             uint32_t addr = iso_base + i * 0x14;
-            uint32_t val = shamem_read(addr);
-            snprintf(b, sizeof(b), "ISO_%d (0x%08x)=0x%08x", iso_stops[i], addr, val);
+            /* NOTE: MEM() reads 32-bit; only low 16 bits are the ISO entry per dual_iso.c read_value() */
+            uint32_t val = MEM(addr) & 0xFFFF;
+            snprintf(b, sizeof(b), "ISO_%d (0x%08x)=0x%04x", iso_stops[i], addr, val);
             info(b);
+        }
+        /* Also try a wider RAM scan for the ISO value pattern */
+        hdr("ISO TABLE RAM SCAN (S28.1)");
+        {
+            /* The ISO 16-bit values expected at correct addresses:
+             * base+0x00: 0x0003  base+0x14: 0x0027  base+0x28: 0x004b
+             * base+0x3C: 0x006f  base+0x50: 0x0093  base+0x64: 0x00b7
+             * base+0x78: 0x00db
+             * Scan RAM 0x40400000-0x40500000 at coarse granularity
+             * looking for any ISO value as first-match indicator, then validate stride. */
+            int found = 0;
+            /* Expected ISO values in the low 16 bits */
+            uint16_t expected[7] = {0x0003, 0x0027, 0x004b, 0x006f, 0x0093, 0x00b7, 0x00db};
+            /* Scan range: 0x40400000 to 0x40500000 (1MB) */
+            uint32_t scan_start = 0x40400000;
+            uint32_t scan_end   = 0x40500000;
+            /* Step by 64 bytes */
+            for (uint32_t base = scan_start; base < scan_end; base += 64) {
+                /* Try each 4-byte alignment within the 64-byte block */
+                for (int a = 0; a < 64; a += 4) {
+                    uint32_t trial = base + a;
+                    uint32_t v0 = MEM(trial) & 0xFFFF;
+                    if (v0 == expected[0]) {
+                        /* Candidate found — validate remaining values at stride 20 */
+                        int match = 1;
+                        for (int k = 1; k < 7; k++) {
+                            uint32_t vk = MEM(trial + k * 0x14) & 0xFFFF;
+                            if (vk != expected[k]) { match = 0; break; }
+                        }
+                        if (match) {
+                            snprintf(b, sizeof(b), "ISO TABLE FOUND at 0x%08x", trial);
+                            info(b);
+                            for (int k = 0; k < 7; k++) {
+                                uint32_t vk = MEM(trial + k * 0x14) & 0xFFFF;
+                                snprintf(b, sizeof(b), "  +0x%02x: ISO %d = 0x%04x",
+                                         k * 0x14, iso_stops[k], vk);
+                                info(b);
+                            }
+                            found = 1;
+                        }
+                    }
+                }
+            }
+            if (!found) {
+                info("ISO table NOT found in 0x40400000-0x40500000 range");
+                info("Enable adtglog2 module and change ISO to discover correct addresses");
+            }
         }
         /* ISO push register */
         hexval("ISO_PUSH_D5", shamem_read(0xC0F42744));

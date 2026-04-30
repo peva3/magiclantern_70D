@@ -14,7 +14,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 4. Extract modules: `unzip -o platform/70D.112/build/magiclantern.zip -d 70d-latest/`
 5. Update size tracking log below
 
-**Current Build:** 457KB (2026-04-30) - S28: wifisrv module + hw_test v16 (register baselines). WiFi TCP client using RAM-loaded sockets. 27 modules in build.
+**Current Build:** 457KB (2026-04-30) - S28: wifisrv module + hw_test v16 (register baselines). WiFi TCP client using RAM-loaded sockets. 28 modules in build including adtglog2.
 **CRITICAL:** Build with `make -j$(nproc)` (no CONFIG_QEMU=y) for hardware deployment. QEMU builds include testing code that causes red LED on physical 70D.
 
 ---
@@ -56,6 +56,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 | 2026-04-29 | 457KB | 452KB | hw_test v15 physical 70D: 23 PASS / 2 SKIP / 0 FAIL. ALL 11 PTPIP stubs VALID, 7/7 socket APIs LOADED in RAM. Dual ISO addresses WRONG (all 0x00000000). FPS TA=0x02BB TB=0x05F5 fps=29976. SD baseline: 13.7MB/s sequential. Deployed to 70d-latest/ |
 | 2026-04-30 | 457KB | 457KB | S28: wifisrv module + hw_test v16 (register baselines). WiFi TCP client using RAM-loaded sockets. 27 modules in build. **HARDWARE BUILD** (no CONFIG_QEMU=y). |
 | 2026-04-30 | 457KB | 457KB | hw_test v16 validated on physical 70D: 26 total, 23 PASS, 3 SKIP, 0 FAIL. Register baselines captured (idle GUI vs LV). All PTPIP/socket stubs re-validated. Shutter: 12349. ENGIO: last_line=1252, last_col=263. |
+| 2026-04-30 | 457KB | 457KB | S28.1: Fixed hw_test dual ISO read (was using shamem_read for RAM). Added RAM scanner 0x40400000-0x40500000. Added adtglog2 module (hooks CMOS_write at 0x26B54). 28 modules in build. |
 
 2. **Documentation Updates:** Keep AGENTS.md and README.md files continuously updated with all findings, changes, and discoveries
 3. **Task Tracking:** Maintain TODO.md with current task status, marking completed items and adding new tasks as discovered
@@ -65,7 +66,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 7. **Incremental Progress:** Complete work in small, testable chunks - never batch multiple untested changes
 
 **Repository:** https://github.com/peva3/magiclantern_70D
-**Current Phase:** Week 9 - hw_test v16 VALIDATED on physical 70D: 26 total, 23 PASS, 3 SKIP, 0 FAIL. WiFi stack confirmed initialized by Canon firmware. Socket APIs RAM-resident. Register baselines captured (idle GUI vs LV modes). Next: WiFi server dev, Dual ISO address RE
+**Current Phase:** Week 9 - hw_test v16 VALIDATED on physical 70D (26 total, 23 PASS, 3 SKIP, 0 FAIL). WiFi stack confirmed initialized by Canon firmware. Socket APIs RAM-resident. Register baselines captured (idle GUI vs LV). Next: Dual ISO address RE via adtglog2 module, WiFi server dev
 **Last Updated:** 2026-04-30
 
 ## QEMU-EOS Setup (in-tree)

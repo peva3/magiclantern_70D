@@ -1052,16 +1052,14 @@ hw_test v15 ran 25 tests on physical Canon 70D: **23 PASS / 2 SKIP / 0 FAIL**. T
 
 ### S28.1 — Dual ISO Address Reverse Engineering (HIGHEST PRIORITY)
 
-**Problem:** All 7 current CMOS ISO register addresses at 0x404E5664+0x14*N are WRONG (read 0x00000000 on physical 70D). These were copied from 7D and never verified.
+**Problem:** All 7 current CMOS ISO register addresses at 0x404E5664+0x14*N are WRONG (read 0x00000000 on physical 70D). These were copied from 7D and never verified. **CRITICAL BUG: hw_test was using `shamem_read()` for RAM addresses (only works for MMIO 0xC0Fxxxxx).** Fixed in hw_test v17 to use `MEM()` instead. Added RAM region scanner (0x40400000-0x40500000) to find correct addresses by searching for the ISO value pattern.
 
 **Approach:**
-- Search 70D ROM1 for firmware code that writes ISO values to CMOS registers during LiveView
-- Cross-reference with 5D3/6D dual_iso implementations (same DIGIC V generation)
-- Use dryshell or firmware disassembly to trace CMOS register writes from ISO change handler
-- Look for the pattern: cmos_write(addr, iso_value) in the ISO setting eventproc
-- Alternative: probe large ranges of 0x404xxxxx RAM space for non-zero values during ISO changes
-
-**Blocks:** Entire Sprint 6 (Dual ISO movie mode development)
+- [x] Fixed hw_test dual ISO read to use MEM() instead of shamem_read() (was returning 0 for non-MMIO)
+- [x] Added RAM region scanner to hw_test (probes 0x40400000-0x40500000 for ISO value pattern 0x03, 0x27, 0x4b, ... at stride 0x14)
+- [x] Added adtglog2 module to build (hooks CMOS_write at 0x26B54, logs ADTG command buffers to ML/LOGS/ADTG.LOG)
+- [ ] **ON HARDWARE:** Run adtglog2 module, enter LiveView, change ISO, check ML/LOGS/ADTG.LOG for CMOS buffer address
+- [ ] **ON HARDWARE:** Run hw_test v17, check RAM scanner results for ISO table address
 
 ### S28.2 — WiFi Client Development (HIGH PRIORITY)
 
