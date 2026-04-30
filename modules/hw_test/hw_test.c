@@ -43,7 +43,7 @@
  * NO call() to known-dangerous functions (EnableBootDisk, TurnOnDisplay).
  */
 
-#define VERSION "hw_test v20 — Unified: GPS + Defect + Dual ISO probes"
+#define VERSION "hw_test v21 — Audio IC + SD clock register probes"
 
 static int t_total, t_pass, t_skip, t_fail, scr_y;
 static FILE *log_fp;
@@ -1244,6 +1244,103 @@ static void hw_task(void *unused)
             if (val == expected[i]) mv3_ok++;
         }
         rst(mv3_ok == ISOS, "movie_CMOS3", "movie CMOS[3] mismatch");
+        info("");
+    }
+
+    /* ════════════════════════════════════════
+     * S8.2: AUDIO IC PROBE
+     * ════════════════════════════════════════ */
+    hdr("AUDIO IC PROBE (S8.2)");
+    {
+        struct { const char *name; } audio_tests[] = {
+            {"SetAudioVolumeIn"},
+            {"SetAudioVolumeOut"},
+            {"PowerMicAmp"},
+            {"PowerAudioOutput"},
+            {"ResetAudioIC"},
+            {"SendDataForAudioIC"},
+            {"DumpAudioIcRegister"},
+            {"InitializeAudioIC"},
+            {"EnableInternalMIC"},
+            {"EnableExternalMIC"},
+            {"EnableHDMIAudio"},
+            {"TestSetAudioMic"},
+            {"TestSetAudioHeadPhone"},
+            {0}
+        };
+        int audio_ok = 0, audio_total = 0;
+        for (int i = 0; audio_tests[i].name; i++) {
+            audio_total++;
+            char b[80];
+            int r = call(audio_tests[i].name);
+            snprintf(b, sizeof(b), "  call(\"%s\") = %d%s",
+                     audio_tests[i].name, r, r == 0 ? "" : r < 0 ? " NOT_FOUND" : "");
+            info(b);
+            if (!r) audio_ok++;
+        }
+        rst(audio_ok > 0, "audio_ic_probe", "all audio calls failed");
+        info("");
+    }
+
+    /* ════════════════════════════════════════
+     * S9.2: SD CLOCK REGISTERS
+     * ════════════════════════════════════════ */
+    hdr("SD CLOCK REGISTERS (S9.2)");
+    {
+        struct { const char *name; uint32_t addr; } sd_regs[] = {
+            {"SD_CLK0",   0xC0400600},
+            {"SD_CLK1",   0xC0400604},
+            {"SD_CLK2",   0xC0400610},
+            {"SD_MASTER", 0xC0400614},
+            {"SD_CLK4",   0xC0400618},
+            {"SD_TIM5",   0xC0400624},
+            {"SD_TIM6",   0xC0400628},
+            {"SD_TIM7",   0xC040061C},
+            {"SD_CLK8",   0xC0400620},
+            {"SD_STAB1",  0xC0400450},
+            {"SD_STAB2",  0xC0400454},
+            {"SD_STAB3",  0xC040046C},
+            {0, 0}
+        };
+        int sd_ok = 0, sd_total = 0;
+        for (int i = 0; sd_regs[i].name; i++) {
+            sd_total++;
+            uint32_t val = shamem_read(sd_regs[i].addr);
+            char b[80];
+            snprintf(b, sizeof(b), "  %s (0x%08x) = 0x%08x",
+                     sd_regs[i].name, sd_regs[i].addr, val);
+            info(b);
+            if (val != 0xFFFFFFFF) sd_ok++;
+        }
+        rst(sd_ok > 0, "sd_registers", "all SD regs returned 0xFF");
+        info("");
+    }
+
+    /* ════════════════════════════════════════
+     * S9.2: SD GPIO REGISTERS
+     * ════════════════════════════════════════ */
+    hdr("SD GPIO REGISTERS (S9.2)");
+    {
+        struct { const char *name; uint32_t addr; } gpio_regs[] = {
+            {"GPIO_SD0", 0xC022C634},
+            {"GPIO_SD1", 0xC022C638},
+            {"GPIO_SD2", 0xC022C63C},
+            {"GPIO_SD3", 0xC022C640},
+            {"GPIO_SD4", 0xC022C644},
+            {"GPIO_SD5", 0xC022C648},
+            {0, 0}
+        };
+        int gpio_ok = 0, gpio_total = 0;
+        for (int i = 0; gpio_regs[i].name; i++) {
+            gpio_total++;
+            uint32_t val = shamem_read(gpio_regs[i].addr);
+            char b[80];
+            snprintf(b, sizeof(b), "  %s (0x%08x) = 0x%08x",
+                     gpio_regs[i].name, gpio_regs[i].addr, val);
+            info(b);
+            if (val != 0xFFFFFFFF) gpio_ok++;
+        }
+        rst(gpio_ok > 0, "sd_gpio_registers", "all GPIO regs returned 0xFF");
         info("");
     }
 
