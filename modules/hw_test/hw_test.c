@@ -43,7 +43,7 @@
  * NO call() to known-dangerous functions (EnableBootDisk, TurnOnDisplay).
  */
 
-#define VERSION "hw_test v24 — config_rw multi-path test, auto-build in ML_MODULES"
+#define VERSION "hw_test v25 — config_rw debug logging (trying 3 paths)"
 
 static int t_total, t_pass, t_skip, t_fail, scr_y;
 static FILE *log_fp;
@@ -459,7 +459,7 @@ static void hw_task(void *unused)
         }
         rst(wrote, "sd_write", wrote ? 0 : "no path found");
     }
-    /* Config file write/read-back (try multiple paths like sd_write) */
+    /* Config file write+read-back (try multiple paths) */
     {
         const char *cfg_paths[] = {
             "ML/SETTINGS/HW_CFG.TST",
@@ -469,21 +469,31 @@ static void hw_task(void *unused)
         int ok = 0;
         for (int i = 0; i < COUNT(cfg_paths) && !ok; i++)
         {
+            char b[80];
+            snprintf(b, sizeof(b), "  trying %s...", cfg_paths[i]);
+            info(b);
             FILE *fw = FIO_CreateFile(cfg_paths[i]);
-            if (!fw) continue;
+            if (!fw) { info("  FAIL: CreateFile"); continue; }
             int w = FIO_WriteFile(fw, "hw_test=1", 9);
             FIO_CloseFile(fw);
-            if (w != 9) { FIO_RemoveFile(cfg_paths[i]); continue; }
+            if (w != 9) {
+                snprintf(b, sizeof(b), "  FAIL: wrote %d/9", w);
+                info(b);
+                FIO_RemoveFile(cfg_paths[i]);
+                continue;
+            }
             msleep(50);
             char rb[16] = {0};
             FILE *fr = FIO_OpenFile(cfg_paths[i], 0);
-            if (!fr) { FIO_RemoveFile(cfg_paths[i]); continue; }
+            if (!fr) { info("  FAIL: OpenFile"); FIO_RemoveFile(cfg_paths[i]); continue; }
             int r = FIO_ReadFile(fr, rb, 15);
             FIO_CloseFile(fr);
+            snprintf(b, sizeof(b), "  read %d bytes: \"%s\"", r, rb);
+            info(b);
             ok = (r == 9 && strcmp(rb, "hw_test=1") == 0);
             FIO_RemoveFile(cfg_paths[i]);
         }
-        rst(ok, "config_rw", ok ? 0 : "fail");
+        rst(ok, "config_rw", ok ? 0 : "no path worked");
     }
 
     hdr("SD BENCHMARK (S9.2)");
