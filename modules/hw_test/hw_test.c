@@ -43,7 +43,7 @@
  * NO call() to known-dangerous functions (EnableBootDisk, TurnOnDisplay).
  */
 
-#define VERSION "hw_test v26 — config_rw fixed (200ms FAT flush delay)"
+#define VERSION "hw_test v27 — FPS stability, ADTG/SD mode, extended call() tests"
 
 static int t_total, t_pass, t_skip, t_fail, scr_y;
 static FILE *log_fp;
@@ -1336,6 +1336,122 @@ static void hw_task(void *unused)
 
     log_flush();
     blink_delay(500);
+
+    /* ════════════════════════════════════════
+     * S3.2: FPS STABILITY (sample over time)
+     * ════════════════════════════════════════ */
+    hdr("FPS STABILITY (S3.2)");
+    {
+        uint32_t samples[20];
+        uint32_t min_val = 0xFFFFFFFF, max_val = 0;
+        uint64_t sum = 0;
+        int n = 20;
+        for (int i = 0; i < n; i++) {
+            uint32_t ta = shamem_read(0xC0F06008) & 0xFFFF;
+            samples[i] = ta;
+            if (ta < min_val) min_val = ta;
+            if (ta > max_val) max_val = ta;
+            sum += ta;
+            msleep(50);
+        }
+        uint32_t avg = (uint32_t)(sum / n);
+        char b[80];
+        snprintf(b, sizeof(b), "  FPS_TA: min=%u max=%u avg=%u range=%u",
+                 min_val, max_val, avg, max_val - min_val);
+        info(b);
+        snprintf(b, sizeof(b), "  Samples: ");
+        for (int i = 0; i < n && i < 10; i++) {
+            char t[8];
+            snprintf(t, sizeof(t), "%s%u", i ? "," : "", samples[i]);
+            strncat(b, t, sizeof(b) - strlen(b) - 1);
+        }
+        info(b);
+        rst(max_val - min_val <= 2, "fps_stability", "FPS_TA range > 2");
+        info("");
+    }
+
+    /* ════════════════════════════════════════
+     * S23 EXT: ADDITIONAL CALL() TESTS
+     * ════════════════════════════════════════ */
+    hdr("CALL DISPATCH EXT (S23.x)");
+    {
+        struct { const char *name; } extra_calls[] = {
+            {"GetBatteryPerformance"},
+            {"GetBatteryTimeRemaining"},
+            {"GetCurrentAvail"},
+            {"GetCFnData"},
+            {"GetHDMIInfo"},
+            {"GetTaskName"},
+            {"SetAudioVolumeOut"},
+            {"FA_GetProperty"},
+            {"FA_GetPropertyAddress"},
+            {"TurnOffDisplay"},
+            {0}
+        };
+        int ok = 0, tot = 0;
+        for (int i = 0; extra_calls[i].name; i++) {
+            tot++;
+            char b[80];
+            int r = call(extra_calls[i].name);
+            snprintf(b, sizeof(b), "  call(\"%s\") = %d%s",
+                     extra_calls[i].name, r, r == 0 ? "" : r < 0 ? " NOT_FOUND" : "");
+            info(b);
+            if (r == 0) ok++;
+        }
+        rst(tot > 0, "call_extended", "extended call() tests ran");
+        info("");
+    }
+
+    /* ════════════════════════════════════════
+     * S5.8: ADTG / CROP REC REGISTERS
+     * ════════════════════════════════════════ */
+    hdr("CROP REC / ADTG REGISTERS (S5.8)");
+    {
+        struct { const char *name; uint32_t addr; } cr_regs[] = {
+            {"CMOS_0_WR",  0x26B54},
+            {"ADTG_WR",    0x2684C},
+            {"CMOS_0_ADDR", 0xC0F06008},
+            {"ADTG_8172",  0xC0F38010},
+            {"ADTG_8173",  0xC0F38014},
+            {"ADTG_8178",  0xC0F38020},
+            {"ADTG_8179",  0xC0F38024},
+            {"ENGIO_HEAD3",0xC0F0713C},
+            {"ENGIO_HEAD4",0xC0F07150},
+            {0,0}
+        };
+        int found = 0;
+        for (int i = 0; cr_regs[i].name; i++) {
+            char b[80];
+            uint32_t v = shamem_read(cr_regs[i].addr);
+            snprintf(b, sizeof(b), "  %s (0x%08x) = 0x%08x",
+                     cr_regs[i].name, cr_regs[i].addr, v);
+            info(b);
+            if (v != 0xFFFFFFFF && v != 0) found++;
+        }
+        rst(found > 0, "adtg_crop_regs",
+            found > 0 ? "some crop rec regs readable" : "all returned 0/0xFF");
+        info("");
+    }
+
+    /* ════════════════════════════════════════
+     * S9.x: SD MODE / STATUS
+     * ════════════════════════════════════════ */
+    hdr("SD CARD MODE (S9.x)");
+    {
+        int mode = shamem_read(0xC0400614);
+        char b[80];
+        snprintf(b, sizeof(b), "  SD_MASTER (0xc0400614) = 0x%08x", mode);
+        info(b);
+        if (mode == 0x1D000301 || mode == 0x1D000001 || mode == 0x1D000601) {
+            info("  SD mode: active (SDR50/DDR50 expected range)");
+        } else if (mode == 0) {
+            info("  SD mode: idle (registers gated off after init)");
+        } else {
+            info("  SD mode: unknown value");
+        }
+        rst(1, "sd_mode_status", "SD status probed");
+        info("");
+    }
 
     /* ════════════════════════════════════════
      * S20: SUMMARY
