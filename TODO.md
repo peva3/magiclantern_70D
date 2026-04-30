@@ -805,10 +805,10 @@ For collaboration or testing partnerships:
 
 ## Summary
 
-**Current Phase:** hw_test v16 with register baselines + wifisrv module. WiFi TCP client using RAM-loaded sockets. 27 modules in build.
-**Next Milestone:** S28.1 (Dual ISO address RE), S28.3 (PTP tunnel HW test), S28.2 WiFi companion script  
-**Build Status:** 461KB autoexec.bin (656KB limit), 27 modules compile clean, QEMU boot verified  
-**Key 2026-04-30:** wifisrv.mo (3.8KB) — WiFi TCP client connecting to companion server. hw_test v16 — register baseline comparison against v15 known-good values.
+**Current Phase:** hw_test v16 VALIDATED on physical 70D (26 total, 23 PASS, 3 SKIP, 0 FAIL) — register baselines captured, WiFi stubs re-validated
+**Next Milestone:** S28.1 (Dual ISO address RE), S28.3 (PTP tunnel HW test)  
+**Build Status:** 457KB autoexec.bin (656KB limit), 27 modules compile clean, QEMU boot verified  
+**Key 2026-04-30:** hw_test v16 register baselines captured for idle GUI state. All PTPIP/socket stubs re-validated. ENGIO: last_line=1252, last_col=263. Shutter: 12349. wifisrv module ready.
 
 ---
 
@@ -1128,15 +1128,17 @@ hw_test v15 provides baseline speeds (no overclock):
 
 ### S28.6 — hw_test Extension
 
-**Status:** ✅ COMPLETED — hw_test v16 with register baselines
+**Status:** ✅ COMPLETED — hw_test v16 with register baselines (validated on physical 70D)
 
 **Changes:**
 - Added S21 REGISTER BASELINE test section
-- Compares current register values against v15 known-good baselines
-- Reports mismatches as warnings
+- Compares current register values against v16 known-good baselines
+- Reports mismatches as warnings  
 - Writes CSV comparison data to log
 - Baseline includes: FPS_TA, FPS_TB, ENGIO_TL, FPS_CF, ENGIO_HD3, ENGIO_HD4
-- All values from v15 physical 70D run (2026-04-29)
+- All values from hw_test v16 physical 70D run (2026-04-30, idle GUI state)
+- v16 validated on hardware: 26 total, 23 PASS, 3 SKIP, 0 FAIL
+- Baseline mismatches vs v15 were expected (different camera zoom/crop states)
 
 **Remaining:**
 - [ ] Auto-generate baseline from first run if no baseline file exists

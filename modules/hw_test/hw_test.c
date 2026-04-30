@@ -42,7 +42,7 @@
  * NO call() to known-dangerous functions (EnableBootDisk, TurnOnDisplay).
  */
 
-#define VERSION "hw_test v15 — Proving Ground"
+#define VERSION "hw_test v16 — Register Baseline"
 
 static int t_total, t_pass, t_skip, t_fail, scr_y;
 static FILE *log_fp;
@@ -895,14 +895,15 @@ static void hw_task(void *unused)
             const char *note;
         } baseline_entry;
 
-        /* Known-good values from hw_test v15 on physical 70D (2026-04-29) */
+        /* Known-good values from hw_test v16 on physical 70D (2026-04-30) */
+        /* Camera state: M mode, LV active, gui_state=0, lv_dispsize=1 */
         const baseline_entry baselines[] = {
-            {"FPS_TA",       0xC0F06008, 0x000002BB, "30p photo mode"},
-            {"FPS_TB",       0xC0F06014, 0x000005F5, "30p photo mode"},
-            {"ENGIO_TL",     0xC0F06800, 0x00180018, "top-left raw"},
+            {"FPS_TA",       0xC0F06008, 0x02BB02BB, "idle GUI (TA|TA<<16)"},
+            {"FPS_TB",       0xC0F06014, 0x000005F4, "idle GUI"},
+            {"ENGIO_TL",     0xC0F06800, 0x0001000F, "idle GUI LV"},
             {"FPS_CF",       0xC0F06000, 0x00000001, "confirm changes"},
-            {"ENGIO_HD3",    0xC0F0713C, 0x000002B4, "HEAD3 timer"},
-            {"ENGIO_HD4",    0xC0F07150, 0x0000026D, "HEAD4 timer"},
+            {"ENGIO_HD3",    0xC0F0713C, 0x000004E5, "HEAD3, idle GUI LV"},
+            {"ENGIO_HD4",    0xC0F07150, 0x000004A9, "HEAD4, idle GUI LV"},
             {0, 0, 0, 0}
         };
 
