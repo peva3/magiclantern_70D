@@ -8,8 +8,8 @@ This document outlines the development sprints for implementing the future work 
 **Base Repository:** https://github.com/peva3/magiclantern_70D  
 **Forked From:** https://github.com/reticulatedpines/magiclantern_simplified  
 **Developer Identity:** pmwoodward3@gmail.com / peva3  
-**Current Phase:** hw_test v15 VALIDATED on physical 70D (23 PASS / 2 SKIP / 0 FAIL) — WiFi stack confirmed initialized, socket APIs RAM-resident, Dual ISO addresses WRONG
-**Last Updated:** 2026-04-29
+**Current Phase:** hw_test v19 VALIDATED on physical 70D (25 PASS / 2 SKIP / 0 FAIL) — RAM dumps analyzed: Canon DLNA Media Server, WiFi SDIO driver, remote shot/AF remote functions found. UPPER RAM uninitialized heap.
+**Last Updated:** 2026-04-30
 
 ### Key Contributors (from forum research)
 - **nikfreak:** Primary 70D port developer
@@ -76,10 +76,10 @@ This document outlines the development sprints for implementing the future work 
 
 | Sprint | Tasks | Risk | Priority |
 |--------|-------|------|----------|
-| S28 | Dual ISO address RE — hw_test proved all 7 addresses are WRONG (read 0x00000000). Find correct CMOS ISO register locations for 70D | HIGH | HIGH |
-| S28 | WiFi server development — socket APIs RAM-resident, PTPIP stubs valid. Build yolo.c-pattern TCP server | Medium | HIGH |
+| S28 | Dual ISO address RE — **RESOLVED.** Addresses ARE correct (hw_test bug was shamem_read for RAM). Test photo/movie modes | Medium | HIGH |
+| S29 | WiFi stack RE — RAM dumps found DLNA Media Server, WiFi SDIO driver, remote shot/AF remote. Map and expose. | High | HIGH |
+| S28 | WiFi server hardware test — wifisrv module connects to companion server | Medium | HIGH |
 | S28 | PTP tunnel hardware test — USB connection with camtunnel.py | Low | HIGH |
-| S6 | Dual ISO — addresses CONFIRMED CORRECT (hw_test bug was using shamem_read for RAM). Movie mode FRAME_CMOS_ISO_START uncommented. | High | HIGH |
 | S5 | CMOS/ENGIO calibration, CROP_PRESET_3X, ADTG readout, crop mode testing (5 tasks) | HIGH | MEDIUM |
 | S28 | Debug feature exploration — SCREENSHOT, SHOW_TASKS, SHOW_FREE_MEMORY, level indicator | Low | MEDIUM |
 | S2 | Focus stacking bug fix (1 task) | Low | LOW |
@@ -87,17 +87,18 @@ This document outlines the development sprints for implementing the future work 
 | S8 | Audio quality testing (1 task) | Low | LOW |
 | S9 | SD UHS tuning, METERING/AF toggle (2 tasks) | Low | LOW |
 
-**Total: ~20 hardware tasks** — Dual ISO address RE is now #1 priority (blocking bug found by hw_test).
+**Total: ~20 hardware tasks** — Dual ISO address RE RESOLVED. WiFi stack RE is new #1 priority from RAM dumps.
 
-### Recommended Sprint Order (Updated 2026-04-29)
-**23 PASS / 2 SKIP / 0 FAIL on physical 70D** — hw_test v15 changed the landscape. Key finding: Dual ISO addresses are WRONG (all 0x00000000). WiFi stack is fully initialized by Canon firmware at boot. Priorities adjusted:
+### Recommended Sprint Order (Updated 2026-04-30)
+**25 PASS / 2 SKIP / 0 FAIL on physical 70D** — hw_test v19 changed the landscape. RAM dumps revealed Canon DLNA Media Server, WiFi SDIO driver, remote shot/AF remote infrastructure. Dual ISO addresses confirmed correct. Priorities adjusted:
 
-1. **S28.1** — Dual ISO address RE (CRITICAL — hw_test proved current addresses wrong)
-2. **S28.2** — WiFi server dev (socket APIs ready, PTPIP stubs valid — can build yolo.c-pattern server)
+1. **S29** — WiFi stack RE from RAM dumps (DLNA/UPnP, WlanSdcom, remote shot functions discovered — map and expose)
+2. **S28.2** — WiFi server hardware test (wifisrv module connects to companion server)
 3. **S28.3** — PTP tunnel hardware test (camtunnel.py via USB)
-4. **S28.4** — Debug feature exploration (SCREENSHOT, DONT_CLICK_ME, SHOW_TASKS, SHOW_FREE_MEMORY)
+4. **S6** — Dual ISO photo/movie mode testing (addresses confirmed correct, test on hardware)
 5. **S5** — crop_rec CMOS/ENGIO calibration (requires LV access, use hw_test data)
-6. Remaining: S6 (dual ISO movie), S2.4 (focus stacking), S3.2-3.4 (FPS banding/UI), S9.2 (SD UHS), S8.2 (audio codec)
+6. **S28.4** — Debug feature exploration (SCREENSHOT, DONT_CLICK_ME, SHOW_TASKS, SHOW_FREE_MEMORY)
+7. Remaining: S2.4 (focus stacking), S3.2-3.4 (FPS banding/UI), S9.2 (SD UHS), S8.2 (audio codec)
 
 ### Confirmed Working Features (from forum)
 
@@ -323,18 +324,19 @@ Implementation: focus.c now includes 70D-specific focus tracking using focus_pos
 
 ## Sprint 6 — Dual ISO Movie Mode (Weeks 19-22)
 
-### Status: hw_test v15 FINDING — current addresses are WRONG (all read 0x00000000)
+### Status: ADDRESSES CONFIRMED CORRECT — Movie mode testing pending
 
-**UPDATE:** Photo mode works (per users). Movie mode deliberately disabled. **hw_test v15 proved that all 7 ISO register addresses at 0x404E5664+0x14*N read 0x00000000 on physical 70D.** These addresses were copied from 7D and never verified. The entire Sprint 6 plan is blocked until correct CMOS ISO register locations are found.
+**UPDATE:** hw_test v19 **CONFIRMED**: All 7 ISO addresses at 0x404E5664 are CORRECT. The earlier "wrong" reading was a hw_test bug (used shamem_read for RAM instead of MEM()). Three tables found: 0x404e5664 (photo), 0x404e5704 (mirror), 0x404e7248 (LV). Movie stride 46 confirmed at 0x404e77d6. FRAME_CMOS_ISO_START uncommented for movie mode.
 
-- [ ] **S28.1** Find correct CMOS ISO register addresses for 70D (NEW — moved to Sprint 28)
-  - Search 70D ROM1 for code that writes ISO values to CMOS during LiveView
-  - Compare with 5D3/6D/7D implementations for patterns
-  - Use dryshell or firmware disassembly to trace CMOS register writes
+- [x] **S28.1** Find correct CMOS ISO register addresses for 70D ✅ (RESOLVED)
+  - All 7 ISO addresses confirmed correct at 0x404E5664+0x14*N
+  - Values: 0x0003, 0x0027, 0x004b, 0x006f, 0x0093, 0x00b7, 0x00db
+  - Three copies in RAM: photo (0x404e5664), mirror (0x404e5704), LV (0x404e7248)
+  - Movie mode table at 0x404e77d6 with stride 0x2E confirmed
 
-- [ ] **S6.1** Investigate dual ISO photo vs movie pipeline (DEFERRED — blocked by S28.1)
-- [ ] **S6.2** Implement movie mode ISO switching (DEFERRED)
-- [ ] **S6.3** Dual ISO calibration for video (DEFERRED)
+- [ ] **S6.1** Investigate dual ISO photo vs movie pipeline
+- [ ] **S6.2** Implement movie mode ISO switching
+- [ ] **S6.3** Dual ISO calibration for video
 
 ---
 
@@ -1044,11 +1046,11 @@ The following require physical 70D hardware:
 
 ---
 
-## Sprint 28 — hw_test v15 Validation-Driven Development (2026-04-29)
+## Sprint 28 — hw_test v19 RAM Dump + Validation-Driven Development (2026-04-30)
 
-### Status: NEW — Created from hw_test v15 physical 70D results
+### Status: RAM dumps validated on physical 70D — 25 PASS / 2 SKIP / 0 FAIL
 
-hw_test v15 ran 25 tests on physical Canon 70D: **23 PASS / 2 SKIP / 0 FAIL**. This sprint encompasses all work items uncovered or made possible by the validation results.
+hw_test v19 dumps 3 RAM regions (33MB total) to SD card for offline RE. Analysis of RAM_LOWER.BIN reveals Canon's DLNA Media Server, WiFi SDIO driver (WlanSdcomDrv.c), remote shot functions (`schedule_remote_shot`, `remote_shot`), AF remote control (`AfCtrl_Act_*Remote`), and ADTG register patterns matching crop_rec code.
 
 ### S28.1 — Dual ISO Address Reverse Engineering (HIGHEST PRIORITY) — RESOLVED
 
@@ -1098,11 +1100,9 @@ Three copies of the ISO table found in RAM:
 
 **Remaining:**
 - [ ] Need socket_accept address for full TCP server pattern
-- [ ] Hardware test: camera connects to companion server
+- [ ] **Hardware test**: camera connects to companion server
 - [ ] Write companion server script (camremote.py)
 - [ ] Add more commands (PROP_GET, CALL, SCREENSHOT)
-
-### S28.3 — PTP Tunnel Hardware Test
 
 ### S28.3 — PTP Tunnel Hardware Test
 
@@ -1159,7 +1159,44 @@ hw_test v15 provides baseline speeds (no overclock):
 - [ ] Auto-generate baseline from first run if no baseline file exists
 - [ ] Store baseline persistently in ML/SETTINGS/
 - [ ] Add HTML report generator
-- [ ] Compare with sd_uhs 160MHz overclocked speeds
+
+---
+
+## Sprint 29 — RAM Dump Analysis & WiFi Stack RE (2026-04-30)
+
+### Status: ✅ RAM DUMP COMPLETE — Offline analysis yields Canon WiFi stack details
+
+hw_test v19 dumps 3 RAM regions (33MB total) to SD card. Analysis on development machine reveals critical WiFi/DLNA/remote infrastructure:
+
+### S29.1 — RAM Dump Implementation (COMPLETE)
+- [x] Added `dump_ram_region()` function to hw_test (256KB buffer, chunked writes)
+- [x] Dumps 3 regions: LOWER (16MB @0x40000000), ISO (1MB @0x40400000), UPPER (16MB @0x4E000000)
+- [x] Safety probe: skips chunks with 0xFFFFFFFF (unmapped pages)
+- [x] Deployed as hw_test v19, pushed to GitHub
+
+### S29.2 — Canon DLNA/UPnP Media Server Analysis
+- [ ] Map UPnP device/service descriptors found in RAM
+- [ ] Identify `<presentationURL>/presentation.html</presentationURL>` web UI
+- [ ] Document service endpoints (CDS, CMS)
+- [ ] Explore accessing web UI from browser
+
+### S29.3 — WiFi SDIO Driver Analysis
+- [ ] Find `WlanSdcomDrv.c` / `WlanSDIODriver.c` compiled code in ROM
+- [ ] Determine WLAN chipset (Broadcom BCM4329 or similar)
+- [ ] Map SDIO command interface
+- [ ] Investigate direct SDIO access for WiFi control
+
+### S29.4 — Remote Shot/AF Control
+- [ ] Create call() wrappers for `schedule_remote_shot` (0x0047db24)
+- [ ] Create call() wrappers for `remote_shot` (0x0047e00c)
+- [ ] Create call() wrappers for AF remote functions (AfCtrl_Act_*Remote)
+- [ ] Test remote trigger via PTP tunnel
+
+### S29.5 — Further RAM Analysis
+- [ ] Search for socket_accept address in RAM dumps
+- [ ] Map all ML function addresses found in RAM (get_ml_card, raw2iso, etc.)
+- [ ] Search for additional WiFi/property strings
+- [ ] Cross-reference ADTG patterns with crop_rec.c (0x8172/0x8173/0x8178/0x8179)
 
 ---
 

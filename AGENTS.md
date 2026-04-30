@@ -14,7 +14,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 4. Extract modules: `unzip -o platform/70D.112/build/magiclantern.zip -d 70d-latest/`
 5. Update size tracking log below
 
-**Current Build:** 457KB (2026-04-30) - S6: Dual ISO BREAKTHROUGH. hw_test v18 with movie stride 46, adtglog2 module, FRAME_CMOS_ISO_START uncommented. 28 modules in build.
+**Current Build:** 457KB (2026-04-30) - hw_test v19: RAM dump for offline RE (LOWER 16MB, ISO 1MB, UPPER 16MB). 28 modules. **VALIDATED on physical 70D: 25 PASS, 2 SKIP, 0 FAIL.** RAM dumps analyzed: found Canon DLNA Media Server, WiFi SDIO driver, remote shot functions, AF remote control, ADTG register patterns.
 **CRITICAL:** Build with `make -j$(nproc)` (no CONFIG_QEMU=y) for hardware deployment. QEMU builds include testing code that causes red LED on physical 70D.
 
 ---
@@ -58,6 +58,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 | 2026-04-30 | 457KB | 457KB | hw_test v16 validated on physical 70D: 26 total, 23 PASS, 3 SKIP, 0 FAIL. Register baselines captured (idle GUI vs LV). All PTPIP/socket stubs re-validated. Shutter: 12349. ENGIO: last_line=1252, last_col=263. |
 | 2026-04-30 | 457KB | 457KB | S28.1: Fixed hw_test dual ISO read (was using shamem_read for RAM). Added RAM scanner 0x40400000-0x40500000. Added adtglog2 module (hooks CMOS_write at 0x26B54). 28 modules in build. |
 | 2026-04-30 | 457KB | 457KB | S6: Dual ISO BREAKTHROUGH — addresses ARE correct (hw_test bug was using shamem_read for RAM). 3 ISO tables found in RAM: 0x404e5664 (photo, stride 20), 0x404e5704 (mirror), 0x404e7248 (LV). FRAME_CMOS_ISO_START uncommented for movie mode. Movie stride 46 probe added. 28 modules. |
+| 2026-04-30 | 457KB | 457KB | hw_test v19: RAM dump for offline RE (LOWER 16MB, ISO 1MB, UPPER 16MB). RAM dumps analyzed: found Canon DLNA Media Server, WiFi SDIO driver, remote shot functions, AF remote control, ADTG register patterns. |
 
 2. **Documentation Updates:** Keep AGENTS.md and README.md files continuously updated with all findings, changes, and discoveries
 3. **Task Tracking:** Maintain TODO.md with current task status, marking completed items and adding new tasks as discovered
@@ -67,7 +68,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 7. **Incremental Progress:** Complete work in small, testable chunks - never batch multiple untested changes
 
 **Repository:** https://github.com/peva3/magiclantern_70D
-**Current Phase:** Week 9 - hw_test v16 VALIDATED on physical 70D (26 total, 23 PASS, 3 SKIP, 0 FAIL). WiFi stack confirmed initialized by Canon firmware. Socket APIs RAM-resident. Register baselines captured (idle GUI vs LV). Next: Dual ISO address RE via adtglog2 module, WiFi server dev
+**Current Phase:** hw_test v19 VALIDATED on physical 70D (25 PASS, 2 SKIP, 0 FAIL). RAM dumps analyzed offline: found Canon DLNA Media Server, WiFi SDIO driver (`WlanSdcomDrv.c`), remote shot functions (`schedule_remote_shot`, `remote_shot`), AF remote control (`AfCtrl_Act_*Remote`), ADTG register patterns (0x8172/0x8173/0x8178/0x8179). UPPER RAM (0x4E000000) confirmed uninitialized heap. Next: Canon WiFi stack RE, PTP tunnel HW test
 **Last Updated:** 2026-04-30
 
 ## QEMU-EOS Setup (in-tree)
@@ -2035,7 +2036,74 @@ FAT 8.3 filename truncation (`ptp_tunnel` → `PTP_TU~1.MO`) broke TCC symbol lo
 **Call() Dispatch Warning**
 `call("EnableBootDisk")` and `call("TurnOnDisplay")` cause hard freeze on 70D (battery pull required). Both functions are documented as working on other DIGIC V cameras but are unsafe on 70D firmware 1.1.2. Contrast with `call("dumpf")` which works fine (used in "Don't click me!" menu entry). Do NOT add call() dispatch tests until root cause is understood.
 
----## Hardware Testing Next Steps
+---## S29: RAM Dump Analysis — Offline RE Findings (2026-04-30)
+
+**hw_test v19** dumps 3 RAM regions to binary files on SD card for offline analysis. All 3 regions dumped successfully on physical 70D (16MB + 1MB + 16MB = 33MB total).
+
+### Dump Files
+| File | Address | Size | Content Profile |
+|------|---------|------|-----------------|
+| `RAM_LOWER.BIN` | 0x40000000 | 16MB | **Mixed data/code/uninit (~50% actual data, 391K readable strings)** |
+| `RAM_ISO.BIN` | 0x40400000 | 1MB | **ISO tables + module loading strings + ML debug output** |
+| `RAM_UPPER.BIN` | 0x4E000000 | 16MB | **Almost entirely uninitialized heap (0x55555555/0xAAAAAAAA)** |
+
+### Canon WiFi Stack Found in RAM_LOWER
+
+**DLNA Media Server (UPnP AV):**
+- Full UPnP device descriptor: `<deviceType>urn:schemas-upnp-org:device:MediaServer:1</deviceType>`
+- DLNA certification: `<dlna:X_DLNADOC>DMS-1.50</dlna:X_DLNADOC>`
+- Services: ConnectionManager, ContentDirectory
+- Web UI: `<presentationURL>/presentation.html</presentationURL>`
+- Strings found at runtime in RAM confirm the WiFi/web server stack is initialized
+
+**WiFi SDIO Driver:**
+- Source file paths in RAM: `./WlanSdcom/WlanSdcomDrv.c`, `./WlanSdcom/WlanSDIODriver.c`
+- Confirms the WLAN chip (likely Broadcom BCM43xx series) connects via SDIO bus
+- Driver compiled into Canon firmware, not loaded separately
+
+**Remote Shot System:**
+- `schedule_remote_shot` at 0x0047db24 — schedules remote capture
+- `remote_shot` at 0x0047e00c — executes remote capture
+- `remote_shot_flag` at 0x004cac90 — flag for remote shot state
+- `Audio RemoteShot` — audio capture support in remote mode
+
+**AF Remote Control:**
+- `AfCtrl_Act_EndLensDriveRemote`
+- `AfCtrl_Act_SetLensParameterRemote`
+- `AfCtrl_Act_StartLensDriveRemote`
+- These are 70D-specific AF control functions accessible via WiFi
+
+**ADTG Register Patterns (cross-verified with crop_rec.c):**
+- `( pTgRegister->dwSrFstAdtg1[6] & 0xFFFF0000 ) == 0x81720000`
+- `( pTgRegister->dwSrFstAdtg1[7] & 0xFFFF0000 ) == 0x81730000`
+- `( pTgRegister->dwSrFstAdtg1[9] & 0xFFFF0000 ) == 0x81780000`
+- `( pTgRegister->dwSrFstAdtg1[10] & 0xFFFF0000 ) == 0x81790000`
+- These match the ADTG registers in crop_rec code (0x8172, 0x8173, 0x8178, 0x8179)
+
+**ENGIO Programming:**
+- `[ENG] [ENGIO](Addr:0x41700000, Data:0x   44000)` — MMIO range at 0x41700000
+- `PROPAD_CreateFROMPropertyHandle DRAMAddr 0x41744000` / `0x41b2c000`
+
+**ML Functions Found in RAM (at runtime):**
+- `get_ml_card` at 0x004546d0
+- `ml_gui_main_task` at 0x004632d0
+- `raw2iso`, `raw2index_iso`, `lens_format_iso`, `val2raw_iso`, `split_iso`
+- `bv_apply_iso`, `bv_set_rawiso`, `iso_components_update`
+- `schedule_remote_shot` at 0x0047db24
+- `edmac_bytes_per_transfer` at 0x00457bcc
+
+**Directories Confirmed:**
+- `/ML/FONTS`, `/ML/LOGS`, `/ML/MODULES`, `/ML/SETTINGS`
+- All paths verified as strings present in RAM
+
+### Implications for Development
+1. **Canon WiFi stack is FULLY initialized** — DLNA/UPnP media server code is loaded and running. No need to load WiFi modules separately.
+2. **WiFi connects via SDIO** — The WlanSdcom driver suggests a standard SDIO WiFi chipset (Broadcom BCM4329 or similar). Standard SDIO commands may work.
+3. **Remote shot infrastructure exists** — `schedule_remote_shot`/`remote_shot` in RAM means we can trigger captures via call() or direct function calls.
+4. **AF remote control is built in** — AF lens control over WiFi is natively supported.
+5. **UPPER RAM (0x4E000000) is uninteresting** — mostly uninitialized. Focus RE on LOWER RAM (0x40000000-0x41000000).
+
+## Hardware Testing Next Steps
 
 Now that hw_test framework is verified on hardware (23 PASS / 2 SKIP / 0 FAIL):
 
