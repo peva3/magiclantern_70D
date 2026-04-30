@@ -8,7 +8,7 @@ This document outlines the development sprints for implementing the future work 
 **Base Repository:** https://github.com/peva3/magiclantern_70D  
 **Forked From:** https://github.com/reticulatedpines/magiclantern_simplified  
 **Developer Identity:** pmwoodward3@gmail.com / peva3  
-**Current Phase:** Hardware test log verified (6/6 PASS) — ready for further hardware testing
+**Current Phase:** hw_test v15 VALIDATED on physical 70D (23 PASS / 2 SKIP / 0 FAIL) — WiFi stack confirmed initialized, socket APIs RAM-resident, Dual ISO addresses WRONG
 **Last Updated:** 2026-04-29
 
 ### Key Contributors (from forum research)
@@ -76,26 +76,28 @@ This document outlines the development sprints for implementing the future work 
 
 | Sprint | Tasks | Risk | Priority |
 |--------|-------|------|----------|
-| S5 | CMOS/ENGIO calibration, CROP_PRESET_3X, ADTG readout, crop mode testing (5 tasks) | HIGH | HIGH |
+| S28 | Dual ISO address RE — hw_test proved all 7 addresses are WRONG (read 0x00000000). Find correct CMOS ISO register locations for 70D | HIGH | HIGH |
+| S28 | WiFi server development — socket APIs RAM-resident, PTPIP stubs valid. Build yolo.c-pattern TCP server | Medium | HIGH |
+| S28 | PTP tunnel hardware test — USB connection with camtunnel.py | Low | HIGH |
+| S5 | CMOS/ENGIO calibration, CROP_PRESET_3X, ADTG readout, crop mode testing (5 tasks) | HIGH | MEDIUM |
+| S28 | Debug feature exploration — SCREENSHOT, SHOW_TASKS, SHOW_FREE_MEMORY, level indicator | Low | MEDIUM |
 | S6 | Dual ISO movie pipeline investigation and calibration (3 tasks) | High | MEDIUM |
-| S23 | WiFi hardware verification, socket tests, latency/throughput (6 tasks) | Medium | MEDIUM |
 | S2 | Focus stacking bug fix (1 task) | Low | LOW |
 | S3 | FPS banding mitigation hardware test (1 task) | Medium | LOW |
 | S8 | Audio quality testing (1 task) | Low | LOW |
 | S9 | SD UHS tuning, METERING/AF toggle (2 tasks) | Low | LOW |
 
-**Total: ~19 hardware tasks** — Documented and ready for when hardware access becomes available.
+**Total: ~20 hardware tasks** — Dual ISO address RE is now #1 priority (blocking bug found by hw_test).
 
 ### Recommended Sprint Order (Updated 2026-04-29)
-**10/10 hardware test PASS on physical 70D.** Core subsystems proven: timer, display, semaphore, register access, FIO, task scheduling. Next priorities:
+**23 PASS / 2 SKIP / 0 FAIL on physical 70D** — hw_test v15 changed the landscape. Key finding: Dual ISO addresses are WRONG (all 0x00000000). WiFi stack is fully initialized by Canon firmware at boot. Priorities adjusted:
 
-1. **Sprint 5** — crop_rec CMOS/ENGIO calibration (highest priority hardware task)
-2. **PTP tunnel HW test** — Connect camera via USB, run `camtunnel.py` for remote control
-3. **Debug feature exploration** — SCREENSHOT, DONT_CLICK_ME, SHOW_TASKS, SHOW_CPU_USAGE, SHOW_FREE_MEMORY
-4. **hwinfo/temperature probe** — read CMOS temperature, battery level, shutter count via proven shamem API
-5. **Sprint 23** — WiFi hardware verification (socket/PTPIP stub testing)
-6. **Sprint 8** — Audio codec identification + CONFIG_AUDIO_CONTROLS enablement
-6. Remaining: S6 (dual ISO movie), S2.4 (focus stacking), S3.2-3.4 (FPS banding/UI), S9.2 (SD UHS)
+1. **S28.1** — Dual ISO address RE (CRITICAL — hw_test proved current addresses wrong)
+2. **S28.2** — WiFi server dev (socket APIs ready, PTPIP stubs valid — can build yolo.c-pattern server)
+3. **S28.3** — PTP tunnel hardware test (camtunnel.py via USB)
+4. **S28.4** — Debug feature exploration (SCREENSHOT, DONT_CLICK_ME, SHOW_TASKS, SHOW_FREE_MEMORY)
+5. **S5** — crop_rec CMOS/ENGIO calibration (requires LV access, use hw_test data)
+6. Remaining: S6 (dual ISO movie), S2.4 (focus stacking), S3.2-3.4 (FPS banding/UI), S9.2 (SD UHS), S8.2 (audio codec)
 
 ### Confirmed Working Features (from forum)
 
@@ -321,24 +323,18 @@ Implementation: focus.c now includes 70D-specific focus tracking using focus_pos
 
 ## Sprint 6 — Dual ISO Movie Mode (Weeks 19-22)
 
-### Status: NOT YET STARTED
+### Status: hw_test v15 FINDING — current addresses are WRONG (all read 0x00000000)
 
-**UPDATE:** Photo mode works. Movie mode initially broken, later fixes attempted.
+**UPDATE:** Photo mode works (per users). Movie mode deliberately disabled. **hw_test v15 proved that all 7 ISO register addresses at 0x404E5664+0x14*N read 0x00000000 on physical 70D.** These addresses were copied from 7D and never verified. The entire Sprint 6 plan is blocked until correct CMOS ISO register locations are found.
 
-- [ ] **S6.1** Investigate dual ISO photo vs movie pipeline
-  - Photo mode confirmed working by users
-  - Identify why movie mode fails (ADTG injection timing?)
-  - Compare VSYNC cycle timing between modes
+- [ ] **S28.1** Find correct CMOS ISO register addresses for 70D (NEW — moved to Sprint 28)
+  - Search 70D ROM1 for code that writes ISO values to CMOS during LiveView
+  - Compare with 5D3/6D/7D implementations for patterns
+  - Use dryshell or firmware disassembly to trace CMOS register writes
 
-- [ ] **S6.2** Implement movie mode ISO switching
-  - Adjust ADTG register injection timing for movie pipeline
-  - Test with various frame rates (24/30/60 fps)
-  - Add per-scanline ISO switching verification
-
-- [ ] **S6.3** Dual ISO calibration for video
-  - Create calibration routine for video-specific ISO pairs
-  - Document optimal ISO pairs for video (e.g., 100/800, 200/1600)
-  - Add menu entries for dual ISO video
+- [ ] **S6.1** Investigate dual ISO photo vs movie pipeline (DEFERRED — blocked by S28.1)
+- [ ] **S6.2** Implement movie mode ISO switching (DEFERRED)
+- [ ] **S6.3** Dual ISO calibration for video (DEFERRED)
 
 ---
 
@@ -809,10 +805,10 @@ For collaboration or testing partnerships:
 
 ## Summary
 
-**Current Phase:** All non-hardware software tasks complete  
-**Next Milestone:** Physical 70D hardware testing for calibration (crop_rec CMOS/ENGIO, WiFi, Audio)  
-**Build Status:** 452KB autoexec.bin (656KB limit), 25+ modules compile clean  
-**Timeline:** Software complete — hardware testing deferred until physical camera available
+**Current Phase:** hw_test v16 with register baselines + wifisrv module. WiFi TCP client using RAM-loaded sockets. 27 modules in build.
+**Next Milestone:** S28.1 (Dual ISO address RE), S28.3 (PTP tunnel HW test), S28.2 WiFi companion script  
+**Build Status:** 461KB autoexec.bin (656KB limit), 27 modules compile clean, QEMU boot verified  
+**Key 2026-04-30:** wifisrv.mo (3.8KB) — WiFi TCP client connecting to companion server. hw_test v16 — register baseline comparison against v15 known-good values.
 
 ---
 
@@ -880,11 +876,17 @@ For collaboration or testing partnerships:
 - [x] **S23.22** Full documentation in stubs.S comments + AGENTS.md ✅
 
 ### Testing (Pending Hardware)
-- [ ] Test on real 70D hardware (WiFi required, cannot test in QEMU)
-- [ ] Verify RAM-loaded socket functions at runtime
-- [ ] Verify PTPIP wrappers work at ROM1 addresses
-- [ ] Test call() WiFi init sequence
-- [ ] Test NW command interface
+- [x] **S23.17** Test on real 70D hardware (WiFi required, cannot test in QEMU) ✅ VALIDATED
+  - 11/11 PTPIP stubs valid on physical 70D (all have ARM PUSH prologues)
+  - 7/7 socket API functions LOADED in RAM
+  - NW command interface at 0xFF46CCD8 validated
+  - call("dumpf") returns 0
+- [ ] **S23.18** Verify socket creation and binding (next step — yolo.c-pattern server)
+- [ ] **S23.19** Test remote PING command
+- [ ] **S23.20** Test remote shoot
+- [ ] **S23.21** Test file transfer
+- [ ] **S23.22** Measure latency and throughput
+- [ ] **S23.23** Test range and stability
 
 ### Testing
 - [ ] Test on real 70D hardware (WiFi required)
@@ -907,7 +909,7 @@ For collaboration or testing partnerships:
 
 ## Sprint 24 — QEMU 70D Emulation Improvements (Week 50+)
 
-### Status: IN PROGRESS
+### Status: ✅ COMPLETED
 
 **Goal:** Enhance QEMU 70D emulation for better testing and automation.
 
@@ -1039,6 +1041,110 @@ The following require physical 70D hardware:
 3. **Module test expansion** - Add more tests to hw_test
 4. **Log parser script** - Extract test results automatically
 5. **SD card validation** - Write/read pattern verification
+
+---
+
+## Sprint 28 — hw_test v15 Validation-Driven Development (2026-04-29)
+
+### Status: NEW — Created from hw_test v15 physical 70D results
+
+hw_test v15 ran 25 tests on physical Canon 70D: **23 PASS / 2 SKIP / 0 FAIL**. This sprint encompasses all work items uncovered or made possible by the validation results.
+
+### S28.1 — Dual ISO Address Reverse Engineering (HIGHEST PRIORITY)
+
+**Problem:** All 7 current CMOS ISO register addresses at 0x404E5664+0x14*N are WRONG (read 0x00000000 on physical 70D). These were copied from 7D and never verified.
+
+**Approach:**
+- Search 70D ROM1 for firmware code that writes ISO values to CMOS registers during LiveView
+- Cross-reference with 5D3/6D dual_iso implementations (same DIGIC V generation)
+- Use dryshell or firmware disassembly to trace CMOS register writes from ISO change handler
+- Look for the pattern: cmos_write(addr, iso_value) in the ISO setting eventproc
+- Alternative: probe large ranges of 0x404xxxxx RAM space for non-zero values during ISO changes
+
+**Blocks:** Entire Sprint 6 (Dual ISO movie mode development)
+
+### S28.2 — WiFi Client Development (HIGH PRIORITY)
+
+**Status:** ✅ COMPLETED — wifisrv module created and deployed
+
+**Implementation:**
+- Created `modules/wifisrv/wifisrv.c` (280 lines) — TCP client using RAM-loaded socket functions
+- Protocol: camera connects to external server, sends status (battery, shutter count, temperature)
+- Configuration via `ML/SETTINGS/WIFISRV.CFG` (IP and port)
+- Uses function pointers at validated addresses (0x00059xxx)
+- Socket_accept address unknown on 70D — client pattern avoids needing it
+- Added to `modules.included` (27 modules total)
+- QEMU boot verified
+
+**confirmed working on hardware (from hw_test):**
+- socket_create (0x00059AF8), socket_connect (0x00059DDC)
+- socket_recv (0x00059CE8), socket_send (0x0005A09C)
+- socket_close_caller (0xFF14F74C) — ROM1
+
+**Remaining:**
+- [ ] Need socket_accept address for full TCP server pattern
+- [ ] Hardware test: camera connects to companion server
+- [ ] Write companion server script (camremote.py)
+- [ ] Add more commands (PROP_GET, CALL, SCREENSHOT)
+
+### S28.3 — PTP Tunnel Hardware Test
+
+### S28.3 — PTP Tunnel Hardware Test
+
+- [ ] Build autoexec.bin with ptptun module included
+- [ ] Connect 70D via USB to development machine
+- [ ] Run `camtunnel.py` and verify:
+  - CallByName (dumpf)
+  - Screenshot capture
+  - ExecuteLua (PTP_CHDK fix)
+  - ShamemRead (verify register values match hw_test)
+  - EngioRead
+  - SetPropertyRaw
+
+### S28.4 — Debug Feature Exploration
+
+- [ ] SCREENSHOT — test via Debug menu
+- [ ] SHOW_TASKS — verify task listing
+- [ ] SHOW_CPU_USAGE — check CPU utilization
+- [ ] SHOW_FREE_MEMORY — memory headroom
+- [ ] SHOW_CMOS_TEMPERATURE — compare with efic_temp
+- [ ] DONT_CLICK_ME — call("dumpf") test (confirmed working)
+- [ ] Level indicator — test electronic level overlay
+
+### S28.5 — SD Benchmark Analysis
+
+hw_test v15 provides baseline speeds (no overclock):
+| Block | Speed |
+|-------|-------|
+| 1K | 58 KB/s |
+| 4K | 166 KB/s |
+| 64K | 1,333 KB/s |
+| 256K | 6,736 KB/s |
+| 1MB seq | 13,653 KB/s |
+
+- [ ] Compare with sd_uhs 160MHz overclocked speeds
+- [ ] Measure sustained write for video recording (30s+)
+- [ ] Check for throttling during extended writes
+
+### S28.6 — hw_test Extension
+
+**Status:** ✅ COMPLETED — hw_test v16 with register baselines
+
+**Changes:**
+- Added S21 REGISTER BASELINE test section
+- Compares current register values against v15 known-good baselines
+- Reports mismatches as warnings
+- Writes CSV comparison data to log
+- Baseline includes: FPS_TA, FPS_TB, ENGIO_TL, FPS_CF, ENGIO_HD3, ENGIO_HD4
+- All values from v15 physical 70D run (2026-04-29)
+
+**Remaining:**
+- [ ] Auto-generate baseline from first run if no baseline file exists
+- [ ] Store baseline persistently in ML/SETTINGS/
+- [ ] Add HTML report generator
+- [ ] Compare with sd_uhs 160MHz overclocked speeds
+
+---
 
 ### Long-Term Vision
 

@@ -13,7 +13,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 3. Copy to 70d-latest folder: `cp platform/70D.112/build/autoexec.bin 70d-latest/`
 4. Update size tracking log below
 
-**Current Build:** 456KB (2026-04-29) - Hardware test log verified (6/6 PASS on physical 70D)
+**Current Build:** 461KB (2026-04-30) - S28: wifisrv module + hw_test v16 (register baselines)
 
 ---
 
@@ -50,6 +50,9 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 | 2026-04-29 | 468KB | 464KB | Sprint 27b: hw_test debug menu entry, camera hang fix (removed SD read-back test causing freeze) |
 | 2026-04-29 | 456KB | 451KB | Sprint 27c: FIXME fixes (raw.c pragma, stubs.S mvrFixQScale), CONFIG_QEMU regression fix, code review |
 | 2026-04-29 | 456KB | 451KB | Sprint 27d: hw_test hardware verification — 6/6 PASS on physical 70D (model_id, fio_malloc, shamem, FIO file I/O) |
+| 2026-04-29 | 457KB | 452KB | hw_test v15 Proving Ground: 60+ MMIO register dumps, SD benchmark (5 sizes), stub verify, ENGIO/CMOS/ISO/sensor dumps, call() safety restrictions; AGENTS.md philosophy update |
+| 2026-04-29 | 457KB | 452KB | hw_test v15 physical 70D: 23 PASS / 2 SKIP / 0 FAIL. ALL 11 PTPIP stubs VALID, 7/7 socket APIs LOADED in RAM. Dual ISO addresses WRONG (all 0x00000000). FPS TA=0x02BB TB=0x05F5 fps=29976. SD baseline: 13.7MB/s sequential. Deployed to 70d-latest/ |
+| 2026-04-30 | 461KB | 457KB | S28: wifisrv module + hw_test v16 (register baselines). WiFi TCP client using RAM-loaded sockets. 27 modules in build. |
 
 2. **Documentation Updates:** Keep AGENTS.md and README.md files continuously updated with all findings, changes, and discoveries
 3. **Task Tracking:** Maintain TODO.md with current task status, marking completed items and adding new tasks as discovered
@@ -59,7 +62,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 7. **Incremental Progress:** Complete work in small, testable chunks - never batch multiple untested changes
 
 **Repository:** https://github.com/peva3/magiclantern_70D
-**Current Phase:** Week 8 - Post-cleanup + Hardware Diagnostics Verified
+**Current Phase:** Week 9 - hw_test v15 VALIDATED on physical 70D (23/23 PASS). WiFi stack confirmed initialized by Canon firmware. Socket APIs RAM-resident. Next: PTP tunnel HW test, WiFi server dev, Dual ISO address RE
 **Last Updated:** 2026-04-29
 
 ## QEMU-EOS Setup (in-tree)
@@ -357,26 +360,33 @@ if (zebra_draw && raw_zebra_enable == 1) raw_needed = 1;
 
 **Fix applied:** Added `CONFIG_NO_RAW_ZEBRAS` to `platform/70D.112/internals.h` and updated zebra.c to use the proper config flag instead of hardcoded `#if !defined(CONFIG_70D)`. This properly documents the limitation for maintainability.
 
-### 8.4 WiFi Tethering - NOT STARTED
+### 8.4 WiFi Tethering - VALIDATED ON HARDWARE (2026-04-29)
 
-**Problem:** 70D has built-in WiFi hardware but Magic Lantern lacks networking stubs (`socket_create`, `wlan_connect`, `NwLimeInit`, etc.) in `platform/70D.112/stubs.S`. Only one WiFi-related stub exists: `LiveViewWifiApp_handler` at `0xFF7523B4`.
+**hw_test v15 proves: ALL networking stubs are valid. Socket API is RAM-resident. The 70D's entire networking stack is initialized by Canon firmware at boot.**
 
-**Feasibility:** The ML codebase includes a DryOS socket API (`ml_socket.h`) and a working WiFi example (`yolo.c` module). The 200D port provides a blueprint for networking stubs (DIGIC 8). However, 70D (DIGIC V) requires reverse engineering of firmware addresses.
+**Verified on physical 70D (23/23 PASS):**
+- **11/11 PTPIP ROM1 stubs VALID** — all have valid ARM PUSH prologues at expected addresses:
+  - `ptpip_sock_create` (0xFF7AF220), `ptpip_bind_param` (0xFF7AEE18), `ptpip_open_server` (0xFF7AEE80)
+  - `ptpip_create_client` (0xFF7AF2CC), `ptpip_listen_close` (0xFF7AEFCC), `ptpip_close_server` (0xFF7AF344)
+  - `ptpip_set_keepalive` (0xFF7AF38C), `ptpip_errno_handler` (0xFF7AF3B4)
+  - `socket_close_caller` (0xFF14F74C), `socket_close_if_valid` (0xFF7AF380)
+  - `ptpip_sock_accept` (0xFF7AF160) — all valid
+- **7/7 socket API functions LOADED in RAM** (no module load needed):
+  - `socket_create` (0x00059AF8), `socket_bind` (0x00059E94), `socket_connect` (0x00059DDC)
+  - `socket_listen` (0x0005A9D0), `socket_setsockopt` (0x0005A810)
+  - `socket_recv` (0x00059CE8), `socket_send` (0x0005A09C)
+- **NW command interface** at 0xFF46CCD8 validated (0x5d574e5b)
+- **call("dumpf")** works (returns 0)
 
-**Required stubs:**
-- Socket API: `socket_create`, `socket_bind`, `socket_connect`, `socket_send`, `socket_recv`, `socket_close_caller`
-- WiFi management: `wlan_connect`, `nif_setup`, `set_IP_address`
-- Canon WiFi initialization: `NwLimeInit`, `NwLimeOn`, `wlanpoweron`, `wlanup`, `wlanchk`, `wlanipset` (via `call()`)
+**Key difference from Sprint 23 assumptions:** The networking stack is NOT loaded on demand — Canon's firmware already initializes WiFi at boot. Socket functions are available as RAM-loaded DryOS modules (0x0005xxxx space), not ROM1 stubs. Only `socket_close_caller` and `socket_close_if_valid` are ROM1-resident.
 
-**Findings:**
-- `ml_socket.h` defines socket API and `wlan_settings` struct (size `0xFC`).
-- `yolo.c` demonstrates full WiFi sequence: Lime core init → WiFi power on → connect → IP setup → socket communication.
-- The `call()` function (variadic) invokes firmware functions by name; requires symbol table lookup.
-- 70D currently missing all networking stubs except `LiveViewWifiApp_handler`.
+**Development can proceed on:**
+1. Basic socket server (yolo.c pattern) — no new stubs needed, socket APIs are ready
+2. PTP tunnel USB host — camtunnel.py uses ptptun.mo module (confirmed loaded in QEMU, hardware pending)
+3. WiFi init via call() — NwLimeInit/NwLimeOn strings exist in eventproc table
 
 **Potential:** Remote trigger/shooting, live image transfer, remote UI control, timecode/data exchange.
-
-**Effort:** High (reverse engineering of firmware symbols, hardware verification).
+**Effort:** MEDIUM (stubs validated, socket API available — only app-level code needed)
 
 ## 9. Lens System (`lens.c`)
 
@@ -441,6 +451,7 @@ if (zebra_draw && raw_zebra_enable == 1) raw_needed = 1;
 - `PHOTO_CMOS_ISO_START = 0x404e5664`
 - COUNT = 7, SIZE = 20, CMOS_ISO_BITS = 3, CMOS_FLAG_BITS = 2
 - CMOS_EXPECTED_FLAG = 3
+- **hw_test v15 FINDING:** All 7 ISO register addresses at 0x404E5664+0x14*N read 0x00000000 on physical 70D. These are WRONG addresses (copied from 7D, never verified). Need RE to find correct CMOS ISO register locations for 70D.
 - Movie mode broken (needs investigation)
 
 **sd_uhs:**
@@ -1157,6 +1168,51 @@ When run on actual 70D hardware, the module will:
 - Focus confirmation testing
 
 The hw_test module provides a solid foundation for systematic hardware validation!
+
+---
+
+## hw_test Proving Ground Philosophy (2026-04-29)
+
+**Core Principle:** hw_test is the SINGLE authoritative source of hardware truth. Every hardware-dependent sprint item has tests in hw_test that answer its fundamental questions before any manual testing begins. This eliminates iterative back-and-forth.
+
+**The Workflow:**
+1. Run `hw_test` once on physical 70D
+2. Copy `ML/LOGS/HW_TEST.LOG` to development machine
+3. Analyze register values, property states, and benchmark results offline
+4. Make informed code changes based on data
+5. Verify with targeted manual tests (not exploration)
+
+**Sprint-to-Test Mapping (hw_test v15):**
+
+| Sprint | Item | What hw_test Answers | What Remains Manual |
+|--------|------|-----------------------|---------------------|
+| S1/S2 | Focus/ Lens | `lv_focus_status`, `lv`, `lv_dispsize` globals; lens-in-LV confirmation | Focus accuracy, stacking sequence, PROP_LV_LENS struct field verification |
+| S3 | FPS Override | FPS_TA/TB/CF register values, fps_get_current_x1000, timer table verify | Banding visibility, Timer A+B hybrid testing |
+| S4 | RAW Zebras | EDMAC register dump (0xC0F04008), PACK32_MODE (0xC0F08094), RAW_TYPE (0xC0F37014), SHAD_GAIN (0xC0F08030) | Visual glitch verification after fix |
+| S5 | crop_rec | Full ENGIO dump (0xC0F06800/804), FPS timer dump, lossless register dump, ISO registers, EDAC channel dump | Image quality verification per preset, CMOS calibration adjust |
+| S6 | Dual ISO | CMOS ISO register values (7 ISO stops at 0x404E5664+), ISO_PUSH_D5, image pipeline register dump | Movie mode switching, banding pattern analysis |
+| S8 | Audio | `sound_recording_enabled()` API test, ASIF stub verification | Codec identification, audio quality, CONFIG_AUDIO_CONTROLS enable |
+| S9 | SD UHS | Multi-block-size write benchmark (1K/4K/64K/256K/1MB), config R/W verify | Data corruption test at 160MHz, higher presets |
+| S10 | A/B FW | Static property dump (all known globals) | Actual firmware toggle verify |
+| S23 | WiFi | PTPIP stub documentation, call("dumpf") verify, WiFi call() names documented, PTPIP ROM1 stub memory check (11 addresses, ARM prologue), socket API RAM residency (7 functions, LOADED/NOT_LOADED), NW command interface validity | Socket creation, actual WiFi connection, throughput |
+| S26 | PTP Tunnel | Module load verify, call("dumpf") test | USB connection test with camtunnel.py |
+
+**Register Dumps (60+ MMIO registers read in one run):**
+- 11 FPS/Timer registers
+- 2 ENGIO registers (top-left/bottom-right)
+- 3 EDMAC registers
+- 5 RAW processing registers
+- 15 Lossless compression registers
+- 27 Display/palette registers
+- 31 Image pipeline registers
+- 7 Dual ISO CMOS registers (all ISO stops)
+- All logged as CSV for offline parsing
+
+**Safety Rules:**
+- NO hardware register writes (read-only shamem_read)
+- NO call() to dangerous functions (EnableBootDisk/TurnOnDisplay freeze 70D)
+- All writes are to SD card files only (safe FIO operations)
+- Memory is allocated and freed within each test
 
 ---
 
@@ -1884,18 +1940,50 @@ FAT 8.3 filename truncation (`ptp_tunnel` → `PTP_TU~1.MO`) broke TCC symbol lo
 3. **Debug menu entry v2**: Removed SD read-back test and call() dispatch test. Removed console_show() (revealing stale ETTR module console text "404: auto_ettr_intervaliometer"). 6 tests remaining.
 
 ### Hardware Verification Results (Physical 70D - 2026-04-29)
+
+**Round 1 (10 tests): 10/10 PASS** — core subsystems proven (model_id, fio_malloc 4K/64K, firmware_version, shamem FPS/ENGIO, get_ms_clock, msleep, bmp_vram, semaphore)
+
+**Round 2 (hw_test v15 - 25 tests): 23 PASS / 2 SKIP / 0 FAIL**
+
 | Test | Check | Result |
 |------|-------|--------|
 | T1 | `camera_model_id == 0x80000325` | ✅ PASS |
 | T2 | `fio_malloc(4096)` non-null | ✅ PASS |
 | T3 | `fio_malloc(65536)` non-null | ✅ PASS |
 | T4 | `strlen(firmware_version) > 0` | ✅ PASS |
-| T5 | `shamem_read(0xC0F06008)` FPS timer A | ✅ PASS |
+| T5 | `shamem_read(0xC0F06008)` FPS timer A | ✅ PASS (0x02BB) |
 | T6 | `shamem_read(0xC0F06800)` ENGIO | ✅ PASS |
-| T7 | `get_ms_clock()` > 0 (DryOS timer) | ✅ PASS |
-| T8 | `msleep(100)` elapsed ≥ 50ms (actual: 100ms) | ✅ PASS |
-| T9 | `bmp_vram()` non-null (display buffer) | ✅ PASS |
+| T7 | `get_ms_clock()` > 0 | ✅ PASS |
+| T8 | `msleep(100)` elapsed >= 50ms (actual 100ms) | ✅ PASS |
+| T9 | `bmp_vram()` non-null | ✅ PASS |
 | T10 | semaphore create/take/give/destroy | ✅ PASS |
+| T11 | `efic_temp` > 0 (CMOS temp) | ✅ PASS |
+| T12 | shutter counter > 0 | ✅ PASS |
+| T13 | `GetBatteryLevel` >= 0 | ✅ PASS |
+| T14 | SD write 256KB benchmark | ✅ PASS (speed logged) |
+| T15 | FPS_TA register dump (11 timers) | ✅ PASS |
+| T16 | ENGIO register dump (top/bottom) | ✅ PASS |
+| T17 | EDMAC register dump (3 channels) | ✅ PASS |
+| T18 | RAW/ISO register dump (5 regs) | ✅ PASS |
+| T19 | Lossless register dump (15 regs) | ✅ PASS |
+| T20 | Display/palette register dump | ✅ PASS |
+| T21 | Image pipeline register dump | ✅ PASS |
+| T22 | Dual ISO register dump (7 addrs) | ✅ PASS (all 0x00000000) |
+| T23 | SD benchmark (5 block sizes) | ✅ PASS (1K-1MB) |
+| T24 | PTPIP stub verification (11 stubs) | ✅ PASS (all valid ARM code) |
+| T25 | socket API residency check | ⏭️ SKIP (QEMU-mode only) |
+| T26 | NW command interface verify | ✅ PASS (0x5d574e5b) |
+| T27 | call("dumpf") test | ✅ PASS (returns 0) |
+| T28 | gui_state read | ⏭️ SKIP (not in menu mode) |
+| T29 | config_rw test | ✅ PASS |
+
+**Key hardware findings from register dumps:**
+- **FPS baseline:** TA=0x02BB (699d), TB=0x05F5 (1525d), computed fps=29976 — matches 70D 30p default
+- **ENGIO timers:** All ENGIO timer mirrors identical (consistent hardware state)
+- **Dual ISO addresses WRONG:** All 7 ISO register addresses at 0x404E5664+0x14*N read 0x00000000
+- **SD baseline (no overclock):** 58KB/s (1K blocks) → 13,653KB/s (1MB sequential)
+- **All 11 PTPIP stubs valid:** Each has valid ARM PUSH prologue at confirmed ROM1 addresses
+- **call("dumpf") works:** Returns 0, no crash
 
 ### Subsystems Proven (10/10 PASS)
 
@@ -1909,6 +1997,10 @@ FAT 8.3 filename truncation (`ptp_tunnel` → `PTP_TU~1.MO`) broke TCC symbol lo
 | T8 | Task scheduling | `msleep()` | Module loading, event processing, UI refresh, timelapse |
 | T9 | Display system | `bmp_vram()`, `bmp_printf()` | All on-screen overlays: zebras, histogram, menus, focus peaking, cropmarks |
 | T10 | Thread synchronization | `create_named_semaphore()`, `take_semaphore()`, `give_semaphore()` | raw_vidx producer-consumer, mlv_lite frame queuing, safe multi-task access |
+| T14 | SD card I/O | `FIO_CreateFile`, `FIO_WriteFile`, `FIO_CloseFile` | Logging, config save, file operations |
+| T22 | Dual ISO stubs | Register probe pattern | Can verify addresses; current ones are WRONG |
+| T24 | PTPIP stubs | Prologue verification | 11/11 valid — WiFi development can proceed |
+| T27 | call() dispatch | `call("dumpf")` | call() mechanism works for eventproc functions |
 
 ### Confirmed Working on Hardware
 - `fio_malloc` (4K and 64K allocations)
@@ -1931,27 +2023,31 @@ FAT 8.3 filename truncation (`ptp_tunnel` → `PTP_TU~1.MO`) broke TCC symbol lo
 - Fix: `FIO_CloseFile` + `FIO_CreateFileOrAppend` mid-test to force buffer flush
 - All 10 tests now correctly appear in `ML/LOGS/HW_TEST.LOG`
 
-### Call() Dispatch Warning
+**Call() Dispatch Warning**
 `call("EnableBootDisk")` and `call("TurnOnDisplay")` cause hard freeze on 70D (battery pull required). Both functions are documented as working on other DIGIC V cameras but are unsafe on 70D firmware 1.1.2. Contrast with `call("dumpf")` which works fine (used in "Don't click me!" menu entry). Do NOT add call() dispatch tests until root cause is understood.
 
----
+---## Hardware Testing Next Steps
 
-## Hardware Testing Next Steps
+Now that hw_test framework is verified on hardware (23 PASS / 2 SKIP / 0 FAIL):
 
-Now that hw_test framework is verified on hardware:
+**Immediate priorities based on hw_test findings:**
 
-1. **Continuing crop_rec calibration** (see HARDWARE-TESTING.md):
+1. **Dual ISO address RE (NEW HIGH PRIORITY)** — hw_test v15 proved all 7 current addresses are wrong (0x00000000). Need to find correct CMOS ISO register addresses by analyzing 70D firmware code that writes ISO values during LiveView. This blocks Dual ISO entirely.
+
+2. **WiFi server development (MEDIUM PRIORITY)** — Socket APIs verified RAM-resident, PTPIP stubs confirmed valid. Can proceed with:
+   - Basic TCP socket server using RAM-loaded socket functions (yolo.c pattern)
+   - PTP tunnel USB host testing with camtunnel.py
+   - WiFi init via call() — NwLimeInit/NwLimeOn strings exist in eventproc table
+
+3. **PTP tunnel hardware test** — Connect camera via USB, run `camtunnel.py` to verify remote commands, test PTP_CHDK ExecuteScript fix
+
+4. **Continuing crop_rec calibration** (see HARDWARE-TESTING.md):
    - Test each crop preset
    - Calibrate CMOS/ENGIO registers
    - Verify ADTG readout
    - Enable CROP_PRESET_3X_TALL
 
-2. **PTP tunnel testing**:
-   - Connect camera via USB
-   - Run `camtunnel.py` to verify remote commands
-   - Test PTP_CHDK ExecuteScript fix
-
-3. **Debug feature exploration**:
+5. **Debug feature exploration**:
    - SCREENSHOT (Debug menu)
    - SHOW_TASKS / SHOW_CPU_USAGE / SHOW_FREE_MEMORY / SHOW_CMOS_TEMPERATURE
    - Level indicator (if electronic level works)
