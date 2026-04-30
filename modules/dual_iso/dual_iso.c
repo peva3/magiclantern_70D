@@ -1369,36 +1369,33 @@ static unsigned int dual_iso_init()
 
         is_70d = 1;
 
-        /* EXPERIMENTAL: Movie mode Dual ISO (uncommented for 70D hw_test v17 validation)
-         * NOTE: Original code said "WE DO NOT SEEM TO BE ABLE TO USE DUAL ISO IN MOVIE MODE"
-         * but the addresses were confirmed correct by hw_test v17 RAM scanner.
-         * Movie mode may require CMOS[3] instead of CMOS[0] — see the TRIPLE ISO comment. */
-        FRAME_CMOS_ISO_START = 0x404e77d6; // CMOS register 0000 - for LiveView, ISO 100 (check in movie mode, not photo!)
-        FRAME_CMOS_ISO_COUNT =          7; // from ISO 100 to 6400 (last real iso!)
-        FRAME_CMOS_ISO_SIZE  =         46; // distance between ISO 100 and ISO 200 addresses, in bytes
+        /* 70D Movie mode Dual ISO
+         * Address confirmed by hw_test v17 RAM scanner on physical 70D.
+         * CMOS[0] table at 0x404e77d6, stride 46. All 7 ISO values verified.
+         * hw_test v22: movie_CMOS0 7/7 PASS, movie_CMOS3 all flag=0 (inactive). */
+        FRAME_CMOS_ISO_START = 0x404e77d6; // CMOS register 0000 - LiveView, ISO 100 (hw_test confirmed)
+        FRAME_CMOS_ISO_COUNT =          7; // ISO 100 to 6400
+        FRAME_CMOS_ISO_SIZE  =         46; // stride between ISO entries
 
         /* WE DO NOT SEEM TO BE ABLE TO USE DUAL ISO IN MOVIE MODE */
         /* MORE CONFUSING IS THAT WE ARE INDEED ABLE TO USE */
         /* CMOS[0] OR CMOS[3]. BOTH SEEM TO WORK WELL IN PHOTO MODE */
-        /* FOR NOW LET US OPT FOR CMOS[0] BUT THE QUESTION IS: */
-        /* COULD WE TAKE ADVANTAGE OF USING BOTH AT THE SAME TIME (TRIPLE ISO)? */
 
-        /* Photo Mode CMOS[0]
-        100 - 0x404e5664 value (0x3)
-        200 - 0x404e5678 value (0x27)
-        400 - 0x404e568c value (0x4b)
-        800 - 0x404e56a0 value (0x6f)
-        1600 -0x404e56b4 value (0x93)
-        3200 -0x404e56c8 value (0xb7)
-        6400 -0x404e56dc value (0xdb) */
+        /* Photo Mode CMOS[0] — 3 tables confirmed by hw_test v22:
+         *   0x404e5664 (photo), 0x404e5704 (mirror), 0x404e7248 (LV)
+         * All stride 20, all 7 ISO values matching. */
+        PHOTO_CMOS_ISO_START = 0x404e5664; // CMOS[0] - photo mode, ISO 100
+        PHOTO_CMOS_ISO_COUNT =          7; // ISO 100 to 6400
+        PHOTO_CMOS_ISO_SIZE  =         20; // stride between ISO entries
 
-        PHOTO_CMOS_ISO_START = 0x404e5664; // CMOS register 0000 - for photo mode, ISO 100
-        PHOTO_CMOS_ISO_COUNT =          7; // from ISO 100 to 6400 (last real iso!)
-        PHOTO_CMOS_ISO_SIZE  =         20; // distance between ISO 100 and ISO 200 addresses, in bytes
-
-        CMOS_ISO_BITS = 3;      // unverified
-        CMOS_FLAG_BITS = 2;     // unverified
-        CMOS_EXPECTED_FLAG = 3; // unverified
+        /* Bitfield layout verified by hw_test v22 values:
+         * 0x0003, 0x0027, 0x004b, 0x006f, 0x0093, 0x00b7, 0x00db
+         * Low 2 bits = flag (always 3 = 0b11 ✓)
+         * Next 3 bits = ISO index (0-6)
+         * Each ISO step = +0x24 in raw value = +9 in ISO field */
+        CMOS_ISO_BITS = 3;
+        CMOS_FLAG_BITS = 2;
+        CMOS_EXPECTED_FLAG = 3;
     }
     else if (is_camera("500D", "1.1.1"))
     {  

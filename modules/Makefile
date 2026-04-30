@@ -56,7 +56,6 @@ ML_MODULES = \
 	dev_tools/adtglog2 \
 	sd_uhs \
 	raw_video/raw_vidx \
-	yolo \
 	hw_test \
 	wifisrv \
 	wifi_test \
