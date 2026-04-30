@@ -43,7 +43,7 @@
  * NO call() to known-dangerous functions (EnableBootDisk, TurnOnDisplay).
  */
 
-#define VERSION "hw_test v23 — config_rw fix (get_config_dir instead of hardcoded path)"
+#define VERSION "hw_test v24 — config_rw multi-path test, auto-build in ML_MODULES"
 
 static int t_total, t_pass, t_skip, t_fail, scr_y;
 static FILE *log_fp;
@@ -459,26 +459,29 @@ static void hw_task(void *unused)
         }
         rst(wrote, "sd_write", wrote ? 0 : "no path found");
     }
-    /* Config file write/read-back */
+    /* Config file write/read-back (try multiple paths like sd_write) */
     {
-        char f[64];
-        snprintf(f, sizeof(f), "%sHW_CFG.TST", get_config_dir());
+        const char *cfg_paths[] = {
+            "ML/SETTINGS/HW_CFG.TST",
+            "B:/ML/SETTINGS/HW_CFG.TST",
+            "A:/ML/SETTINGS/HW_CFG.TST",
+        };
         int ok = 0;
-        FILE *fw = FIO_CreateFile(f);
-        if (fw) {
+        for (int i = 0; i < COUNT(cfg_paths) && !ok; i++)
+        {
+            FILE *fw = FIO_CreateFile(cfg_paths[i]);
+            if (!fw) continue;
             int w = FIO_WriteFile(fw, "hw_test=1", 9);
             FIO_CloseFile(fw);
-            if (w == 9) {
-                msleep(50);
-                char rb[16] = {0};
-                FILE *fr = FIO_OpenFile(f, 0);
-                if (fr) {
-                    int r = FIO_ReadFile(fr, rb, 15);
-                    FIO_CloseFile(fr);
-                    ok = (r == 9 && strcmp(rb, "hw_test=1") == 0);
-                }
-            }
-            FIO_RemoveFile(f);
+            if (w != 9) { FIO_RemoveFile(cfg_paths[i]); continue; }
+            msleep(50);
+            char rb[16] = {0};
+            FILE *fr = FIO_OpenFile(cfg_paths[i], 0);
+            if (!fr) { FIO_RemoveFile(cfg_paths[i]); continue; }
+            int r = FIO_ReadFile(fr, rb, 15);
+            FIO_CloseFile(fr);
+            ok = (r == 9 && strcmp(rb, "hw_test=1") == 0);
+            FIO_RemoveFile(cfg_paths[i]);
         }
         rst(ok, "config_rw", ok ? 0 : "fail");
     }
