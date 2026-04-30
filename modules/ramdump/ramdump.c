@@ -112,6 +112,7 @@ static unsigned int ramdump_init(void)
     if (config_flag_file_setting_load("ML/SETTINGS/RAMDUMP.RUN"))
     {
         ramdump_auto();
+        config_flag_file_setting_save("ML/SETTINGS/RAMDUMP.RUN", 0);
     }
     return 0;
 }

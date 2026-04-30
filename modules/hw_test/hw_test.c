@@ -1147,6 +1147,7 @@ static unsigned int hw_init(void)
     if (config_flag_file_setting_load("ML/SETTINGS/HW_TEST.RUN"))
     {
         hw_task(0);
+        config_flag_file_setting_save("ML/SETTINGS/HW_TEST.RUN", 0);
     }
     return 0;
 }
