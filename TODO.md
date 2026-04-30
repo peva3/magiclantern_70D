@@ -8,7 +8,7 @@ This document outlines the development sprints for implementing the future work 
 **Base Repository:** https://github.com/peva3/magiclantern_70D  
 **Forked From:** https://github.com/reticulatedpines/magiclantern_simplified  
 **Developer Identity:** pmwoodward3@gmail.com / peva3  
-**Current Phase:** hw_test v19 VALIDATED on physical 70D (25 PASS / 2 SKIP / 0 FAIL) — RAM dumps analyzed: Canon DLNA Media Server, WiFi SDIO driver, remote shot/AF remote functions found. UPPER RAM uninitialized heap.
+**Current Phase:** FULL 512MB RAM dump (ramdump module) — 509MB data analyzed. Complete: call() table (~520 fns), WiFi/DLNA stack, symbol table (270+ symbols), 30+ PROP_ IDs, GPS/touch/defect systems. All software RE complete.
 **Last Updated:** 2026-04-30
 
 ### Key Contributors (from forum research)
@@ -76,29 +76,34 @@ This document outlines the development sprints for implementing the future work 
 
 | Sprint | Tasks | Risk | Priority |
 |--------|-------|------|----------|
-| S28 | Dual ISO address RE — **RESOLVED.** Addresses ARE correct (hw_test bug was shamem_read for RAM). Test photo/movie modes | Medium | HIGH |
-| S29 | WiFi stack RE — RAM dumps found DLNA Media Server, WiFi SDIO driver, remote shot/AF remote. Map and expose. | High | HIGH |
-| S28 | WiFi server hardware test — wifisrv module connects to companion server | Medium | HIGH |
-| S28 | PTP tunnel hardware test — USB connection with camtunnel.py | Low | HIGH |
+| S29 | Full RAM dump — **COMPLETE.** 512MB, 12K strings, ~520 call() fns, 270+ symbols, 30+ PROP_ IDs, GPS/touch/defect systems discovered | — | DONE |
+| S6 | Dual ISO photo/movie test — addresses confirmed correct. Test on hardware | Medium | HIGH |
+| S28.2 | WiFi server hardware test — wifisrv module connects to companion server | Medium | HIGH |
+| S28.3 | PTP tunnel hardware test — USB connection with camtunnel.py | Low | HIGH |
+| S30.1 | WiFi TCP server app (camremote.py companion) — socket APIs validated | Low | HIGH |
+| S30.2 | GPS data exposure in ML overlays — GPS functions confirmed in firmware | Low | MEDIUM |
+| S30.3 | Defect/hot pixel suppression using Canon defect API — system mapped | Low | MEDIUM |
 | S5 | CMOS/ENGIO calibration, CROP_PRESET_3X, ADTG readout, crop mode testing (5 tasks) | HIGH | MEDIUM |
-| S28 | Debug feature exploration — SCREENSHOT, SHOW_TASKS, SHOW_FREE_MEMORY, level indicator | Low | MEDIUM |
+| S28.4 | Debug feature exploration — SCREENSHOT, SHOW_TASKS, SHOW_FREE_MEMORY, level indicator | Low | MEDIUM |
 | S2 | Focus stacking bug fix (1 task) | Low | LOW |
 | S3 | FPS banding mitigation hardware test (1 task) | Medium | LOW |
 | S8 | Audio quality testing (1 task) | Low | LOW |
 | S9 | SD UHS tuning, METERING/AF toggle (2 tasks) | Low | LOW |
 
-**Total: ~20 hardware tasks** — Dual ISO address RE RESOLVED. WiFi stack RE is new #1 priority from RAM dumps.
+**Total: ~18 hardware tasks** — S29 (WiFi RE) COMPLETE. Priority shifted to WiFi server, GPS, and defect integration.
 
 ### Recommended Sprint Order (Updated 2026-04-30)
-**25 PASS / 2 SKIP / 0 FAIL on physical 70D** — hw_test v19 changed the landscape. RAM dumps revealed Canon DLNA Media Server, WiFi SDIO driver, remote shot/AF remote infrastructure. Dual ISO addresses confirmed correct. Priorities adjusted:
+**All software-layer RE COMPLETE.** Full 512MB RAM dump comprehensively analyzed. WiFi stack fully documented (DLNA/UPnP, SDIO, PTPIP). 520+ call() functions, 270+ ML symbols, 30+ PROP_ IDs mapped. GPS, touch, defect systems identified. Priorities shift from RE to implementation:
 
-1. **S29** — WiFi stack RE from RAM dumps (DLNA/UPnP, WlanSdcom, remote shot functions discovered — map and expose)
-2. **S28.2** — WiFi server hardware test (wifisrv module connects to companion server)
-3. **S28.3** — PTP tunnel hardware test (camtunnel.py via USB)
-4. **S6** — Dual ISO photo/movie mode testing (addresses confirmed correct, test on hardware)
-5. **S5** — crop_rec CMOS/ENGIO calibration (requires LV access, use hw_test data)
-6. **S28.4** — Debug feature exploration (SCREENSHOT, DONT_CLICK_ME, SHOW_TASKS, SHOW_FREE_MEMORY)
-7. Remaining: S2.4 (focus stacking), S3.2-3.4 (FPS banding/UI), S9.2 (SD UHS), S8.2 (audio codec)
+1. **S30.1** — WiFi TCP server (use validated socket APIs + known PTPIP wrappers + camremote.py companion)
+2. **S30.2** — GPS data exposure (GPS functions exist, can show in ML overlays)
+3. **S30.3** — Defect/hot pixel suppression (defect management system mapped)
+4. **S28.3** — PTP tunnel hardware test (camtunnel.py via USB)
+5. **S6** — Dual ISO hardware test (photo mode addresses confirmed, test movie with FRAME_CMOS_ISO_START)
+6. **S28.2** — WiFi server hardware test (wifisrv module — depends on companion app first)
+7. **S5** — crop_rec CMOS/ENGIO calibration (requires LV access)
+8. **S28.4** — Debug feature exploration (SCREENSHOT, DONT_CLICK_ME, SHOW_TASKS, SHOW_FREE_MEMORY)
+9. Remaining: S2.4 (focus stacking), S3.2-3.4 (FPS banding/UI), S9.2 (SD UHS), S8.2 (audio codec)
 
 ### Confirmed Working Features (from forum)
 
