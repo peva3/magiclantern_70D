@@ -1050,16 +1050,33 @@ The following require physical 70D hardware:
 
 hw_test v15 ran 25 tests on physical Canon 70D: **23 PASS / 2 SKIP / 0 FAIL**. This sprint encompasses all work items uncovered or made possible by the validation results.
 
-### S28.1 — Dual ISO Address Reverse Engineering (HIGHEST PRIORITY)
+### S28.1 — Dual ISO Address Reverse Engineering (HIGHEST PRIORITY) — RESOLVED
 
-**Problem:** All 7 current CMOS ISO register addresses at 0x404E5664+0x14*N are WRONG (read 0x00000000 on physical 70D). These were copied from 7D and never verified. **CRITICAL BUG: hw_test was using `shamem_read()` for RAM addresses (only works for MMIO 0xC0Fxxxxx).** Fixed in hw_test v17 to use `MEM()` instead. Added RAM region scanner (0x40400000-0x40500000) to find correct addresses by searching for the ISO value pattern.
+**Status:** ISO addresses are CORRECT. The earlier "wrong addresses" was a hw_test false alarm.
 
-**Approach:**
-- [x] Fixed hw_test dual ISO read to use MEM() instead of shamem_read() (was returning 0 for non-MMIO)
-- [x] Added RAM region scanner to hw_test (probes 0x40400000-0x40500000 for ISO value pattern 0x03, 0x27, 0x4b, ... at stride 0x14)
-- [x] Added adtglog2 module to build (hooks CMOS_write at 0x26B54, logs ADTG command buffers to ML/LOGS/ADTG.LOG)
-- [ ] **ON HARDWARE:** Run adtglog2 module, enter LiveView, change ISO, check ML/LOGS/ADTG.LOG for CMOS buffer address
-- [ ] **ON HARDWARE:** Run hw_test v17, check RAM scanner results for ISO table address
+**Problem (FIXED):** hw_test v15/v16 was using `shamem_read()` for addresses in regular RAM (0x404Exxxx), but `shamem_read()` only works for MMIO registers (0xC0Fxxxxx). The `dual_iso` module itself uses `read_value()` (proper RAM read) and was never affected.
+
+**hw_test v17 confirmed on physical 70D:**
+- ISO_100 (0x404e5664)=0x0003
+- ISO_200 (0x404e5678)=0x0027
+- ISO_400 (0x404e568c)=0x004b
+- ISO_800 (0x404e56a0)=0x006f
+- ISO_1600 (0x404e56b4)=0x0093
+- ISO_3200 (0x404e56c8)=0x00b7
+- ISO_6400 (0x404e56dc)=0x00db
+
+Three copies of the ISO table found in RAM:
+1. 0x404e5664 — photo still table (stride 0x14)
+2. 0x404e5704 — photo mirror table (stride 0x14)
+3. 0x404e7248 — likely LV/movie table (stride 0x14? needs verification)
+
+**Dual ISO is UNBLOCKED.** The existing addresses in dual_iso.c are correct for 70D.
+
+- [x] Fixed hw_test dual ISO read to use MEM() instead of shamem_read()
+- [x] Added RAM region scanner to hw_test
+- [x] CONFIRMED: All 7 ISO addresses are correct, Dual ISO module should work
+- [ ] S6.1: Test Dual ISO on hardware (photo mode)
+- [ ] S6.2: Investigate movie mode (address 0x404e7248 with stride 46 per dual_iso.c comments)
 
 ### S28.2 — WiFi Client Development (HIGH PRIORITY)
 

@@ -455,9 +455,12 @@ if (zebra_draw && raw_zebra_enable == 1) raw_needed = 1;
 - `PHOTO_CMOS_ISO_START = 0x404e5664`
 - COUNT = 7, SIZE = 20, CMOS_ISO_BITS = 3, CMOS_FLAG_BITS = 2
 - CMOS_EXPECTED_FLAG = 3
-- **hw_test v15/v16 FINDING:** All 7 ISO register addresses at 0x404E5664+0x14*N read 0x00000000 on physical 70D. These are WRONG addresses (copied from 7D, never verified). **CRITICAL BUG: hw_test was using `shamem_read()` which only works for MMIO (0xC0Fxxxxx), not general RAM.** Fixed in hw_test v17 to use `MEM()` instead + RAM region scanner.
-- **adtglog2 module** added to build: hooks `CMOS_write` at 0x26B54, logs ADTG command buffers to `ML/LOGS/ADTG.LOG`. Run on hardware, enter LiveView, change ISO, and inspect log to find correct ISO table addresses.
-- Movie mode broken (needs investigation)
+- **hw_test v17 BREAKTHROUGH:** All 7 ISO register addresses ARE CORRECT! Values confirmed on physical 70D:
+  ISO_100=0x0003, ISO_200=0x0027, ISO_400=0x004b, ISO_800=0x006f, ISO_1600=0x0093, ISO_3200=0x00b7, ISO_6400=0x00db.
+  Three copies in RAM: 0x404e5664 (photo), 0x404e5704 (mirror), 0x404e7248 (likely LV/movie).
+- **CRITICAL BUG FIXED:** hw_test v15/v16 was using `shamem_read()` for RAM addresses — only works for MMIO (0xC0Fxxxxx). Used `MEM()` instead. The `dual_iso` module uses `read_value()` (proper RAM read) and was never affected.
+- Movie mode table: 0x404e7248 (stride 46? needs verification)
+- adtglog2 module hooks `CMOS_write` at 0x26B54 for definitive logging
 
 **sd_uhs:**
 - CID_hook = `0xff7cf394`
