@@ -160,6 +160,7 @@ NSTUB(0xFF7AF380, socket_close_if_valid)       /* close(fd) if fd != -1, else no
 NSTUB(0xFF7AF220, ptpip_sock_create)           /* socket_create(1,1,0) + setsockopt REUSEADDR */
 NSTUB(0xFF7AEE18, ptpip_bind_param)            /* socket() + bind + socket_close on error     */
 NSTUB(0xFF7AEE80, ptpip_open_server)           /* Full TCP server: socket+bind+setopt+log     */
+NSTUB(0xFF7AF160, ptpip_sock_accept)           /* accept client connection, returns client fd */
 NSTUB(0xFF7AF2CC, ptpip_create_client)         /* TCP client: connect from sockaddr struct     */
 NSTUB(0xFF7AEFCC, ptpip_listen_close)          /* listen(1) + socket_close_caller             */
 NSTUB(0xFF7AF344, ptpip_close_server)          /* listen(2,shutdown) + socket_close_caller    */

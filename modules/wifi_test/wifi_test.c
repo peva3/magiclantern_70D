@@ -56,6 +56,7 @@ extern int ptpip_listen_close(int fd);
 extern int ptpip_close_server(int fd);
 extern int ptpip_set_keepalive(int fd);
 extern int ptpip_bind_param(void);
+extern int ptpip_sock_accept(int server_fd);
 
 static unsigned short htons_ml(unsigned short port)
 {
@@ -204,6 +205,10 @@ static void test_ptpip_wrappers(void)
 
     printf("[PTPIP] ptpip_close_server(-1)... ");
     result = ptpip_close_server(-1);
+    printf("returned: %d\n", result);
+
+    printf("[PTPIP] ptpip_sock_accept(-1)... ");
+    result = ptpip_sock_accept(-1);
     printf("returned: %d\n", result);
 
     printf("[PTPIP] socket_close_if_valid(-1) (should noop)... ");
