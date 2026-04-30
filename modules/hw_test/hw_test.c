@@ -1356,13 +1356,13 @@ static void hw_task(void *unused)
         }
         uint32_t avg = (uint32_t)(sum / n);
         char b[80];
-        snprintf(b, sizeof(b), "  FPS_TA: min=%u max=%u avg=%u range=%u",
+        snprintf(b, sizeof(b), "  FPS_TA: min=%d max=%d avg=%d range=%d",
                  min_val, max_val, avg, max_val - min_val);
         info(b);
         char samp[80];
         int pos = snprintf(samp, sizeof(samp), "  Samples: ");
         for (int i = 0; i < n && i < 10 && pos < (int)sizeof(samp) - 8; i++) {
-            pos += snprintf(samp + pos, sizeof(samp) - pos, "%s%u", i ? "," : "", samples[i]);
+            pos += snprintf(samp + pos, sizeof(samp) - pos, "%s%d", i ? "," : "", samples[i]);
         }
         info(samp);
         rst(max_val - min_val <= 2, "fps_stability", "FPS_TA range > 2");
