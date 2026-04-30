@@ -61,6 +61,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 | 2026-04-30 | 457KB | 457KB | hw_test v19: RAM dump for offline RE (LOWER 16MB, ISO 1MB, UPPER 16MB). RAM dumps analyzed: found Canon DLNA Media Server, WiFi SDIO driver, remote shot functions, AF remote control, ADTG register patterns. |
 | 2026-04-30 | 457KB | 457KB | FULL 512MB RAM dump (0x40000000-0x5FFFFFFF) extracted via ramdump module. 509MB data, ~12K strings, 520+ callable functions, full symbol table (270+ ML symbols), 30+ PROP_ IDs mapped, 55 source file paths found. |
 | 2026-04-30 | 457KB | 457KB | S30: WiFi TCP server (wifisrv v2), GPS/defect/dual-ISO probes. hw_test v20-v23: unified probes, config_rw fix, all latent build bugs fixed (crop_rec brace, mlv_3 session/falthrough, worker.c strncpy). Build system fix: hw_test added to ML_MODULES, stale .mo prevention. |
+| 2026-04-30 | 457KB | 457KB | hw_test v27: 35 PASS / 5 SKIP / 0 FAIL. FPS stability (range=0, rock-solid). ADTG/crop registers. Extended call() tests (GetHDMIInfo, FA_GetProperty, TurnOffDisplay work). config_rw PASS. Pre-deployment test suite (tests/run_all.sh: symbol check + syntax + build size). 3 dead probe modules deleted. All 28 70D modules auto-build. |
 
 2. **Documentation Updates:** Keep AGENTS.md and README.md files continuously updated with all findings, changes, and discoveries
 3. **Task Tracking:** Maintain TODO.md with current task status, marking completed items and adding new tasks as discovered
@@ -70,7 +71,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 7. **Incremental Progress:** Complete work in small, testable chunks - never batch multiple untested changes
 
 **Repository:** https://github.com/peva3/magiclantern_70D
-**Current Phase:** hw_test v23 — 31/5/0 PASS/SKIP/FAIL on physical 70D. All software tasks built out: WiFi TCP server (wifisrv), GPS/defect/dual-ISO probes, audio IC probe, SD clock regs, config_rw fix. All latent build bugs fixed (crop_rec extra brace, mlv_3 session var + fallthrough, worker.c strncpy). 32 modules. Next: hardware testing of WiFi, PTP tunnel, Dual ISO
+**Current Phase:** hw_test v27 — 35 PASS / 5 SKIP / 0 FAIL on physical 70D. FPS stability (range=0, rock-solid). ADTG/crop registers. Extended call() tests (GetHDMIInfo, FA_GetProperty, TurnOffDisplay work). Pre-deployment test suite (tests/run_all.sh). All 28 modules auto-build. All automated hardware testing complete in hw_test. Next: manual testing of WiFi, PTP tunnel, Dual ISO
 **Last Updated:** 2026-04-30
 
 ## QEMU-EOS Setup (in-tree)
