@@ -57,7 +57,11 @@ ML_MODULES = \
 	sd_uhs \
 	raw_video/raw_vidx \
 	yolo \
-	hw_test
+	hw_test \
+	wifisrv \
+	wifi_test \
+	ptptun \
+	ramdump
 
 .PHONY: clean $(BUILD_DIR)
 
