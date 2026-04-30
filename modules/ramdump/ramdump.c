@@ -3,14 +3,13 @@
 #include <bmp.h>
 #include <stdio.h>
 #include <string.h>
-#include <menu.h>
 
-static void ramdump_task(void *priv, int unused)
+static void ramdump_auto(void)
 {
     uint32_t start_addr = 0x40000000;
     uint32_t end_addr   = 0x60000000;
     uint32_t total_size = end_addr - start_addr;
-    uint32_t chunk      = 262144; /* 256KB */
+    uint32_t chunk      = 262144;
 
     extern int GetBatteryLevel(void);
     int batt = GetBatteryLevel();
@@ -107,20 +106,9 @@ static void ramdump_task(void *priv, int unused)
     bmp_off();
 }
 
-static struct menu_entry ramdump_menu[] = {
-    {
-        .name   = "Dump Full RAM",
-        .priv   = ramdump_task,
-        .select = run_in_separate_task,
-        .help   = "Dump 512MB RAM (0x40000000-0x5FFFFFFF) to ML/LOGS/RAM_FULL.BIN",
-        .help2  = "Takes ~30-60s. Do NOT power off! Needs 50%+ battery.",
-    },
-    MENU_EOL,
-};
-
 static unsigned int ramdump_init(void)
 {
-    menu_add("Debug", ramdump_menu, COUNT(ramdump_menu));
+    ramdump_auto();
     return 0;
 }
 
