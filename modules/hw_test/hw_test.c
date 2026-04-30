@@ -42,7 +42,7 @@
  * NO call() to known-dangerous functions (EnableBootDisk, TurnOnDisplay).
  */
 
-#define VERSION "hw_test v16 — Register Baseline"
+#define VERSION "hw_test v17 — ISO RAM Scanner"
 
 static int t_total, t_pass, t_skip, t_fail, scr_y;
 static FILE *log_fp;
