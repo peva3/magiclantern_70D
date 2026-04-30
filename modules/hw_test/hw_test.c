@@ -42,7 +42,7 @@
  * NO call() to known-dangerous functions (EnableBootDisk, TurnOnDisplay).
  */
 
-#define VERSION "hw_test v17 — ISO RAM Scanner"
+#define VERSION "hw_test v18 — Movie stride probe + adtglog2"
 
 static int t_total, t_pass, t_skip, t_fail, scr_y;
 static FILE *log_fp;
