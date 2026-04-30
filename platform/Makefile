@@ -252,6 +252,7 @@ zip_contents:: $(BUILD_DIR)/$(ML_MODULES_SYM_NAME) \
 	$(CP) $(BUILD_DIR)/$(ML_MODULES_SYM_NAME) $(ZIP_MODULES_DIR)/
 	$(CP) $(MODULES_DIR)/$(BUILD_DIR)/*.mo $(CAM_MODULES_DIR)/
 	$(PYTHON) $(PLATFORM_DIR)/create_hid_files.py modules.hidden $(ZIP_MODULES_DIR)
+	-@rm -f $(ZIP_MODULES_DIR)/*.mo $(ZIP_MODULES_DIR)/*.sym 2>/dev/null
 	$(PYTHON) $(PLATFORM_DIR)/copy_included_modules.py modules.included $(CAM_MODULES_DIR) $(ZIP_MODULES_DIR)
 endif
 

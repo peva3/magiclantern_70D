@@ -43,7 +43,7 @@
  * NO call() to known-dangerous functions (EnableBootDisk, TurnOnDisplay).
  */
 
-#define VERSION "hw_test v19 — RAM dump for offline RE"
+#define VERSION "hw_test v20 — Unified: GPS + Defect + Dual ISO probes"
 
 static int t_total, t_pass, t_skip, t_fail, scr_y;
 static FILE *log_fp;
@@ -1103,6 +1103,148 @@ static void hw_task(void *unused)
         }
         rst(dumps_ok == total, "ram_dump", dumps_ok > 0 ? "partial" : "all failed");
         info("RAM dumps in ML/LOGS/RAM_*.BIN — copy to PC for strings/hexdump/IDA");
+    }
+
+    log_flush();
+    blink_delay(500);
+
+    /* ════════════════════════════════════════
+     * S30.2: GPS PROBE
+     * ════════════════════════════════════════ */
+    hdr("GPS PROBE (S30.2)");
+    {
+        struct { const char *name; int arg; } gps_tests[] = {
+            {"GPS_Initialize", 0},
+            {"GetGPSTime", 0},
+            {"GetGPSListRecvCapability", 0},
+            {"GetGPSCaptureTimeList", 0},
+            {"GPSList", 0},
+            {"GPSClearList", 0},
+            {"NwLimeInit", 0},
+            {"NwLimeOn", 0},
+            {0, 0}
+        };
+        int gps_ok = 0, gps_total = 0;
+        for (int i = 0; gps_tests[i].name; i++) {
+            gps_total++;
+            char b[80];
+            int r = call(gps_tests[i].name);
+            snprintf(b, sizeof(b), "  call(\"%s\") = %d%s",
+                     gps_tests[i].name, r, r == 0 ? "" : r < 0 ? " NOT_FOUND" : "");
+            info(b);
+            if (!r) gps_ok++;
+        }
+        rst(gps_ok == gps_total, "gps_probe", "some GPS calls failed");
+        info("");
+    }
+
+    /* ════════════════════════════════════════
+     * S30.3: DEFECT PROBE
+     * ════════════════════════════════════════ */
+    hdr("DEFECT PROBE (S30.3)");
+    {
+        struct { const char *name; int arg; int has_arg; } defect_tests[] = {
+            {"FA_LvDetectDefectsFull", 0, 0},
+            {"FA_LvDetectDefectsMagnify", 0, 0},
+            {"FA_LvDetectDefectsMovieCrop", 0, 0},
+            {"FA_LvDefectMaxCountFull", 0, 1},
+            {"ExecuteDefectMarge1", 0, 0},
+            {"ExecuteDefectMarge2", 0, 0},
+            {"ExecuteDefectMarge3", 0, 0},
+            {"FA_LvMargeDefectsMagnify", 0, 0},
+            {"FA_SetMergeDefParameter", 0, 1},
+            {"FA_DefectsTestImage", 0, 0},
+            {"FA_DefectsMergeTestImage", 0, 0},
+            {"FA_DetectDefTestImage", 0, 0},
+            {"FA_ProjectionTestImage", 0, 0},
+            {"FA_CreateTestImage", 0, 1},
+            {0, 0, 0}
+        };
+        int def_ok = 0, def_total = 0;
+        for (int i = 0; defect_tests[i].name; i++) {
+            def_total++;
+            char b[80];
+            int r;
+            if (defect_tests[i].has_arg)
+                r = call(defect_tests[i].name, defect_tests[i].arg);
+            else
+                r = call(defect_tests[i].name);
+            snprintf(b, sizeof(b), "  call(\"%s\") = %d%s",
+                     defect_tests[i].name, r, r == 0 ? "" : r < 0 ? " NOT_FOUND" : "");
+            info(b);
+            if (!r) def_ok++;
+        }
+        rst(def_ok > 0, "defect_probe", "all defect calls failed");
+        info("");
+    }
+
+    /* ════════════════════════════════════════
+     * S6: DUAL ISO CMOS TABLE DUMP
+     * ════════════════════════════════════════ */
+    hdr("DUAL ISO CMOS TABLES (S6)");
+    {
+        #define ISOS 7
+        uint32_t photo_cmos0 = 0x404e5664;
+        uint32_t photo_cmos3 = 0x404e5667;
+        uint32_t movie_cmos0 = 0x404e77d6;
+        uint32_t movie_cmos3 = 0x404e77d9;
+        int stride_ph = 20;
+        int stride_mv = 46;
+
+        unsigned expected[ISOS] = { 3, 0x27, 0x4b, 0x6f, 0x93, 0xb7, 0xdb };
+
+        info("  Photo CMOS[0] (stride 20):");
+        int ph_ok = 0;
+        for (int i = 0; i < ISOS; i++) {
+            uint32_t addr = photo_cmos0 + i * stride_ph;
+            uint32_t val = MEM(addr) & 0xFFFF;
+            char b[64];
+            snprintf(b, sizeof(b), "    ISO[%d] 0x%08x = 0x%04x%s",
+                     i, addr, val, val == expected[i] ? "" : " MISMATCH");
+            info(b);
+            if (val == expected[i]) ph_ok++;
+        }
+        rst(ph_ok == ISOS, "photo_CMOS0", "photo CMOS[0] mismatch");
+
+        info("  Photo CMOS[3] (stride 20):");
+        int ph3_ok = 0;
+        for (int i = 0; i < ISOS; i++) {
+            uint32_t addr = photo_cmos3 + i * stride_ph;
+            uint32_t val = MEM(addr) & 0xFFFF;
+            char b[64];
+            snprintf(b, sizeof(b), "    ISO[%d] 0x%08x = 0x%04x%s",
+                     i, addr, val, val == expected[i] ? "" : " MISMATCH");
+            info(b);
+            if (val == expected[i]) ph3_ok++;
+        }
+        rst(ph3_ok == ISOS, "photo_CMOS3", "photo CMOS[3] mismatch");
+
+        info("  Movie CMOS[0] (stride 46):");
+        int mv_ok = 0;
+        for (int i = 0; i < ISOS; i++) {
+            uint32_t addr = movie_cmos0 + i * stride_mv;
+            uint32_t val = MEM(addr) & 0xFFFF;
+            char b[64];
+            snprintf(b, sizeof(b), "    ISO[%d] 0x%08x = 0x%04x%s",
+                     i, addr, val, val == expected[i] ? "" : " MISMATCH");
+            info(b);
+            if (val == expected[i]) mv_ok++;
+        }
+        rst(mv_ok == ISOS, "movie_CMOS0", "movie CMOS[0] mismatch");
+
+        info("  Movie CMOS[3] (stride 46):");
+        int mv3_ok = 0;
+        for (int i = 0; i < ISOS; i++) {
+            uint32_t addr = movie_cmos3 + i * stride_mv;
+            uint32_t val = MEM(addr) & 0xFFFF;
+            char b[64];
+            snprintf(b, sizeof(b), "    ISO[%d] 0x%08x = 0x%04x%s",
+                     i, addr, val, val == expected[i] ? "" : " MISMATCH");
+            info(b);
+            if (val == expected[i]) mv3_ok++;
+        }
+        rst(mv3_ok == ISOS, "movie_CMOS3", "movie CMOS[3] mismatch");
+        info("");
     }
 
     log_flush();
