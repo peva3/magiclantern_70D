@@ -13,7 +13,8 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 3. Copy to 70d-latest folder: `cp platform/70D.112/build/autoexec.bin 70d-latest/`
 4. Update size tracking log below
 
-**Current Build:** 461KB (2026-04-30) - S28: wifisrv module + hw_test v16 (register baselines)
+**Current Build:** 457KB (2026-04-30) - S28: wifisrv module + hw_test v16 (register baselines). WiFi TCP client using RAM-loaded sockets. 27 modules in build.
+**CRITICAL:** Build with `make -j$(nproc)` (no CONFIG_QEMU=y) for hardware deployment. QEMU builds include testing code that causes red LED on physical 70D.
 
 ---
 
@@ -52,7 +53,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 | 2026-04-29 | 456KB | 451KB | Sprint 27d: hw_test hardware verification — 6/6 PASS on physical 70D (model_id, fio_malloc, shamem, FIO file I/O) |
 | 2026-04-29 | 457KB | 452KB | hw_test v15 Proving Ground: 60+ MMIO register dumps, SD benchmark (5 sizes), stub verify, ENGIO/CMOS/ISO/sensor dumps, call() safety restrictions; AGENTS.md philosophy update |
 | 2026-04-29 | 457KB | 452KB | hw_test v15 physical 70D: 23 PASS / 2 SKIP / 0 FAIL. ALL 11 PTPIP stubs VALID, 7/7 socket APIs LOADED in RAM. Dual ISO addresses WRONG (all 0x00000000). FPS TA=0x02BB TB=0x05F5 fps=29976. SD baseline: 13.7MB/s sequential. Deployed to 70d-latest/ |
-| 2026-04-30 | 461KB | 457KB | S28: wifisrv module + hw_test v16 (register baselines). WiFi TCP client using RAM-loaded sockets. 27 modules in build. |
+| 2026-04-30 | 457KB | 457KB | S28: wifisrv module + hw_test v16 (register baselines). WiFi TCP client using RAM-loaded sockets. 27 modules in build. **HARDWARE BUILD** (no CONFIG_QEMU=y). |
 
 2. **Documentation Updates:** Keep AGENTS.md and README.md files continuously updated with all findings, changes, and discoveries
 3. **Task Tracking:** Maintain TODO.md with current task status, marking completed items and adding new tasks as discovered
