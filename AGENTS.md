@@ -445,7 +445,7 @@ if (zebra_draw && raw_zebra_enable == 1) raw_needed = 1;
 
 ## 15. Modules (`modules.included`)
 
-**Enabled (21 modules):** adv_int, arkanoid, autoexpo, bench, crop_rec, deflick, dot_tune, dual_iso, edmac, ettr, file_man, img_name, lua, mlv_lite, mlv_play, mlv_snd, pic_view, sd_uhs, selftest, silent
+**Enabled (28 modules):** adv_int, arkanoid, autoexpo, bench, crop_rec, deflick, dot_tune, dual_iso, edmac, ettr, file_man, img_name, lua, mlv_lite, mlv_play, mlv_snd, pic_view, sd_uhs, selftest, sf_dump, silent, hw_test, wifi_test, raw_vidx, ptptun, wifisrv, adtglog2
 
 **Not built by default:** mlv_rec, raw_vid, raw_vidx, script, io_crypt, bolt_rec, bulb_nd, yolo, fpu_emu
 
@@ -455,7 +455,8 @@ if (zebra_draw && raw_zebra_enable == 1) raw_needed = 1;
 - `PHOTO_CMOS_ISO_START = 0x404e5664`
 - COUNT = 7, SIZE = 20, CMOS_ISO_BITS = 3, CMOS_FLAG_BITS = 2
 - CMOS_EXPECTED_FLAG = 3
-- **hw_test v15 FINDING:** All 7 ISO register addresses at 0x404E5664+0x14*N read 0x00000000 on physical 70D. These are WRONG addresses (copied from 7D, never verified). Need RE to find correct CMOS ISO register locations for 70D.
+- **hw_test v15/v16 FINDING:** All 7 ISO register addresses at 0x404E5664+0x14*N read 0x00000000 on physical 70D. These are WRONG addresses (copied from 7D, never verified). **CRITICAL BUG: hw_test was using `shamem_read()` which only works for MMIO (0xC0Fxxxxx), not general RAM.** Fixed in hw_test v17 to use `MEM()` instead + RAM region scanner.
+- **adtglog2 module** added to build: hooks `CMOS_write` at 0x26B54, logs ADTG command buffers to `ML/LOGS/ADTG.LOG`. Run on hardware, enter LiveView, change ISO, and inspect log to find correct ISO table addresses.
 - Movie mode broken (needs investigation)
 
 **sd_uhs:**
