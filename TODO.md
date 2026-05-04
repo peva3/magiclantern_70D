@@ -8,7 +8,7 @@ This document outlines the development sprints for implementing the future work 
 **Base Repository:** https://github.com/peva3/magiclantern_70D  
 **Forked From:** https://github.com/reticulatedpines/magiclantern_simplified  
 **Developer Identity:** pmwoodward3@gmail.com / peva3  
-**Current Phase:** FULL 512MB RAM dump (ramdump module) — 509MB data analyzed. Complete: call() table (~520 fns), WiFi/DLNA stack, symbol table (270+ symbols), 30+ PROP_ IDs, GPS/touch/defect systems. All software RE complete.
+**Current Phase:** hw_test v27 — 35 PASS / 5 SKIP / 0 FAIL on physical 70D. Dual ISO photo mode working. All automated hardware testing complete. Remaining: manual testing (WiFi, PTP tunnel, crop_rec, Dual ISO movie).
 **Last Updated:** 2026-04-30
 
 ### Key Contributors (from forum research)

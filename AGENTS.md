@@ -14,7 +14,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 4. Extract modules: `unzip -o platform/70D.112/build/magiclantern.zip -d 70d-latest/`
 5. Update size tracking log below
 
-**Current Build:** 457KB (2026-04-30) - ramdump module: FULL 512MB RAM dump (0x40000000-0x5FFFFFFF). 29 modules. **VALIDATED on physical 70D.** Full RAM dump comprehensively analyzed: 509MB data pages, 12,639 unique strings, ~520 callable functions extracted, 270+ ML symbols confirmed, 30+ PROP_ IDs mapped, 55 Canon source file paths identified. Canon WiFi/DLNA/UPnP stack fully documented. GPS, touch, defect management systems identified.
+**Current Build:** 457KB (2026-04-30) - hw_test v27: 35 PASS / 5 SKIP / 0 FAIL on physical 70D. **All automated hardware testing complete.** Full 512MB RAM dump (0x40000000-0x5FFFFFFF) comprehensively analyzed: 509MB data pages, 12,639 unique strings, ~520 callable functions extracted, 270+ ML symbols confirmed, 30+ PROP_ IDs mapped, 55 Canon source file paths identified. Canon WiFi/DLNA/UPnP stack fully documented. GPS, touch, defect management systems discovered. 31 modules auto-build. See [CHANGELOG.md](CHANGELOG.md) for full project history.
 **CRITICAL:** Build with `make -j$(nproc)` (no CONFIG_QEMU=y) for hardware deployment. QEMU builds include testing code that causes red LED on physical 70D.
 
 ---
