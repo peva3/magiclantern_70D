@@ -20,18 +20,58 @@ The result: a fully modern, buildable, and hardware-validated Magic Lantern for 
 
 ### Magic Lantern (70D Platform)
 
-- **Brought the 70D port up to date** with the newest ML mainline codebase — resolved years of accumulated incompatibilities, build breaks, and feature drift
-- **31 modules auto-build** from source with a clean build system (no stale artifacts, validated pre-deployment checks)
-- **Full 512MB RAM dump** extracted and analyzed from a physical 70D — found Canon's hidden DLNA/UPnP Media Server, mapped 520+ callable functions, identified 270+ ML runtime symbols, traced 55 Canon source file paths
-- **WiFi stack fully reverse-engineered** — discovered Canon's built-in DLNA Media Server (DMS-1.50), mapped all 8 PTPIP ROM1 socket wrappers, located the 7 RAM-loaded socket API functions at fixed addresses
-- **Dual ISO working** on hardware — photo mode validated, all 3 CMOS ISO tables located in RAM, movie mode unblocked
-- **FPS Override enabled** — Timer A-only via HiJello/FastTv mode, verified rock-solid (range=0 across 20 samples)
-- **All 14 audio DMA stubs documented** in ROM1; audio IC probe integrated into diagnostics
-- **SD UHS fully mapped** — clock registers, GPIO registers (confirmed unused on 70D), benchmark integrated
-- **GPS, touchscreen, and defect management** systems identified in firmware
-- **~740 lines of dead code removed** across 12+ cleanup sprints
-- **Dual ISO, crop_rec, MLV v3, raw_vidx, sd_uhs** — all ported and enabled
-- **Pre-deployment test suite** (`tests/run_all.sh`) catches symbol errors, syntax problems, and oversize builds before they reach the camera
+The last official 70D build had 20 modules, no hardware validation, and was based on an older ML snapshot. Here's everything that changed:
+
+**New Modules (11 added: 20 → 31)**
+| Module | What It Does | Origin |
+|--------|-------------|--------|
+| `sd_uhs` | SD card overclocking (160MHz, ~70MB/s) | ML mainline port |
+| `raw_vidx` | MLV v3 RAW video recording | ML mainline port |
+| `mlv_rec` | RAW video (was available but not in build) | ML mainline |
+| `hw_test` | Full hardware diagnostic suite (40 tests) | **Our work** |
+| `ptptun` | USB PTP tunnel (remote camera control) | **Our work** |
+| `wifisrv` | WiFi TCP server (remote control over network) | **Our work** |
+| `wifi_test` | WiFi/PTPIP stub discovery and validation | **Our work** |
+| `ramdump` | Full 512MB RAM dump to SD card | **Our work** |
+| `adtglog2` | CMOS/ADTG register write logging | ML dev tool |
+| `sf_dump` | Serial flash dump utility | ML dev tool |
+| 3 dead probe modules deleted → folded into hw_test | — | **Our cleanup** |
+
+**Newly Enabled Features (ported from ML mainline, previously off for 70D)**
+- **FPS Override** — Timer A-only mode (HiJello/FastTv). **Verified: range=0 stability**
+- **Focus Confirmation** — via PROP_LV_LENS focus_pos stability detection
+- **Double-click zoom** shortcut from 5D3/6D
+- **Zoom from image review** (Ken Rockwell zoom)
+- **Swap info in playback** mode
+- **Focus peaking as display filter**
+- **Focus box snap to x5 raw**
+- **Beep support**, Q Menu in playback, white balance workaround, zoom half-shutter UI lock
+- **Debug menu**: Screenshot, Show Tasks, CPU usage, free memory, shutter count, CMOS temp
+
+**Reverse Engineering (all our work)**
+- **Full 512MB RAM dump** extracted and analyzed from physical 70D
+- **520+ call() functions documented** — Canon's complete eventproc dispatch table
+- **270+ ML symbols confirmed** at runtime addresses
+- **55 Canon source file paths** identified (kernel, sensor, WiFi, audio, video)
+- **WiFi stack fully reversed** — Canon's DLNA/UPnP Media Server discovered (DMS-1.50), 8 PTPIP socket stubs mapped, 7 socket API functions located at fixed RAM addresses
+- **All 14 audio DMA stubs** located in ROM1
+- **GPS/Touch/Defect** management systems identified
+- **Camera hangs from call("EnableBootDisk") / call("TurnOnDisplay")** documented
+
+**Hardware Validation (all our work — old build had zero)**
+40 automated tests on a physical 70D (shutter count: 12,349):
+- **35 PASS / 5 SKIP / 0 FAIL** — all core subsystems proven
+- PTPIP stubs: 11/11 valid, Socket API: 7/7 loaded in RAM
+- Dual ISO: photo mode **confirmed working**
+- FPS: range=0 across 20 samples (rock-solid timing)
+- RAM dumps: 3 regions, 33MB total written to SD card
+- Register baselines: 6/6 match
+
+**Infrastructure (all our work)**
+- Pre-deployment test suite (`tests/run_all.sh`) — catches symbol errors before camera
+- Auto-build system — all 31 modules rebuild on `make`, no stale artifacts
+- ~740 lines dead code removed, 10+ cleanup sprints
+- CHANGELOG.md with complete project history
 
 ### QEMU Emulation (qemu-eos)
 
