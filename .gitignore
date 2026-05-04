@@ -105,3 +105,9 @@ roms/*/placeholder*
 roms/**/ROM*.BIN.gz
 
 70d-latest/
+
+# Build logs
+logs/
+
+# Release archives
+magiclantern_70D-*.tar.gz
