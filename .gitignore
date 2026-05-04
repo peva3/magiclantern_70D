@@ -105,6 +105,7 @@ roms/*/placeholder*
 roms/**/ROM*.BIN.gz
 
 70d-latest/
+70d-dev/
 
 # Build logs
 logs/
