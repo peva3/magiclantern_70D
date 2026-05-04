@@ -129,6 +129,10 @@ magiclantern_70D/
 ├── firmware/                   # Canon firmware files
 ├── camremote.py                # WiFi remote control companion
 ├── camtunnel.py                # USB PTP tunnel companion
+├── SECURITY.md                 # Security/vulnerability reporting
+├── CODE_OF_CONDUCT.md          # Community guidelines
+├── CONTRIBUTING.md             # How to contribute
+├── LICENSE                     # GPL v3 (see also COPYING)
 └── qemu-eos/                   # QEMU emulator (git subtree)
 ```
 

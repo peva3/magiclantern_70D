@@ -1,0 +1,44 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Source code
+*.c text eol=lf
+*.h text eol=lf
+*.S text eol=lf
+*.py text eol=lf
+*.sh text eol=lf
+*.lua text eol=lf
+*.mo binary
+*.bin binary
+*.FIR binary
+*.jpg binary
+*.png binary
+*.bmp binary
+*.rbf binary
+*.lut binary
+*.zip binary
+*.gz binary
+
+# Documentation
+*.md text eol=lf
+*.txt text eol=lf
+*.rst text eol=lf
+
+# Makefiles
+Makefile text eol=lf
+Makefile.* text eol=lf
+*.mk text eol=lf
+
+# Config
+*.cfg text eol=lf
+*.conf text eol=lf
+*.ini text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.csv text eol=lf
+
+# Git
+.gitattributes text eol=lf
+.gitignore text eol=lf
+.gitmodules text eol=lf
