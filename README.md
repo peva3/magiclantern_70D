@@ -95,6 +95,12 @@ All automated tests executed and PASSED on a physical Canon EOS 70D:
 
 **⚠️ Warning:** Development software. Use at your own risk. Always backup your settings.
 
+### Installation Notes
+
+- **First install:** Copy files to a FAT32-formatted SD card. Insert, power on while holding PLAY button.
+- **Re-installing:** If you've previously used ML, **format the SD card** before re-running `ML-SETUP.FIR`. Canon's bootloader retains boot flags from prior installations, which can cause a "Enable Firmware disabled" error during re-install. Formatting clears these flags.
+- **Companion scripts:** `camremote.py` (WiFi) and `camtunnel.py` (USB PTP) run from a Python3 laptop, not on the camera.
+
 ---
 
 ## Getting the Build
