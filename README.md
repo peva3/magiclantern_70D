@@ -167,6 +167,7 @@ magiclantern_70D/
 ├── camtunnel.py             # USB PTP tunnel
 ├── CHANGELOG.md             # Full project history
 ├── DEEPDIVE.md              # Exhaustive technical deep dive
+├── RAMDUMP.md               # Complete 512MB RAM dump analysis
 ├── AGENTS.md                # Technical architecture deep dive
 ├── TODO.md                  # Remaining work
 └── qemu-eos/                # QEMU emulator (git subtree)
