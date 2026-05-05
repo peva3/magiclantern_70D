@@ -2,9 +2,8 @@
 # Extract hardware test logs from QEMU SD card image
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="$SCRIPT_DIR/platform/70D.112/build"
-SD_IMG="$BUILD_DIR/sd.qcow2"
 OUTPUT_DIR="$SCRIPT_DIR/logs/hw_test"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 

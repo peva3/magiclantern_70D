@@ -1,0 +1,630 @@
+"""
+Comprehensive Reverse Engineering script for Canon 70D firmware.
+Runs all analyses in one pass to minimize Ghidra headless startup time.
+@category Canon70D
+"""
+import sys, struct, os
+
+from ghidra.app.decompiler import DecompInterface
+from ghidra.util.task import TaskMonitor
+from ghidra.program.model.symbol import SourceType
+from ghidra.program.model.lang import Register
+
+af = currentProgram.getAddressFactory()
+fm = currentProgram.getFunctionManager()
+mem = currentProgram.getMemory()
+rm = currentProgram.getReferenceManager()
+listing = currentProgram.getListing()
+sym_table = currentProgram.getSymbolTable()
+decomp = DecompInterface()
+decomp.openProgram(currentProgram)
+
+def to_rom(rt_addr):
+    """Convert runtime address to ROM offset"""
+    if rt_addr >= 0xFF000000:
+        return rt_addr - 0xFF000000 + 0xF8000000
+    return rt_addr
+
+def to_runtime(rom_addr):
+    """Convert ROM offset to runtime address"""
+    if rom_addr >= 0xF8000000 and rom_addr < 0xF9000000:
+        return rom_addr - 0xF8000000 + 0xFF000000
+    return rom_addr
+
+def read_u32(addr):
+    try:
+        b = bytearray(4)
+        mem.getBytes(af.getAddress("%08X" % addr), b)
+        return struct.unpack_from('<I', b)[0]
+    except:
+        return 0
+
+def get_string(addr, max_len=256):
+    """Read null-terminated string from ROM"""
+    try:
+        b = bytearray(max_len)
+        n = mem.getBytes(af.getAddress("%08X" % addr), b)
+        s = b.tobytes()
+        end = s.find(b'\x00')
+        if end >= 0:
+            s = s[:end]
+        return s.decode('ascii', errors='replace').strip()
+    except:
+        return None
+
+def get_function_name(addr):
+    f = fm.getFunctionAt(af.getAddress("%08X" % addr))
+    if f:
+        return f.getName()
+    return None
+
+def is_valid_string_ptr(addr):
+    """Check if addr points to a plausible ASCII string"""
+    s = get_string(addr, 64)
+    if s is None or len(s) < 2:
+        return False
+    # Check it's printable ASCII
+    for c in s:
+        if c < ' ' and c not in '\t\n\r':
+            return False
+        if c > '~':
+            return False
+    return True
+
+def is_valid_func_ptr(addr):
+    """Check if addr is a valid function pointer (runtime addr)"""
+    if addr < 0xFF000000 or addr > 0xFFFFFFFF:
+        return False
+    rom = to_rom(addr)
+    f = fm.getFunctionAt(af.getAddress("%08X" % rom))
+    if f:
+        return True
+    # Check if address is in a valid code range
+    if 0xF8000000 <= rom < 0xF9000000:
+        inst = listing.getInstructionAt(af.getAddress("%08X" % rom))
+        return inst is not None
+    return False
+
+def decompile_func(addr, label="func"):
+    """Decompile a function at the given ROM address"""
+    f = fm.getFunctionAt(af.getAddress("%08X" % addr))
+    if f is None:
+        f = fm.getFunctionContaining(af.getAddress("%08X" % addr))
+    if f is None:
+        return None, "No function found"
+    res = decomp.decompileFunction(f, 300, TaskMonitor.DUMMY)
+    if res and res.decompileCompleted():
+        return res.getDecompiledFunction().getC(), None
+    if res:
+        return None, res.getErrorMessage()
+    return None, "decomp returned None"
+
+# ============================================================
+# PART 1: Project Statistics
+# ============================================================
+print("=" * 60)
+print("PART 1: PROJECT STATISTICS")
+print("=" * 60)
+
+func_count = fm.getFunctionCount()
+instr_count = listing.getNumInstructions()
+sym_count = sym_table.getNumSymbols()
+
+# Count labeled vs unlabeled functions
+labeled = 0
+unlabeled = 0
+for f in fm.getFunctions(True):
+    syms = sym_table.getSymbols(f.getBody().getMinAddress())
+    has_user = False
+    for s in syms:
+        if s.getSource() == SourceType.USER_DEFINED:
+            has_user = True
+            break
+    if has_user or not f.getName().startswith("FUN_"):
+        labeled += 1
+    else:
+        unlabeled += 1
+
+# Count THUMB vs ARM
+thumb_count = 0
+arm_count = 0
+for f in fm.getFunctions(True):
+    body = f.getBody()
+    inst = listing.getInstruction(body.getMinAddress())
+    if inst:
+        if inst.getFlowType().toString().startswith("THUMB"):
+            thumb_count += 1
+        # Actually check: THUMB addresses have bit 0 set
+        if body.getMinAddress().getOffset() & 1:
+            thumb_count += 1
+        else:
+            arm_count += 1
+
+print("Functions: %d" % func_count)
+print("  Labeled: %d" % labeled)
+print("  Unlabeled (FUN_*): %d" % unlabeled)
+print("Instructions: %d" % instr_count)
+print("Symbols: %d" % sym_count)
+print("Memory blocks: %d" % len(mem.getBlocks()))
+
+# ============================================================
+# PART 2: CALL() FUNCTION DISPATCH
+# ============================================================
+print("\n" + "=" * 60)
+print("PART 2: CALL() FUNCTION ANALYSIS")
+print("=" * 60)
+
+call_rom = 0xF814439C  # call() at runtime 0xFF14339C -> ROM 0xF814439C
+f = fm.getFunctionAt(af.getAddress("%08X" % call_rom))
+if f is None:
+    print("Creating function at call()...")
+    f = createFunction(af.getAddress("%08X" % call_rom), "call_dispatch")
+if f:
+    print("call() at 0x%X: %s" % (call_rom, f.getName()))
+    print("Body: %s" % f.getBody())
+else:
+    print("ERROR: Could not find call() function")
+
+# Decompile call()
+print("\ncall() decompilation:")
+code, err = decompile_func(call_rom, "call_dispatch")
+if code:
+    for line in code.split('\n')[:60]:
+        print(line)
+    if len(code.split('\n')) > 60:
+        print("... (%d more lines)" % (len(code.split('\n')) - 60))
+elif err:
+    print("Decompile error: " + err)
+
+# ============================================================
+# PART 3: EVENTPROC TABLE DISCOVERY
+# ============================================================
+print("\n" + "=" * 60)
+print("PART 3: EVENTPROC TABLE DISCOVERY")
+print("=" * 60)
+
+# Strategy 1: Scan for 8-byte entries {string_ptr, func_ptr} near call()
+# Tables are arrays of {str_ptr (4 bytes), func_ptr (4 bytes)} terminated by (0,0)
+# The table walker is at 0xF8144420
+
+tables_found = 0
+eventproc_entries = []
+
+# Scan ROM1 for eventproc tables
+# Look in plausible ranges: near call(), in data sections
+scan_ranges = [
+    (0xF8100000, 0xF8200000, "Near call()"),
+    (0xF8200000, 0xF8800000, "Lower mid ROM1"),
+    (0xF8800000, 0xF8F00000, "Upper ROM1"),
+    (0xF8F00000, 0xF9000000, "End of ROM1"),
+    (0xF0000000, 0xF0800000, "ROM0 (assets)"),
+]
+
+for scan_start, scan_end, label in scan_ranges:
+    found_in_range = 0
+    addr = scan_start
+    while addr < scan_end - 8:
+        str_ptr = read_u32(addr)
+        func_ptr = read_u32(addr + 4)
+        
+        if str_ptr == 0 and func_ptr == 0:
+            addr += 4
+            continue
+            
+        # Check: string pointer must be in ROM and look like ASCII
+        str_in_rom = (0xF0000000 <= str_ptr < 0xF0800000) or (0xF8000000 <= str_ptr < 0xF9000000)
+        func_is_valid = is_valid_func_ptr(func_ptr)
+        
+        if str_in_rom and func_is_valid and is_valid_string_ptr(str_ptr):
+            # Verify: next entry should also be valid or be a terminator
+            next_str = read_u32(addr + 8)
+            next_func = read_u32(addr + 12)
+            
+            next_valid = False
+            if next_str == 0 and next_func == 0:
+                next_valid = True  # terminator
+            elif (is_valid_string_ptr(next_str) and is_valid_func_ptr(next_func)):
+                next_valid = True
+            if next_str == str_ptr and next_func == func_ptr:
+                next_valid = False  # duplicate (self-reference)
+            
+            if next_valid:
+                func_name = get_function_name(to_rom(func_ptr)) or "?"
+                s = get_string(str_ptr, 80)
+                if s and len(s) > 1 and (s[0].isalpha() or s.startswith('_')):
+                    eventproc_entries.append((addr, str_ptr, func_ptr, s, func_name, label))
+                    found_in_range += 1
+                    if found_in_range == 1:
+                        print("\nTable at 0x%X (%s):" % (addr, label))
+                    print("  [%s] str=0x%X func=0x%X name='%s'" % (
+                        get_function_name(to_rom(func_ptr))[:20] if func_name != '?' else '?',
+                        str_ptr, func_ptr, s))
+                    
+                    # Skip ahead to avoid duplicate detections
+                    # But continue at next entry boundary
+                    tables_found += found_in_range
+        
+        addr += 4
+    
+    print("  %d entries in %s" % (found_in_range, label))
+
+print("\nTotal eventproc entries found: %d" % len(eventproc_entries))
+
+# Group entries by table (consecutive entries at 8-byte spacing)
+if eventproc_entries:
+    eventproc_entries.sort(key=lambda x: x[0])
+    tables = []
+    current_table = [eventproc_entries[0]]
+    for i in range(1, len(eventproc_entries)):
+        prev_addr = eventproc_entries[i-1][0]
+        curr_addr = eventproc_entries[i][0]
+        if curr_addr - prev_addr <= 8:
+            current_table.append(eventproc_entries[i])
+        else:
+            tables.append(current_table)
+            current_table = [eventproc_entries[i]]
+    tables.append(current_table)
+    
+    print("\n=== Eventproc Tables Summary ===")
+    for i, table in enumerate(tables):
+        print("Table %d at 0x%X (%d entries):" % (i+1, table[0][0], len(table)))
+        for entry in table[:5]:
+            print("  0x%X -> %s [%s]" % (entry[2], entry[3][:40], entry[4]))
+        if len(table) > 5:
+            print("  ... (%d more)" % (len(table) - 5))
+
+
+# ============================================================
+# PART 4: INTERRUPT VECTOR TABLE
+# ============================================================
+print("\n" + "=" * 60)
+print("PART 4: INTERRUPT/EXCEPTION VECTORS")
+print("=" * 60)
+
+# Check for vector table at common locations
+vector_locations = [
+    (0xFFFF0000, "ARM high vectors"),
+    (0x00000000, "ARM low vectors"),
+    (0xF8000000, "ROM1 base"),
+    (0xFF000000, "Runtime base"),
+    (0xF0000000, "ROM0 base"),
+]
+
+for vec_base, label in vector_locations:
+    print("\nChecking %s (0x%X):" % (label, vec_base))
+    try:
+        b = bytearray(32)
+        mem.getBytes(af.getAddress("%08X" % vec_base), b)
+        vals = struct.unpack_from('<8I', b)
+        
+        print("  Vectors: " + " ".join(["0x%08X" % v for v in vals]))
+        
+        # ARM vector table: Reset, Undefined, SWI, Prefetch, Data, IRQ, FIQ
+        # Check if these look like valid code pointers
+        valid_vectors = 0
+        for i, v in enumerate(vals):
+            # THUMB vectors have bit 0 set, ARM don't
+            if v >= 0xF0000000:  # in ROM range (even if thumb bit)
+                base = v & ~1  # clear thumb bit
+                if base >= 0xF8000000:  # ROM1
+                    rom_addr = base
+                elif base >= 0xFF000000:
+                    rom_addr = to_rom(base)
+                else:
+                    rom_addr = base
+                f = fm.getFunctionAt(af.getAddress("%08X" % rom_addr))
+                inst = listing.getInstructionAt(af.getAddress("%08X" % rom_addr))
+                has_code = (f is not None or inst is not None)
+                fname = f.getName() if f else "?"
+                if has_code:
+                    valid_vectors += 1
+                    print("  [%d] 0x%08X -> %s [%s] %s" % (i, v, "0x%X" % rom_addr, fname, 
+                        "THUMB" if v & 1 else "ARM"))
+        
+        print("  Valid vectors: %d/8" % valid_vectors)
+        
+    except Exception as e:
+        print("  Error: %s" % e)
+
+# ============================================================
+# PART 5: KERNEL SWI/SYSCALL DISPATCH
+# ============================================================
+print("\n" + "=" * 60)
+print("PART 5: KERNEL SWI/SYSCALL DISPATCH")
+print("=" * 60)
+
+# Find the SWI handler - look for SWI instruction references
+print("Searching for SWI handler addresses from vector table...")
+swi_vectors = []
+for vec_base in [0xFFFF0000, 0x00000000]:
+    try:
+        b = bytearray(8)
+        mem.getBytes(af.getAddress("%08X" % (vec_base + 8)), b)
+        val = struct.unpack_from('<I', b)[1]  # SWI vector is at +8, second word is the... 
+        # Actually ARM vector table: offset 0=Reset, 4=Undef, 8=SWI, 12=Prefetch, 16=Data, 20=Reserved, 24=IRQ, 28=FIQ
+        # But the format is: first word = 0xEAxxxxxx (branch instruction), or it's a vector address
+        
+        vals = struct.unpack_from('<8I', b)
+        for i, v in enumerate(vals):
+            if i == 2:  # SWI index
+                swi_val = v
+        
+        # ARM vectors can be:
+        # 1. LDR PC,[PC,#offset]  -> loads from address
+        # 2. Direct branch
+        b2 = bytearray(4)
+        mem.getBytes(af.getAddress("%08X" % (vec_base + 8)), b2)
+        swi_instr = struct.unpack_from('<I', b2)[0]
+        
+        # LDR PC,[PC,#-0xXX] or LDR PC,[PC,#imm12]
+        # LDR PC relative: 0xE51FFxxx or 0xE59FFxxx
+        if (swi_instr & 0x0FFF0000) == 0x051F0000 or (swi_instr & 0x0FFF0000) == 0x059F0000:
+            offset = swi_instr & 0xFFF
+            if swi_instr & 0x00800000:
+                offset = -offset
+            base = vec_base + 8 + 8  # PC is 8 bytes ahead
+            load_addr = base + offset
+            handler = read_u32(load_addr)
+            print("SWI handler via LDR PC,[PC,...]: load_addr=0x%X handler=0x%X" % (load_addr, handler))
+            swi_vectors.append(handler)
+        
+        # B/BL instruction: 0xEAxxxxxx or 0xEBxxxxxx
+        elif (swi_instr >> 24) in [0xEA, 0xEB]:
+            offset = swi_instr & 0x00FFFFFF
+            if offset & 0x800000:
+                offset = offset - 0x1000000
+            target = (vec_base + 8 + 8) + (offset << 2)  # PC + offset*4
+            print("SWI handler via B/BL: target=0x%X" % target)
+            swi_vectors.append(target)
+        
+        else:
+            print("SWI vector instruction: 0x%08X (unknown format)" % swi_instr)
+            
+        # Also check the vector as a direct address
+        swi_word2 = read_u32(vec_base + 12)
+        if swi_word2 >= 0xF0000000:
+            print("SWI candidate from vector table word at +12: 0x%X" % swi_word2)
+            swi_vectors.append(swi_word2)
+            
+    except Exception as e:
+        print("Error reading vector table at 0x%X: %s" % (vec_base, e))
+
+# Look for SUBS PC,LR,#4 which is the typical SWI return
+print("\nSearching for SWI return instructions (SUBS PC,LR,#4)...")
+swi_return = []
+for addr in range(0xF8000000, 0xF9000000, 4):
+    inst = listing.getInstructionAt(af.getAddress("%08X" % addr))
+    if inst:
+        mnem = inst.getMnemonicString()
+        if mnem == "subs" and "pc" in inst.toString().lower() and "lr" in inst.toString().lower():
+            f = fm.getFunctionContaining(af.getAddress("%08X" % addr))
+            fname = f.getName() if f else "?"
+            swi_return.append((addr, fname))
+            
+for addr, fname in swi_return[:5]:
+    print("  SUBS PC,LR,#4 at 0x%X (%s)" % (addr, fname))
+print("  (Total SWI returns: %d)" % len(swi_return))
+
+if swi_return:
+    # Decompile the SWI handler
+    first_swi = swi_return[0]
+    print("\nSWI handler at 0x%X:" % first_swi[0])
+    code, err = decompile_func(first_swi[0], "SWI_handler")
+    if code:
+        for line in code.split('\n')[:40]:
+            print(line)
+        if len(code.split('\n')) > 40:
+            print("... (%d more lines)" % (len(code.split('\n')) - 40))
+    elif err:
+        print("  Error: " + err)
+
+# ============================================================
+# PART 6: GPS PROPERTY CHAIN
+# ============================================================
+print("\n" + "=" * 60)
+print("PART 6: GPS PROPERTY CHAIN")
+print("=" * 60)
+
+# Search for GPS-related strings in ROM
+print("Searching for GPS strings in ROM...")
+gps_strings = []
+for addr in range(0xF0000000, 0xF0800000, 1):
+    # Quick check: look for "GPS" at the beginning or with underscores
+    s = get_string(addr, 32)
+    if s and len(s) >= 3:
+        up = s.upper()
+        if ('GPS' in up or 'Gps' in s) and len(s) < 30 and s[0].isalpha():
+            if addr not in [x[0] for x in gps_strings]:
+                gps_strings.append((addr, s))
+
+for addr, s in gps_strings[:40]:
+    print("  0x%X: %s" % (addr, s))
+if len(gps_strings) > 40:
+    print("  ... (%d more)" % (len(gps_strings) - 40))
+print("Total GPS strings: %d" % len(gps_strings))
+
+# Search for PROP_GPS property handlers
+gps_props = []
+# Known PROP IDs: 0x800500xx range for GPS
+prop_candidates = [0x80050060 + i for i in range(0x40)]
+known_props = [0x80050060, 0x80050061, 0x80050062, 0x80050063, 0x80050064, 0x80050065]
+print("\nSearching for PROP_GPS handlers...")
+for prop_id in known_props:
+    # Search for references to this property ID
+    # In ARM code, property IDs are usually loaded via LDR with an address or MOV/MOVT
+    for chunk_start in range(0xF8000000, 0xF9000000, 0x100000):
+        chunk_end = min(chunk_start + 0x100000, 0xF9000000)
+        chunk_bytes = bytearray(chunk_end - chunk_start)
+        try:
+            mem.getBytes(af.getAddress("%08X" % chunk_start), chunk_bytes)
+        except:
+            continue
+        # Search for the property ID as a 4-byte value
+        prop_bytes = struct.pack('<I', prop_id)
+        pos = 0
+        while True:
+            pos = chunk_bytes.find(prop_bytes, pos)
+            if pos < 0:
+                break
+            addr = chunk_start + pos
+            f = fm.getFunctionContaining(af.getAddress("%08X" % addr))
+            fname = f.getName() if f else "?"
+            gps_props.append((addr, prop_id, fname))
+            pos += 4
+            if len(gps_props) > 100:
+                break
+        if len(gps_props) > 100:
+            break
+    if len(gps_props) > 100:
+        break
+
+for addr, prop_id, fname in gps_props[:20]:
+    print("  PROP 0x%08X referenced at 0x%X (%s)" % (prop_id, addr, fname))
+if len(gps_props) > 20:
+    print("  ... (%d more references)" % (len(gps_props) - 20))
+
+# ============================================================
+# PART 7: AUDIO CODEC I2C
+# ============================================================
+print("\n" + "=" * 60)
+print("PART 7: AUDIO CODEC I2C COMMUNICATION")
+print("=" * 60)
+
+# Find I2C read/write functions
+print("Searching for I2C functions...")
+i2c_candidates = []
+for addr in range(0xF8000000, 0xF9000000, 4):
+    inst = listing.getInstructionAt(af.getAddress("%08X" % addr))
+    if inst:
+        s = inst.toString()
+        # I2C registers on DIGIC V are in the 0xC0Fxxxxx range
+        # Look for LDR referencing common I2C addresses
+        if 'i2c' in s.lower() or 'I2C' in s:
+            f = fm.getFunctionContaining(af.getAddress("%08X" % addr))
+            fname = f.getName() if f else "?"
+            i2c_candidates.append((addr, s, fname))
+
+for addr, s, fname in i2c_candidates[:20]:
+    print("  0x%X: %s (%s)" % (addr, s[:60], fname))
+if len(i2c_candidates) > 20:
+    print("  ... (%d more)" % (len(i2c_candidates) - 20))
+
+# Search for AudioIC strings
+print("\nSearching for AudioIC strings in ROM...")
+audio_strings = []
+for addr in range(0xF0000000, 0xF0800000, 1):
+    s = get_string(addr, 48)
+    if s and len(s) >= 3:
+        up = s.upper()
+        if ('AUDIO' in up or 'CODEC' in up or 'ASIF' in up or 'AUDIOIC' in up) and len(s) < 40:
+            if addr not in [x[0] for x in audio_strings]:
+                audio_strings.append((addr, s))
+
+for addr, s in audio_strings[:20]:
+    print("  0x%X: %s" % (addr, s))
+if len(audio_strings) > 20:
+    print("  ... (%d more)" % (len(audio_strings) - 20))
+
+# ============================================================
+# PART 8: KERNEL DISPATCH TABLES
+# ============================================================
+print("\n" + "=" * 60)
+print("PART 8: KERNEL DISPATCH TABLES (LDR PC,[PC,#-4]! pattern)")
+print("=" * 60)
+
+# Search for the dispatch pattern: this is a jump table where each entry 
+# is the address of a kernel function, loaded via LDR PC,[PC,#-4]!
+# Based on prior finding: tables at 0xBA4BB0-0xBA4F00
+
+kernel_tables = []
+print("Searching known kernel dispatch range 0xBA4000-0xBA5000...")
+for addr in range(0xF8BA4000, 0xF8BA5000, 4):
+    inst = listing.getInstructionAt(af.getAddress("%08X" % addr))
+    if inst:
+        s = inst.toString()
+        # LDR PC,[PC,#-4]! pattern
+        if 'ldr' in s.lower() and 'pc' in s.lower() and '[pc' in s.lower():
+            f = fm.getFunctionContaining(af.getAddress("%08X" % addr))
+            fname = f.getName() if f else "?"
+            kernel_tables.append((addr, s, fname))
+
+for addr, s, fname in kernel_tables:
+    print("  0x%X: %s (%s)" % (addr, s[:60], fname))
+
+# Also find the jump table entries (the addresses being loaded)
+if kernel_tables:
+    print("\nFunction table entries referenced by LDR PC,[PC,#-4]:")
+    for addr, s, fname in kernel_tables[:5]:
+        # LDR PC,[PC,#-N] - compute the loaded address
+        # LDR PC,[PC,#imm12] format: 0xE51FFxxx
+        inst = listing.getInstructionAt(af.getAddress("%08X" % addr))
+        if inst:
+            # Try to get the referenced address
+            refs = inst.getReferencesFrom()
+            for r in refs:
+                target = r.getToAddress().getOffset()
+                # This is a table entry address - read the function pointer
+                func_ptr = read_u32(target)
+                func_name = get_function_name(to_rom(func_ptr)) or "?"
+                print("  table_entry at 0x%X -> func 0x%X [%s]" % (target, func_ptr, func_name))
+
+# ============================================================
+# PART 9: SWI DISPATCH TABLE
+# ============================================================
+print("\n" + "=" * 60)
+print("PART 9: DRYOS SYSCALL TABLE")
+print("=" * 60)
+
+# In DRYOS, the SWI handler dispatches via a syscall table.
+# The SWI number (from SWI #N instruction) indexes into a table.
+# Look for the table by finding a LDR PC,[PC,Rx,LSL#2] or similar
+
+# Decompile the candidate SWI handlers
+if swi_return:
+    swi_handler_rom = swi_return[0][0]
+    print("Decompiling SWI handler at 0x%X..." % swi_handler_rom)
+    code, err = decompile_func(swi_handler_rom, "SWI_dispatch")
+    if code:
+        for line in code.split('\n')[:80]:
+            print(line)
+        if len(code.split('\n')) > 80:
+            print("... (%d more lines)" % (len(code.split('\n')) - 80))
+    elif err:
+        print("  Error: " + err)
+
+# Also search for the DRYOS syscall table
+# DRYOS syscall table is usually an array of function pointers
+print("\nSearching for DRYOS syscall table...")
+syscall_count = 0
+# Look near the SWI handler or in common kernel data areas
+for scan_start in [0xF8BA0000, 0xF8A00000, 0xF8B00000, 0xF8C00000]:
+    if syscall_count > 50:
+        break
+    for offset in range(0, 0x10000, 4):
+        addr = scan_start + offset
+        func_ptr = read_u32(addr)
+        if is_valid_func_ptr(func_ptr):
+            rom = to_rom(func_ptr)
+            fn = get_function_name(rom)
+            if fn and not fn.startswith("FUN_"):
+                syscall_count += 1
+                if syscall_count <= 10:
+                    print("  SYSCALL[%d] at 0x%X: 0x%X [%s]" % (syscall_count-1, addr, func_ptr, fn))
+
+# ============================================================
+# PART 10: SUMMARY & OUTPUT
+# ============================================================
+print("\n" + "=" * 60)
+print("PART 10: RESULTS SUMMARY")
+print("=" * 60)
+print("Functions: %d (labeled: %d, unlabeled: %d)" % (func_count, labeled, unlabeled))
+print("Eventproc entries found: %d" % len(eventproc_entries))
+print("SWI return instructions: %d" % len(swi_return))
+print("I2C references: %d" % len(i2c_candidates))
+print("GPS strings: %d" % len(gps_strings))
+print("GPS property references: %d" % len(gps_props))
+print("Audio strings: %d" % len(audio_strings))
+print("Kernel dispatch entries: %d" % len(kernel_tables))
+
+decomp.dispose()
+print("\nDone.")

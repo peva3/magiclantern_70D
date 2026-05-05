@@ -1,0 +1,409 @@
+"""
+Jython script for comprehensive Canon 70D RE analysis.
+@category Canon70D
+"""
+from ghidra.app.decompiler import DecompInterface
+from ghidra.util.task import TaskMonitor
+from ghidra.program.model.symbol import SourceType
+import struct
+import jarray
+
+af = currentProgram.getAddressFactory()
+fm = currentProgram.getFunctionManager()
+mem = currentProgram.getMemory()
+rm = currentProgram.getReferenceManager()
+listing = currentProgram.getListing()
+sym_table = currentProgram.getSymbolTable()
+decomp = DecompInterface()
+decomp.openProgram(currentProgram)
+
+def to_rom(rt_addr):
+    if rt_addr >= 0xFF000000:
+        return rt_addr - 0xFF000000 + 0xF8000000
+    return rt_addr
+
+def read_u32(addr):
+    try:
+        b = jarray.zeros(4, 'b')
+        mem.getBytes(af.getAddress("%08X" % addr), b)
+        return struct.unpack('<I', b)[0]
+    except:
+        return 0
+
+def get_string(addr, max_len=256):
+    try:
+        b = jarray.zeros(max_len, 'b')
+        n = mem.getBytes(af.getAddress("%08X" % addr), b)
+        s = "".join(chr(x & 0xFF) for x in b[:n] if x != 0)
+        return s
+    except:
+        return None
+
+def get_function_name(addr):
+    f = fm.getFunctionAt(af.getAddress("%08X" % addr))
+    if f:
+        return f.getName()
+    return None
+
+def is_valid_string_ptr(addr):
+    s = get_string(addr, 64)
+    if s is None or len(s) < 2:
+        return False
+    for c in s:
+        if c < ' ' and c not in '\t\n\r':
+            return False
+        if c > '~':
+            return False
+    return True
+
+def is_valid_func_ptr(addr):
+    if addr < 0xFF000000 or addr > 0xFFFFFFFF:
+        return False
+    rom = to_rom(addr)
+    f = fm.getFunctionAt(af.getAddress("%08X" % rom))
+    if f:
+        return True
+    if 0xF8000000 <= rom < 0xF9000000:
+        inst = listing.getInstructionAt(af.getAddress("%08X" % rom))
+        return inst is not None
+    return False
+
+def decompile_func(addr, label="func"):
+    f = fm.getFunctionAt(af.getAddress("%08X" % addr))
+    if f is None:
+        f = fm.getFunctionContaining(af.getAddress("%08X" % addr))
+    if f is None:
+        return None, "No function found"
+    res = decomp.decompileFunction(f, 300, TaskMonitor.DUMMY)
+    if res and res.decompileCompleted():
+        return res.getDecompiledFunction().getC(), None
+    if res:
+        return None, res.getErrorMessage()
+    return None, "decomp returned None"
+
+# ============================================================
+# PART 1: Project Statistics
+# ============================================================
+print "=" * 60
+print "PART 1: PROJECT STATISTICS"
+print "=" * 60
+
+func_count = fm.getFunctionCount()
+instr_count = listing.getNumInstructions()
+sym_count = sym_table.getNumSymbols()
+
+labeled = 0
+unlabeled = 0
+for f in fm.getFunctions(True):
+    name = f.getName()
+    if name.startswith("FUN_"):
+        unlabeled += 1
+    else:
+        labeled += 1
+
+print "Functions: %d" % func_count
+print "  Labeled: %d" % labeled
+print "  Unlabeled (FUN_*): %d" % unlabeled
+print "Instructions: %d" % instr_count
+print "Symbols: %d" % sym_count
+
+label_sources = {}
+all_syms = sym_table.getAllSymbols(True)
+while all_syms.hasNext():
+    s = all_syms.next()
+    src = s.getSource().name()
+    label_sources[src] = label_sources.get(src, 0) + 1
+print "\nSymbol by source:"
+for src, count in sorted(label_sources.items(), key=lambda x: -x[1]):
+    print "  %s: %d" % (src, count)
+
+print "\nMemory blocks:"
+for b in mem.getBlocks():
+    print "  %s: 0x%X-0x%X (%d bytes)" % (b.getName(), b.getStart().getOffset(), b.getEnd().getOffset(), b.getSize())
+
+# ============================================================
+# PART 2: CALL() ANALYSIS
+# ============================================================
+print "\n" + "=" * 60
+print "PART 2: CALL() FUNCTION ANALYSIS"
+print "=" * 60
+
+call_rom = 0xF814439C
+f = fm.getFunctionAt(af.getAddress("%08X" % call_rom))
+if f is None:
+    print "Creating function at call()..."
+    f = createFunction(af.getAddress("%08X" % call_rom), "call_dispatch")
+if f:
+    print "call() at 0x%X: %s" % (call_rom, f.getName())
+    print "Body: %s" % f.getBody()
+    
+    refs = rm.getReferencesTo(af.getAddress("%08X" % call_rom))
+    callers = []
+    while refs.hasNext():
+        ref = refs.next()
+        from_addr = ref.getFromAddress()
+        caller = fm.getFunctionContaining(from_addr)
+        caller_name = caller.getName() if caller else "?"
+        callers.append((from_addr.getOffset(), caller_name))
+    
+    print "\nCallers of call() (first 30):"
+    for a, name in callers[:30]:
+        print "  0x%X (%s)" % (a, name)
+    print "Total callers: %d" % len(callers)
+
+print "\nDecompiling call() function..."
+code, err = decompile_func(call_rom, "call_dispatch")
+if code:
+    for line in code.split('\n')[:80]:
+        print line
+    if len(code.split('\n')) > 80:
+        print "... (%d more lines)" % (len(code.split('\n')) - 80)
+elif err:
+    print "Decompile error: " + err
+
+# Decompile nearby table walker
+print "\nDecompiling table walker at 0xF8144420..."
+code, err = decompile_func(0xF8144420, "table_walker")
+if code:
+    for line in code.split('\n')[:40]:
+        print line
+    if len(code.split('\n')) > 40:
+        print "... (%d more lines)" % (len(code.split('\n')) - 40)
+elif err:
+    print "Decompile error: " + err
+
+# ============================================================
+# PART 3: EVENTPROC TABLE DISCOVERY
+# ============================================================
+print "\n" + "=" * 60
+print "PART 3: EVENTPROC TABLE DISCOVERY"
+print "=" * 60
+
+# Scan ROM1 for string+function pointer pairs at 8-byte intervals
+eventproc_entries = []
+scanned_ranges = [(0xF8100000, 0xF8600000), (0xF8700000, 0xF8F00000)]
+for scan_start, scan_end in scanned_ranges:
+    addr = scan_start
+    while addr < scan_end - 8:
+        str_ptr = read_u32(addr)
+        func_ptr = read_u32(addr + 4)
+        
+        if str_ptr == 0 and func_ptr == 0:
+            addr += 4
+            continue
+        
+        str_in_rom = (0xF0000000 <= str_ptr < 0xF0800000) or (0xF8000000 <= str_ptr < 0xF9000000)
+        func_valid = is_valid_func_ptr(func_ptr)
+        
+        if str_in_rom and func_valid and is_valid_string_ptr(str_ptr):
+            # Check next entry
+            nstr = read_u32(addr + 8)
+            nfunc = read_u32(addr + 12)
+            nv = (nstr == 0 and nfunc == 0) or (is_valid_string_ptr(nstr) and is_valid_func_ptr(nfunc))
+            if nv and not (nstr == str_ptr and nfunc == func_ptr):
+                func_name = get_function_name(to_rom(func_ptr)) or "?"
+                s = get_string(str_ptr, 80)
+                if s and len(s) > 1 and s[0].isalpha():
+                    eventproc_entries.append((addr, str_ptr, func_ptr, s, func_name))
+        addr += 4
+
+print "Total eventproc entries found: %d" % len(eventproc_entries)
+
+printed = set()
+print "\nUnique entries:"
+for a, sp, fp, s, fn in sorted(eventproc_entries, key=lambda x: x[0]):
+    if s not in printed:
+        print "  [%s] 0x%08X -> %s" % (fn[:20] if fn else "?", fp, s[:60])
+        printed.add(s)
+print "Unique names: %d" % len(printed)
+
+# ============================================================
+# PART 4: INTERRUPT VECTORS
+# ============================================================
+print "\n" + "=" * 60
+print "PART 4: INTERRUPT/EXCEPTION VECTORS"
+print "=" * 60
+
+for vname, vbase in [("Low vectors", 0x00000000), ("High vectors", 0xFFFF0000)]:
+    print "\n%s (0x%X):" % (vname, vbase)
+    words = [read_u32(vbase + i) for i in range(0, 32, 4)]
+    if all(w == 0 for w in words[:4]):
+        print "  Not mapped"
+        continue
+    
+    vec_names = ["Reset", "Undef", "SWI", "Prefetch", "Data", "Reserved", "IRQ", "FIQ"]
+    for i, (name, word) in enumerate(zip(vec_names, words)):
+        # LDR PC,[PC,#offset] - 0xE51FFxxx or 0xE59FFxxx
+        if (word & 0x0F7F0000) == 0x051F0000 or (word & 0x0F7F0000) == 0x059F0000:
+            offset = word & 0xFFF
+            if word & 0x00800000:
+                offset = -offset
+            load_addr = vbase + i*4 + 8 + offset
+            handler_addr = read_u32(load_addr)
+            handler_rom = to_rom(handler_addr)
+            hname = get_function_name(handler_rom) or "?"
+            print "  %s: LDR PC -> 0x%X [%s]" % (name, handler_addr, hname)
+        elif (word >> 24) in [0xEA, 0xEB]:
+            offset = word & 0x00FFFFFF
+            if offset & 0x800000:
+                offset = offset | 0xFF000000
+            target = (vbase + i*4 + 8) + (offset << 2)
+            target_rom = to_rom(target) if target >= 0xFF000000 else target
+            hname = get_function_name(target_rom) or "?"
+            print "  %s: B 0x%X [%s]" % (name, target, hname)
+        else:
+            print "  %s: 0x%08X" % (name, word)
+
+# ============================================================
+# PART 5: SWI/SYSCALL
+# ============================================================
+print "\n" + "=" * 60
+print "PART 5: DRYOS SWI/SYSCALL"
+print "=" * 60
+
+print "\nSearching for SUBS PC,LR,#4 (SWI return)..."
+swi_returns = []
+for addr in range(0xF8000000, 0xF9000000, 2):
+    try:
+        inst = listing.getInstructionAt(af.getAddress("%08X" % addr))
+        if inst:
+            s = inst.toString()
+            if 'subs' in s.lower() and 'pc' in s.lower() and 'lr' in s.lower():
+                f = fm.getFunctionContaining(af.getAddress("%08X" % addr))
+                fname = f.getName() if f else "?"
+                swi_returns.append((addr, s, fname))
+    except:
+        pass
+
+for a, s, fn in swi_returns[:10]:
+    print "  0x%X: %s (%s)" % (a, s[:40], fn)
+print "Total: %d" % len(swi_returns)
+
+# Decompile first SWI handler
+if swi_returns:
+    for swi_a, _, fn in swi_returns[:2]:
+        print "\nSWI handler at 0x%X (%s):" % (swi_a, fn)
+        code, err = decompile_func(swi_a, "SWI")
+        if code:
+            for line in code.split('\n')[:60]:
+                print line
+            if len(code.split('\n')) > 60:
+                print "... (%d more)" % (len(code.split('\n')) - 60)
+        elif err:
+            print "  Error: " + err
+
+# ============================================================
+# PART 6: GPS
+# ============================================================
+print "\n" + "=" * 60
+print "PART 6: GPS STRINGS"
+print "=" * 60
+
+gps_set = set()
+for addr in range(0xF0000000, 0xF0800000):
+    s = get_string(addr, 40)
+    if s and len(s) >= 3:
+        up = s.upper()
+        if 'GPS' in up or 'Gps' in s or 'gps' in up:
+            gps_set.add((addr, s))
+
+for a, s in sorted(gps_set)[:30]:
+    print "  0x%X: %s" % (a, s)
+print "Total: %d" % len(gps_set)
+
+# ============================================================
+# PART 7: AUDIO STRINGS
+# ============================================================
+print "\n" + "=" * 60
+print "PART 7: AUDIO STRINGS"
+print "=" * 60
+
+audio_set = set()
+for addr in range(0xF0000000, 0xF0800000):
+    s = get_string(addr, 48)
+    if s and len(s) >= 3:
+        up = s.upper()
+        if any(x in up for x in ['AUDIO', 'CODEC', 'ASIF', 'AUDIOIC', 'I2S', 'MIC', 'DAC', 'ADC']):
+            audio_set.add((addr, s))
+
+for a, s in sorted(audio_set)[:25]:
+    print "  0x%X: %s" % (a, s)
+print "Total: %d" % len(audio_set)
+
+# ============================================================
+# PART 8: DISPATCH TABLES
+# ============================================================
+print "\n" + "=" * 60
+print "PART 8: KERNEL LDR PC,[PC,#-4] DISPATCH"
+print "=" * 60
+
+d_sites = []
+for addr in range(0xF8BA0000, 0xF8C00000, 2):
+    try:
+        inst = listing.getInstructionAt(af.getAddress("%08X" % addr))
+        if inst:
+            s = inst.toString()
+            if 'ldr' in s.lower() and 'pc' in s.lower() and '[pc' in s.lower():
+                f = fm.getFunctionContaining(af.getAddress("%08X" % addr))
+                fname = f.getName() if f else "?"
+                d_sites.append((addr, s, fname))
+    except:
+        pass
+
+for a, s, fn in d_sites[:20]:
+    print "  0x%X: %s (%s)" % (a, s[:60], fn)
+print "Total dispatch sites: %d" % len(d_sites)
+
+# ============================================================
+# PART 9: RAM MODULE FUNCTIONS
+# ============================================================
+print "\n" + "=" * 60
+print "PART 9: RAM FUNCTION REFERENCES"
+print "=" * 60
+
+ram_targets = set()
+for addr in range(0xF8000000, 0xF9000000, 4):
+    val = read_u32(addr)
+    if 0x00010000 <= val < 0x00100000:
+        ram_targets.add(val)
+
+print "Unique RAM function references: %d" % len(ram_targets)
+for t in sorted(ram_targets)[:20]:
+    print "  0x%08X" % t
+
+# ============================================================
+# PART 10: MPU MESSAGES
+# ============================================================
+print "\n" + "=" * 60
+print "PART 10: MPU MESSAGE REFERENCES"
+print "=" * 60
+
+mpu_msgs = set()
+for addr in range(0xF8000000, 0xF9000000, 4):
+    val = read_u32(addr)
+    if 0x80000000 <= val < 0x80010000:
+        f = fm.getFunctionContaining(af.getAddress("%08X" % addr))
+        fname = f.getName() if f else "?"
+        mpu_msgs.add((addr, val, fname))
+
+for a, val, fn in sorted(mpu_msgs)[:25]:
+    print "  0x%X: 0x%08X (%s)" % (a, val, fn)
+print "Total: %d" % len(mpu_msgs)
+
+# ============================================================
+# SUMMARY
+# ============================================================
+print "\n" + "=" * 60
+print "SUMMARY"
+print "=" * 60
+print "Functions: %d (%d labeled, %d unlabeled)" % (func_count, labeled, unlabeled)
+print "Eventproc entries: %d (unique names: %d)" % (len(eventproc_entries), len(printed))
+print "SWI return sites: %d" % len(swi_returns)
+print "GPS strings: %d" % len(gps_set)
+print "Audio strings: %d" % len(audio_set)
+print "Kernel dispatch sites: %d" % len(d_sites)
+print "RAM func references: %d unique" % len(ram_targets)
+print "MPU message refs: %d" % len(mpu_msgs)
+
+decomp.dispose()
+print "\nDone."

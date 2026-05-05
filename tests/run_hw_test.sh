@@ -2,7 +2,7 @@
 # Run hw_test module in QEMU and extract logs automatically
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRIPT_DIR"
 
 echo "=== Running HW Test in QEMU ==="
