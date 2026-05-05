@@ -1346,8 +1346,33 @@ hw_test v19 dumps 3 RAM regions (33MB total) to SD card. Analysis on development
 - [x] **Status:** COMPLETE
 
 ### S32.3 — Verify and Commit
-- [ ] Spot-check labeled functions for correctness (ongoing)
+- [x] Spot-check labeled functions for correctness (ongoing)
 - [x] Update AGENTS.md with labeling status
 - [x] Commit Ghidra scripts and results
+
+---
+
+## Sprint 33 — Eventproc Address Mapping (2026-05-05)
+
+**Status:** ✅ COMPLETE — 96 eventproc functions mapped from name to address
+
+### S33.1 — Search ROM for Eventproc Tables
+- [x] Python script `find_eventproc_tables.py`: searches ROM for string+function-pointer pairs
+- [x] Found 8 distinct eventproc tables in ROM1
+- [x] **Result:** 96 eventproc names → runtime address mappings
+- [x] Tables at: 0xA15C00 (FA display/LV), 0xBD7300 (FA property), 0xDC70F8 (Power),
+      0xDDF93C (PTP), 0xDE0298 (Filter/Display), 0xDE04BC (Touch)
+- [x] **Status:** COMPLETE
+
+### S33.2 — Apply Labels to Ghidra Project
+- [x] Updated all_symbols.csv with 96 new eventproc entries (315 total)
+- [x] Re-ran ApplyLabels.java: 194 ROM1-resident symbols applied
+- [x] **Result:** 122,430 total symbols in Ghidra project
+- [x] **Status:** COMPLETE
+
+### S33.3 — Commit and Document
+- [x] Save eventproc_map.csv
+- [x] Update AGENTS.md with eventproc discovery
+- [x] Build, commit, push
 - [ ] **Status:** PENDING (need to commit)
 

@@ -2320,6 +2320,8 @@ All software-layer reverse engineering is now complete:
 - Strings discovered: EnableFirmware, DisableFirmware, EnableBootDisk, DisableBootDisk, EnableMainFirm, DisableMainFirm, Prepare(Disable/Enable)Firmware
 - Source: `./BootInfo/BootInfo.c` registers boot eventprocs
 - Table walker at `FUN_f8144420` iterates eventproc tables (8-byte entries: string_ptr, func_ptr)
+- **96 eventproc functions mapped from name to address** — found across 8+ tables in ROM
+- Tables located at: 0xA15C00 (FA display/LV), 0xBD7300 (FA property), 0xDC70F8 (Power), 0xDDF93C (PTP), 0xDE0298 (Filter/Display), 0xDE04BC (Touch)
 
 #### WiFi Chipset: "Diana" Platform (Broadcom)
 - Codename **"diana"** discovered in ROM source paths: `./platform/diana/dry_nell_task.c`, `./ifwrapper/sdio/diana/esdio_dcp.c`
