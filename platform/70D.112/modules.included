@@ -21,6 +21,7 @@ selftest
 sf_dump
 silent
 hw_test
+wifi_enable
 wifi_test
 raw_vidx
 ptptun

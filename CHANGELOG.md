@@ -353,3 +353,13 @@ and `reticulatedpines/qemu-eos`.
 - `all_symbols.csv`: 579 total symbols (166 NSTUB + 81 ML + 332 eventproc + existing)
 - `eventproc_labels.csv`: Ghidra-compatible label import file
 - TODO.md: Sprint 33 completion with verification of unmapped function categories
+
+## 2026-05-05 — wifi_enable Module: WiFi Init + TCP Server for 70D
+
+### Added
+- **New module: wifi_enable** (`modules/wifi_enable/`) — initializes 70D WiFi stack
+  using RE-discovered eventproc sequence (DisablePowerSave → InitializePTPFrameworkController → LughPowerOn → LughConnect → OpenSession → EnablePowerSave)
+- **Companion script** (`companion/camremote.py`) — Python TCP client for camera remote control
+- **Module registers**: wifi_enable added to ML_MODULES in modules/Makefile and platform modules.included
+- All 7 RAM-loaded socket functions (0x0005xxxx) verified and used for TCP server
+- Build: 457KB autoexec.bin, 454KB magiclantern.bin (4.9KB module)
