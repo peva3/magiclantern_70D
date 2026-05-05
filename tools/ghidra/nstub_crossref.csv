@@ -1,0 +1,167 @@
+Name,Address,Region,Notes
+current_interrupt,0x0000064C,MODULE,RAM-loaded module offset 0x00064C
+create_init_task,0x00003168,MODULE,RAM-loaded module offset 0x003168
+DryosDebugMsg,0x00006904,MODULE,RAM-loaded module offset 0x006904
+dm_set_store_level,0x00006C70,MODULE,RAM-loaded module offset 0x006C70
+SetHPTimerAfterNow,0x00007F94,MODULE,RAM-loaded module offset 0x007F94
+SetHPTimerNextTick,0x00008094,MODULE,RAM-loaded module offset 0x008094
+create_named_semaphore,0x000091DC,MODULE,RAM-loaded module offset 0x0091DC
+take_semaphore_now,0x000092E4,MODULE,RAM-loaded module offset 0x0092E4
+take_semaphore,0x0000933C,MODULE,RAM-loaded module offset 0x00933C
+give_semaphore,0x00009428,MODULE,RAM-loaded module offset 0x009428
+msleep,0x00009818,MODULE,RAM-loaded module offset 0x009818
+task_create,0x000098CC,MODULE,RAM-loaded module offset 0x0098CC
+GetSizeOfMaxRegion,0x0000A4A8,MODULE,RAM-loaded module offset 0x00A4A8
+GetMemoryInformation,0x0000A4FC,MODULE,RAM-loaded module offset 0x00A4FC
+AllocateMemory,0x0000A75C,MODULE,RAM-loaded module offset 0x00A75C
+FreeMemory,0x0000AAF8,MODULE,RAM-loaded module offset 0x00AAF8
+CreateMemoryChunk,0x0000B45C,MODULE,RAM-loaded module offset 0x00B45C
+GetMemoryAddressOfMemoryChunk,0x0000BA08,MODULE,RAM-loaded module offset 0x00BA08
+AddMemoryChunk,0x0000BC70,MODULE,RAM-loaded module offset 0x00BC70
+GetFirstChunkFromSuite,0x0000BD8C,MODULE,RAM-loaded module offset 0x00BD8C
+DeleteMemorySuite,0x0000C070,MODULE,RAM-loaded module offset 0x00C070
+CreateMemorySuite,0x0000C420,MODULE,RAM-loaded module offset 0x00C420
+GetNextMemoryChunk,0x0000CA90,MODULE,RAM-loaded module offset 0x00CA90
+CreateRecursiveLock,0x0000D4D0,MODULE,RAM-loaded module offset 0x00D4D0
+dma_memcpy,0x0000D834,MODULE,RAM-loaded module offset 0x00D834
+SetTimerAfter,0x0000E8AC,MODULE,RAM-loaded module offset 0x00E8AC
+CancelTimer,0x0000EAAC,MODULE,RAM-loaded module offset 0x00EAAC
+task_trampoline,0x0000EF60,MODULE,RAM-loaded module offset 0x00EF60
+SetEDmac,0x00037DD0,MODULE,RAM-loaded module offset 0x037DD0
+ConnectWriteEDmac,0x00037F30,MODULE,RAM-loaded module offset 0x037F30
+ConnectReadEDmac,0x00037FF4,MODULE,RAM-loaded module offset 0x037FF4
+StartEDmac,0x0003817C,MODULE,RAM-loaded module offset 0x03817C
+AbortEDmac,0x000384A0,MODULE,RAM-loaded module offset 0x0384A0
+RegisterEDmacCompleteCBR,0x00038540,MODULE,RAM-loaded module offset 0x038540
+UnregisterEDmacCompleteCBR,0x0003857C,MODULE,RAM-loaded module offset 0x03857C
+RegisterEDmacAbortCBR,0x000385D4,MODULE,RAM-loaded module offset 0x0385D4
+UnregisterEDmacAbortCBR,0x00038610,MODULE,RAM-loaded module offset 0x038610
+RegisterEDmacPopCBR,0x00038668,MODULE,RAM-loaded module offset 0x038668
+UnregisterEDmacPopCBR,0x000386A4,MODULE,RAM-loaded module offset 0x0386A4
+msg_queue_create,0x0003A4E8,MODULE,RAM-loaded module offset 0x03A4E8
+msg_queue_receive,0x0003A5F8,MODULE,RAM-loaded module offset 0x03A5F8
+msg_queue_post,0x0003A7E4,MODULE,RAM-loaded module offset 0x03A7E4
+msg_queue_count,0x0003A824,MODULE,RAM-loaded module offset 0x03A824
+AcquireRecursiveLock,0x0003A930,MODULE,RAM-loaded module offset 0x03A930
+ReleaseRecursiveLock,0x0003AA44,MODULE,RAM-loaded module offset 0x03AA44
+vsnprintf,0x0003BFC4,MODULE,RAM-loaded module offset 0x03BFC4
+TryPostStageEvent,0x0003D644,MODULE,RAM-loaded module offset 0x03D644
+TryPostStageEvent_end,0x0003D6A0,MODULE,RAM-loaded module offset 0x03D6A0
+TryPostEvent,0x0003DD24,MODULE,RAM-loaded module offset 0x03DD24
+TryPostEvent_end,0x0003DD80,MODULE,RAM-loaded module offset 0x03DD80
+alloc_dma_memory,0x0003DF6C,MODULE,RAM-loaded module offset 0x03DF6C
+free_dma_memory,0x0003DFA0,MODULE,RAM-loaded module offset 0x03DFA0
+get_task_info_by_id,0x00051358,MODULE,RAM-loaded module offset 0x051358
+bzero32,0x00071618,MODULE,RAM-loaded module offset 0x071618
+pre_isr_hook,0x0007A9B8,MODULE,RAM-loaded module offset 0x07A9B8
+post_isr_hook,0x0007A9BC,MODULE,RAM-loaded module offset 0x07A9BC
+current_task,0x0007AAC0,MODULE,RAM-loaded module offset 0x07AAC0
+task_dispatch_hook,0x0007AAD4,MODULE,RAM-loaded module offset 0x07AAD4
+gui_main_struct,0x0007AE14,MODULE,RAM-loaded module offset 0x07AE14
+sounddev,0x0007B1F8,MODULE,RAM-loaded module offset 0x07B1F8
+dm_names,0x0007B868,MODULE,RAM-loaded module offset 0x07B868
+task_max,0x0007BEF4,MODULE,RAM-loaded module offset 0x07BEF4
+mvr_config,0x000946E0,MODULE,RAM-loaded module offset 0x0946E0
+gui_task_list,0x0009DBC8,MODULE,RAM-loaded module offset 0x09DBC8
+sd_device,0x000A8118,MODULE,RAM-loaded module offset 0x0A8118
+LCD_Palette,0x000BC2E8,MODULE,RAM-loaded module offset 0x0BC2E8
+bmp_vram_info,0x000BDAE8,MODULE,RAM-loaded module offset 0x0BDAE8
+camera_engine,0xC0220000,MMIO,MMIO register
+cstart,0xFF0C1BA8,ROM1,ROM1 offset 0x70C1BA8
+init_task,0xFF0C54CC,ROM1,ROM1 offset 0x70C54CC
+malloc,0xFF0C8DE4,ROM1,ROM1 offset 0x70C8DE4
+free,0xFF0C8E3C,ROM1,ROM1 offset 0x70C8E3C
+gui_main_task,0xFF0D97AC,ROM1,ROM1 offset 0x70D97AC
+GUI_Control,0xFF0D9B7C,ROM1,ROM1 offset 0x70D9B7C
+GUI_ChangeMode,0xFF0D9D38,ROM1,ROM1 offset 0x70D9D38
+gui_init_end,0xFF0DA220,ROM1,ROM1 offset 0x70DA220
+SRM_AllocateMemoryResourceFor1stJob,0xFF0E9F6C,ROM1,ROM1 offset 0x70E9F6C
+SRM_FreeMemoryResourceFor1stJob,0xFF0EE02C,ROM1,ROM1 offset 0x70EE02C
+StartASIFDMAADC,0xFF1172E0,ROM1,ROM1 offset 0x71172E0
+StopASIFDMAADC,0xFF11758C,ROM1,ROM1 offset 0x711758C
+StartASIFDMADAC,0xFF1176B4,ROM1,ROM1 offset 0x71176B4
+StopASIFDMADAC,0xFF117934,ROM1,ROM1 offset 0x7117934
+SetNextASIFADCBuffer,0xFF117DFC,ROM1,ROM1 offset 0x7117DFC
+SetNextASIFDACBuffer,0xFF117FE4,ROM1,ROM1 offset 0x7117FE4
+sounddev_task,0xFF118F5C,ROM1,ROM1 offset 0x7118F5C
+SoundDevActiveIn,0xFF11936C,ROM1,ROM1 offset 0x711936C
+SoundDevShutDownIn,0xFF1195C4,ROM1,ROM1 offset 0x71195C4
+SetAudioVolumeIn,0xFF11970C,ROM1,ROM1 offset 0x711970C
+prop_register_slave,0xFF12A924,ROM1,ROM1 offset 0x712A924
+prop_request_change,0xFF12AB14,ROM1,ROM1 offset 0x712AB14
+prop_deliver,0xFF12B090,ROM1,ROM1 offset 0x712B090
+prop_cleanup,0xFF12B15C,ROM1,ROM1 offset 0x712B15C
+PROPAD_GetPropertyData,0xFF12CB14,ROM1,ROM1 offset 0x712CB14
+LoadCalendarFromRTC,0xFF13D2A0,ROM1,ROM1 offset 0x713D2A0
+audio_ic_read,0xFF13F208,ROM1,ROM1 offset 0x713F208
+SetAudioVolumeOut,0xFF13F728,ROM1,ROM1 offset 0x713F728
+PowerMicAmp,0xFF13FDE0,ROM1,ROM1 offset 0x713FDE0
+SetSamplingRate,0xFF13FE14,ROM1,ROM1 offset 0x713FE14
+PowerAudioOutput,0xFF14169C,ROM1,ROM1 offset 0x714169C
+call,0xFF14439C,ROM1,ROM1 offset 0x714439C
+AllocateMemoryResource,0xFF147F3C,ROM1,ROM1 offset 0x7147F3C
+AllocateContinuousMemoryResource,0xFF147F88,ROM1,ROM1 offset 0x7147F88
+FreeMemoryResource,0xFF1480A0,ROM1,ROM1 offset 0x71480A0
+socket_close_caller,0xFF14F74C,ROM1,ROM1 offset 0x714F74C
+SetGUIRequestMode,0xFF196950,ROM1,ROM1 offset 0x7196950
+Gui_SetSoundRecord,0xFF1A48F8,ROM1,ROM1 offset 0x71A48F8
+ptpPropSetUILock,0xFF27C868,ROM1,ROM1 offset 0x727C868
+GUI_SetRollingPitchingLevelStatus,0xFF27D010,ROM1,ROM1 offset 0x727D010
+ptp_register_handler,0xFF29F7BC,ROM1,ROM1 offset 0x729F7BC
+mvrSetDefQScale,0xFF2BB154,ROM1,ROM1 offset 0x72BB154
+mvrSetFullHDOptSize,0xFF2BB18C,ROM1,ROM1 offset 0x72BB18C
+mvrSetGopOptSizeFULLHD,0xFF2BB370,ROM1,ROM1 offset 0x72BB370
+mvrFixQScale,0xFF2BB65C,ROM1,ROM1 offset 0x72BB65C
+EngDrvOut,0xFF2BC3AC,ROM1,ROM1 offset 0x72BC3AC
+shamem_read,0xFF2BC448,ROM1,ROM1 offset 0x72BC448
+engio_write,0xFF2BC6C4,ROM1,ROM1 offset 0x72BC6C4
+CreateResLockEntry,0xFF2C049C,ROM1,ROM1 offset 0x72C049C
+LockEngineResources,0xFF2C095C,ROM1,ROM1 offset 0x72C095C
+UnLockEngineResources,0xFF2C0B00,ROM1,ROM1 offset 0x72C0B00
+FIO_OpenFile,0xFF34AEEC,ROM1,ROM1 offset 0x734AEEC
+FIO_CreateFile,0xFF34AFA8,ROM1,ROM1 offset 0x734AFA8
+FIO_RemoveFile,0xFF34B054,ROM1,ROM1 offset 0x734B054
+FIO_ReadFile,0xFF34B0FC,ROM1,ROM1 offset 0x734B0FC
+FIO_SeekSkipFile,0xFF34B1AC,ROM1,ROM1 offset 0x734B1AC
+FIO_WriteFile,0xFF34B29C,ROM1,ROM1 offset 0x734B29C
+FIO_CloseFile,0xFF34B34C,ROM1,ROM1 offset 0x734B34C
+FIO_GetFileSize,0xFF34B4C8,ROM1,ROM1 offset 0x734B4C8
+FIO_RenameFile,0xFF34B9E0,ROM1,ROM1 offset 0x734B9E0
+FIO_CreateDirectory,0xFF34BBA8,ROM1,ROM1 offset 0x734BBA8
+FIO_FindFirstEx,0xFF34C170,ROM1,ROM1 offset 0x734C170
+FIO_FindNextEx,0xFF34C264,ROM1,ROM1 offset 0x734C264
+FIO_FindClose,0xFF34C344,ROM1,ROM1 offset 0x734C344
+dialog_set_property_str,0xFF392A7C,ROM1,ROM1 offset 0x7392A7C
+ProcessPathForFurikake,0xFF42A9EC,ROM1,ROM1 offset 0x742A9EC
+dialog_redraw,0xFF4E0E80,ROM1,ROM1 offset 0x74E0E80
+MirrorDisplay,0xFF504650,ROM1,ROM1 offset 0x7504650
+ReverseDisplay,0xFF504680,ROM1,ROM1 offset 0x7504680
+NormalDisplay,0xFF5046B0,ROM1,ROM1 offset 0x75046B0
+ErrForCamera_handler,0xFF53CF40,ROM1,ROM1 offset 0x753CF40
+CancelDateTimer,0xFF549070,ROM1,ROM1 offset 0x7549070
+HideUnaviFeedBack_maybe,0xFF5568AC,ROM1,ROM1 offset 0x75568AC
+LiveViewApp_handler,0xFF55CA40,ROM1,ROM1 offset 0x755CA40
+LiveViewApp_handler_BL_JudgeBottomInfoDispTimerState,0xFF55D838,ROM1,ROM1 offset 0x755D838
+LiveViewApp_handler_end,0xFF55F1CC,ROM1,ROM1 offset 0x755F1CC
+ShootOlcApp_handler,0xFF56A160,ROM1,ROM1 offset 0x756A160
+PlayMovieGuideApp_handler,0xFF5886E0,ROM1,ROM1 offset 0x75886E0
+PACK16_Setup,0xFF63D818,ROM1,ROM1 offset 0x763D818
+fsuDecodePartitionTable,0xFF67BD28,ROM1,ROM1 offset 0x767BD28
+GetCFnData,0xFF6C8054,ROM1,ROM1 offset 0x76C8054
+SetCFnData,0xFF6C813C,ROM1,ROM1 offset 0x76C813C
+LiveViewLevelApp_handler,0xFF6EEB9C,ROM1,ROM1 offset 0x76EEB9C
+ErrCardForLVApp_handler,0xFF6F03C4,ROM1,ROM1 offset 0x76F03C4
+LiveViewShutterApp_handler,0xFF745794,ROM1,ROM1 offset 0x7745794
+LiveViewWifiApp_handler,0xFF7523B4,ROM1,ROM1 offset 0x77523B4
+PlayMain_handler,0xFF776250,ROM1,ROM1 offset 0x7776250
+ptpip_bind_param,0xFF7AEE18,ROM1,ROM1 offset 0x77AEE18
+ptpip_open_server,0xFF7AEE80,ROM1,ROM1 offset 0x77AEE80
+ptpip_listen_close,0xFF7AEFCC,ROM1,ROM1 offset 0x77AEFCC
+ptpip_sock_accept,0xFF7AF160,ROM1,ROM1 offset 0x77AF160
+ptpip_sock_create,0xFF7AF220,ROM1,ROM1 offset 0x77AF220
+ptpip_create_client,0xFF7AF2CC,ROM1,ROM1 offset 0x77AF2CC
+ptpip_close_server,0xFF7AF344,ROM1,ROM1 offset 0x77AF344
+socket_close_if_valid,0xFF7AF380,ROM1,ROM1 offset 0x77AF380
+ptpip_set_keepalive,0xFF7AF38C,ROM1,ROM1 offset 0x77AF38C
+ptpip_errno_handler,0xFF7AF3B4,ROM1,ROM1 offset 0x77AF3B4
+audio_thresholds,0xFFA1844C,ROM1,ROM1 offset 0x7A1844C

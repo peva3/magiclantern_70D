@@ -2208,3 +2208,65 @@ All software-layer reverse engineering is now complete:
 
 5. **Defect/pixel mapping** — defect management system mapped, could enable better hot pixel suppression
 
+---
+
+## Sprint 30 — Ghidra Disassembly & Full Firmware RE Plan (2026-05-05)
+
+### External Resources Discovered
+
+#### Forum Archives
+- **70D development thread** (topic 14309, 139 pages, Jan 2015—Nov 2022): Survives via Wayback Machine at `web.archive.org`. nikfreak was the sole 70D ML developer. Last active dev post (page 139, post #3466, Apr 2022): theBilalFakhouri states *"Currently there is no active developer on 70D... 70D has a unique Dual Pixel sensor... more research is required."* Development has been completely dormant since 2022.
+- **nikfreak's bitbucket** (`70D_merge_fw112`): Now 404. Source previously at `https://bitbucket.org/nikfreak/magic-lantern/branch/70D_merge_fw112`.
+- **CMOS/ADTG/Digic register investigation** (topic 10111, 51 pages, 2014-2023): Critically important RE thread by a1ex documenting: ADTG column gain registers `0x8882-0x8888`, black level register `0x8880`, DIGIC `0xC0F0819C` (SaturateOffset), `SHAD_GAIN` at `0xC0F08030`. Source: `adtg_gui.mo`, `iso_regs.mo`, `raw_diag.mo` modules at `builds.magiclantern.fm/modules.html` and bitbucket iso-research branch.
+
+#### ROM Structure (Confirmed via detect_rom_type.py)
+| File | Size | Type | Memory Base | Content |
+|------|------|------|-------------|---------|
+| `ROM0.BIN` | 8MB | ASSET ROM (score 0.8) | `0xF0000000` | UI menus, strings, GUI resources, `<MENU>`, Copyright-Info, "activate movie" |
+| `ROM1.BIN` | 16MB | CODE ROM (score 1.0) | `0xF8000000` | DryOS kernel, Canon firmware code, DRYOS version/panic messages |
+| `SFDATA.BIN` | 16MB | Sensor calibration data | — | ADTG tables, pixel maps, ISO curves (no code/asset markers) |
+
+**Correction from prior assumptions:** The `detect_rom_type.py` script confirms ROM0 = assets (opposite of 77D convention which has ROM0=code). The firmware entry at `0xFF0C0000` is in ROM1 address space. After boot, the firmware copies itself from ROM1 to RAM at the expected addresses.
+
+#### Ghidra Toolchain Status
+- Ghidra is **NOT installed** in the workspace. Scripts exist at `tools/ghidra/`: `create_project_from_roms.py` (skeleton, needs completion), `detect_rom_type.py` (working), `merge_rom_copy_files.py` (exists).
+- Ghidra must be installed separately (download from ghidra-sre.org, version 11.x recommended for ARMv5 THUMB support).
+- Once installed: `python3 tools/ghidra/create_project_from_roms.py 70D --rom0 roms/70D/ROM0.BIN --rom1 roms/70D/ROM1.BIN`
+
+### Sprint 30 Task Plan
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 30.1 | Download 70D forum archives from Wayback Machine | IN PROGRESS | All 139 pages of topic 14309 + 51 pages of topic 10111 |
+| 30.2 | Generate NSTUB-to-ROM-offset cross-reference | PENDING | Maps `stubs.S` addresses to ROM0/ROM1 offsets |
+| 30.3 | Download iso-research source modules | PENDING | adtg_gui.mo, iso_regs.mo, raw_diag.mo |
+| 30.4 | Complete Ghidra project creation script | PENDING | Fill in create_project_from_roms.py skeleton |
+| 30.5 | Generate full symbol table for Ghidra import | PENDING | 270 ML symbols + 150+ NSTUBs as Ghidra CSV labels |
+| 30.6 | DRYOS API identification & documentation | PENDING | 50+ DryOS syscalls from stubs.S + eos.c model params |
+| 30.7 | WiFi chipset identification | PENDING | SDIO CMD3 probe for manufacturer ID |
+| 30.8 | ADTG/Sensor register map (70D-specific) | PENDING | From iso-research findings applied to 70D |
+
+### Sprint 30 ROM Analysis Results
+
+**ROM type detection** (`detect_rom_type.py`):
+- `ROM0.BIN`: Code score = 0.0, Asset score = **0.8** → ASSET ROM (menus, strings, UI)
+- `ROM1.BIN`: Code score = **1.0**, Asset score = 0.0 → CODE ROM (DryOS, firmware functions)
+- `SFDATA.BIN`: Code score = 0.0, Asset score = 0.0 → Sensor calibration data
+
+**DIGIC V default memory map (from QEMU model_list.c):**
+- ROM0: `0xF0000000` (8MB) — assets
+- ROM1: `0xF8000000` (16MB) — code
+- RAM: `0x40000000`–`0x5FFFFFFF` (512MB)
+- MMIO: `0xC0000000`–`0xDFFFFFFF`
+- Firmware entry: `0xFF0C0000` (cstart at `0xFF0C1BA8`)
+- Boot flags: `0xF8000000` (first word of ROM1)
+
+**Ghidra import prerequisites (for when Ghidra is available):**
+1. Create project: e.g. `70D.gpr`
+2. Import `ROM1.BIN` as binary at address `0xF8000000` (ARM little-endian, THUMB mode)
+3. Import `ROM0.BIN` as binary at address `0xF0000000` (data only, no analysis)
+4. Apply 270 ML symbols + NSTUBs as label annotations
+5. Run auto-analysis with ARM plugin (adjust timeout for 16MB code ROM)
+6. Apply known function signatures from stubs (parameter counts, return types)
+7. The firmware copy-to-RAM addresses (0xFF0Cxxxx, 0x0003xxxx, 0x0005xxxx, 0x0045xxxx, 0x0046xxxx, 0x0047xxxx) should be labeled in ROM1 offsets (0xF8000000 + relative offset)
+

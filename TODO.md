@@ -1218,30 +1218,64 @@ hw_test v19 dumps 3 RAM regions (33MB total) to SD card. Analysis on development
 
 ---
 
-### Long-Term Vision
+## Sprint 30 — Ghidra Disassembly & Full Firmware RE (2026-05-05)
 
-#### A. Full Hardware Abstraction
-- Complete sensor emulation
-- Audio codec emulation
-- WiFi stack emulation
-- Touch screen emulation
-- Button matrix emulation
+**Status:** 🔄 IN PROGRESS — External resources discovered, ROM types confirmed, Ghidra project not yet created
 
-#### B. Automated Testing Pipeline
-- CI/CD integration
-- Automated regression tests
-- Performance tracking
-- Issue detection
+### S30.1 — Download 70D Forum Archives from Wayback Machine
+- [ ] Download all 139 pages of topic 14309 (70D dev thread)
+- [ ] Download all 51 pages of topic 10111 (CMOS/ADTG RE thread)
+- [ ] Archive to `tools/forum_archives/`
+- [ ] Extract key findings (stub addresses, register values, known bugs)
+- [ ] **Status:** PENDING
 
-#### C. Development Tools
-- Interactive debugging UI
-- Memory visualization
-- Performance profiler
-- Configuration editor
+### S30.2 — Generate NSTUB-to-ROM-Offset Cross-Reference
+- [ ] Parse `platform/70D.112/stubs.S` for all NSTUB entries
+- [ ] Compute ROM1 offsets: `stub_addr - 0xFF000000 + 0xF8000000`
+- [ ] Generate Ghidra-compatible label CSV file
+- [ ] Distinguish between ROM0 (asset) and ROM1 (code) stubs
+- [ ] **Status:** PENDING
 
-#### D. Documentation
-- API documentation
-- Emulation accuracy notes
-- Known issues list
-- Best practices guide
+### S30.3 — Download iso-research Source Modules
+- [ ] Download `adtg_gui.mo` source from bitbucket iso-research branch
+- [ ] Download `iso_regs.mo` source from bitbucket iso-research branch
+- [ ] Download `raw_diag.mo` source from builds.magiclantern.fm
+- [ ] Cross-reference register patterns with 70D hardware tests
+- [ ] **Status:** PENDING
+
+### S30.4 — Complete Ghidra Project Creation Script
+- [ ] Fill in `tools/ghidra/create_project_from_roms.py` body
+- [ ] Add ROM0/ROM1 detection logic (uses detect_rom_type.py)
+- [ ] Add label import from S30.2 CSV
+- [ ] Add firmware entry point marking
+- [ ] **Status:** PENDING
+
+### S30.5 — Generate Full Symbol Table for Ghidra Import
+- [ ] Collect all 270+ ML symbols from RAMDUMP.md Section 4
+- [ ] Collect all 150+ NSTUBs from stubs.S
+- [ ] Convert to Ghidra CSV label format (address, name, type)
+- [ ] Map RAM addresses to ROM1 offsets where possible
+- [ ] **Status:** PENDING
+
+### S30.6 — DRYOS API Identification
+- [ ] Document all DryOS syscalls used in stubs.S
+- [ ] Cross-reference against QEMU model parameters (eos.c model_list.c)
+- [ ] Identify DRYOS version from ROM strings
+- [ ] Map SWI call numbers to function names
+- [ ] **Status:** PENDING
+
+### S30.7 — WiFi Chipset Identification
+- [ ] Write hw_test probe for SDIO CMD3 (manufacturer ID)
+- [ ] Identify WLAN chipset from SDIO response
+- [ ] Cross-reference against known Canon WiFi chips (Broadcom BCM4329/BCM4334)
+- [ ] **Status:** PENDING
+
+### S30.8 — ADTG/Sensor Register Map (70D-specific)
+- [ ] Apply iso-research ADTG findings (0x8882-0x8888, 0x8880) to 70D
+- [ ] Test column gain adjustment on physical 70D
+- [ ] Map DIGIC registers 0xC0F0819C (SaturateOffset) for 70D
+- [ ] Map SHAD_GAIN 0xC0F08030 behavior on 70D
+- [ ] **Status:** PENDING
+
+---
 
