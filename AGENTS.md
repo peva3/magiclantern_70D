@@ -2566,3 +2566,47 @@ Full AK4646 init sequence traced and documented:
 | LV/EVF | Evf, LvCommon, HeadControl, Path/Lv* |
 | Sensor | SensorDrive, Device/TG/TGdriver |
 
+---
+
+## EOS M (M1) Platform — Status
+
+**Firmware:** 2.0.2 | **DIGIC:** V | **Status:** Pre-hardware (camera en route, 2026-05-05)
+
+### Overview
+The EOS M (original/M1) is Canon's first mirrorless camera (2012). Shares the 18MP sensor with 650D/700D/100D family. Mirrorless architecture means no MLU, no optical viewfinder, simpler capture path. Key platform differences from 70D are documented in `doc/EOS-M1.md`.
+
+### Key Differences from 70D
+| Aspect | EOS M | 70D |
+|--------|-------|-----|
+| RAM | 256MB | 512MB |
+| Boot method | Classic (boot-d45.o) | AllocateMemory pool |
+| Task hooks | Old-style | New (`CONFIG_NEW_DRYOS_TASK_HOOKS`) |
+| WiFi | None | Built-in |
+| Sensor | 18MP Hybrid CMOS AF | 20.2MP Dual Pixel AF |
+| LV_FOCUS_DATA | **Supported** (QEMU spells exist) | Not supported |
+| SD overclock | 240MHz hybrid | 160MHz max |
+| Stubs count | ~139 | ~277 |
+| ASIF/Beep | Hangs camera | Works |
+| EDMAC write_chan | 0x13 (2 bytes/xfer) | 0x11 (8 bytes/xfer) |
+
+### Current Status (2026-05-05)
+- **Build**: 448KB autoexec.bin, 20 modules — compiles cleanly
+- **QEMU**: Model loads, ROMs found, memory mapped. `CF init failed` with placeholder ROMs — real dumps needed for firmware boot.
+- **Modules**: 20 included (no hw_test, ptptun, wifisrv, adtglog2 — these need porting)
+- **Test script**: `./test_qemu.sh EOSM --boot` works for model testing
+- **`doc/EOS-M1.md`**: Comprehensive platform analysis created (549 lines)
+- **`doc/M1-TODO.md`**: Development roadmap tracking
+
+### Pre-Hardware Tasks
+| Task | Status |
+|------|--------|
+| Fix QEMU ROM loading (QEMU_EOS_WORKDIR) | ✅ DONE |
+| Create doc/EOS-M1.md | ✅ DONE |
+| Create doc/M1-TODO.md | ✅ DONE |
+| Update AGENTS.md with EOSM section | ✅ DONE (this) |
+| Port hw_test module | ✅ DONE |
+| Port ptptun module | ✅ DONE |
+| Add 96kHz to mlv_snd | ✅ DONE (already in code) |
+| Write hardware test plan | ✅ DONE (doc/eosm_test_plan.md) |
+| Set up EOSM GDB scripts | ✅ DONE (boot.gdb) |
+

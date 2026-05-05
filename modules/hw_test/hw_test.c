@@ -43,7 +43,11 @@
  * NO call() to known-dangerous functions (EnableBootDisk, TurnOnDisplay).
  */
 
+#ifdef CONFIG_EOSM
+#define VERSION "hw_test v27 (EOSM port) — DIGIC V hardware proving ground"
+#else
 #define VERSION "hw_test v27 — FPS stability, ADTG/SD mode, extended call() tests"
+#endif
 
 static int t_total, t_pass, t_skip, t_fail, scr_y;
 static FILE *log_fp;
@@ -305,7 +309,7 @@ static const reg_entry imgproc_regs[] = {
 };
 
 static const reg_entry misc_regs[] = {
-    {"CARD_LED", 0xC022C06C},
+    {"CARD_LED", CARD_LED_ADDRESS},
     {0, 0}
 };
 
@@ -385,8 +389,13 @@ static void hw_task(void *unused)
         char buf[80];
         snprintf(buf, sizeof(buf), "Model=0x%x %s %s", camera_model_id, camera_model, firmware_version);
         info(buf);
+#ifdef CONFIG_EOSM
+        int ok = (camera_model_id == 0x80000331);
+        rst(ok, "model_id_EOSM", ok ? 0 : "wrong camera");
+#else
         int ok = (camera_model_id == 0x80000325);
         rst(ok, "model_id_70D", ok ? 0 : "wrong camera");
+#endif
         rst(shooting_mode >= 0, "shooting_mode", shooting_mode == 0 ? "boot" : 0);
         rst(gui_state == 2, "gui_state_active", gui_state == 2 ? 0 : "not active");
     }
@@ -555,6 +564,7 @@ static void hw_task(void *unused)
 
     blink_delay(100);
 
+#ifdef CONFIG_70D
     /* ════════════════════════════════════════
      * S11: REGISTER DUMP — DUAL ISO (S6)
      * ════════════════════════════════════════ */
@@ -650,6 +660,10 @@ static void hw_task(void *unused)
         /* ISO push register */
         hexval("ISO_PUSH_D5", shamem_read(0xC0F42744));
     }
+#else
+    hdr("DUAL ISO REGISTERS (S6)");
+    rst(0, "dual_iso_regs_70D_only", "EOSM probe not yet ported");
+#endif
 
     blink_delay(100);
 
@@ -799,6 +813,7 @@ static void hw_task(void *unused)
         rst(1, "wifi_stubs_documented", 0);
     }
 
+#ifdef CONFIG_70D
     /* ════════════════════════════════════════
      * S16b: WIFI / PTPIP STUB VALIDATION (S23)
      * ════════════════════════════════════════
@@ -901,7 +916,15 @@ static void hw_task(void *unused)
         info("Socket API load status indicates if NW is initialized");
         rst(1, "wifi_probe_complete", 0);
     }
+#else
+    hdr("WIFI / PTPIP (S23)");
+    rst(0, "ptpip_stubs", "SKIP (no WiFi on EOSM)");
+    rst(0, "sock_api_loaded", "SKIP (no WiFi on EOSM)");
+    rst(0, "nw_cmd_interface", "SKIP (no WiFi on EOSM)");
+    rst(1, "wifi_probe_complete", "SKIP (no WiFi on EOSM)");
+#endif
 
+#ifdef CONFIG_70D
     /* ════════════════════════════════════════
      * S30.7: WIFI CHIPSET PROBE
      * ════════════════════════════════════════
@@ -994,6 +1017,13 @@ static void hw_task(void *unused)
             info("PTPIP server code at 0xFF7AEE80 confirmed resident (WiFi stack in ROM)");
         }
     }
+#else
+    hdr("WIFI CHIPSET PROBE (S30.7)");
+    rst(0, "wifi_ip_verify", "SKIP (no WiFi on EOSM)");
+    rst(0, "dlna_upnp_verify", "SKIP (no WiFi on EOSM)");
+    rst(0, "wlan_chip_strings", "SKIP (no WiFi on EOSM)");
+    rst(0, "wlan_sdio_drv_init", "SKIP (no WiFi on EOSM)");
+#endif
 
     log_flush();
     blink_delay(500);
@@ -1124,12 +1154,21 @@ static void hw_task(void *unused)
             uint32_t size;
         } ram_region;
 
+#ifdef CONFIG_EOSM
+        const ram_region regions[] = {
+            {"LOWER",  0x40000000, 0x01000000},  /* 16MB — firmware data */
+            {"MID",    0x41000000, 0x00800000},  /*  8MB — Canon structs / GUI buffers */
+            {"UPPER",  0x4E000000, 0x01000000},  /* 16MB — upper 256MB range */
+            {0, 0, 0}
+        };
+#else
         const ram_region regions[] = {
             {"LOWER",  0x40000000, 0x01000000},  /* 16MB — primary firmware data */
             {"ISO",    0x40400000, 0x00100000},  /*  1MB — ISO tables region */
             {"UPPER",  0x4E000000, 0x01000000},  /* 16MB — upper RAM / ML pool */
             {0, 0, 0}
         };
+#endif
 
         int dumps_ok = 0, total = 0;
         for (int r = 0; regions[r].label; r++) {
@@ -1261,6 +1300,7 @@ static void hw_task(void *unused)
         info("");
     }
 
+#ifdef CONFIG_70D
     /* ════════════════════════════════════════
      * S6: DUAL ISO CMOS TABLE DUMP
      * ════════════════════════════════════════ */
@@ -1329,6 +1369,12 @@ static void hw_task(void *unused)
         rst(mv3_ok == ISOS, "movie_CMOS3", "movie CMOS[3] mismatch");
         info("");
     }
+#else
+    hdr("DUAL ISO CMOS TABLES (S6)");
+    rst(0, "photo_CMOS0", "SKIP (70D-specific addresses)");
+    rst(0, "movie_CMOS0", "SKIP (70D-specific addresses)");
+    info("");
+#endif
 
     /* ════════════════════════════════════════
      * S8.2: AUDIO IC PROBE
@@ -1499,6 +1545,7 @@ static void hw_task(void *unused)
      * ════════════════════════════════════════ */
     hdr("CROP REC / ADTG REGISTERS (S5.8)");
     {
+#ifdef CONFIG_70D
         struct { const char *name; uint32_t addr; } cr_regs[] = {
             {"CMOS_0_WR",  0x26B54},
             {"ADTG_WR",    0x2684C},
@@ -1511,6 +1558,18 @@ static void hw_task(void *unused)
             {"ENGIO_HEAD4",0xC0F07150},
             {0,0}
         };
+#else
+        struct { const char *name; uint32_t addr; } cr_regs[] = {
+            {"CMOS_0_ADDR", 0xC0F06008},
+            {"ADTG_8172",  0xC0F38010},
+            {"ADTG_8173",  0xC0F38014},
+            {"ADTG_8178",  0xC0F38020},
+            {"ADTG_8179",  0xC0F38024},
+            {"ENGIO_HEAD3",0xC0F0713C},
+            {"ENGIO_HEAD4",0xC0F07150},
+            {0,0}
+        };
+#endif
         int found = 0;
         for (int i = 0; cr_regs[i].name; i++) {
             char b[80];

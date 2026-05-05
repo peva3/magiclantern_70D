@@ -91,6 +91,18 @@ done
 QEMU_CMD=("$QEMU_BIN" "-M" "$CAMERA" "-nographic" "$DEBUG_OPTS"
     "-drive" "if=sd,format=qcow2,file=$QEMU_DIR/sd.qcow2")
 
+# ── QEMU_EOS_WORKDIR for ROM path resolution ────────────────────────────────────
+export QEMU_EOS_WORKDIR="$ROM_DIR"
+
+# ── QEMU_EOS_DEBUGMSG for DebugMsg logging ─────────────────────────────────────
+if [[ " ${D_ARGS[*]} " =~ " debugmsg " ]]; then
+    case "$CAMERA" in
+        70D)  export QEMU_EOS_DEBUGMSG="0xFFA50C3C" ;;
+        EOSM) export QEMU_EOS_DEBUGMSG="0xFF1BE4AC" ;;
+        *)    echo "DebugMsg address not known for $CAMERA" ;;
+    esac
+fi
+
 if [ "$BOOT_MODE" -eq 1 ]; then
     ML_BUILD_DIR="$SCRIPT_DIR/platform/${CAMERA}.202/build"
     if [ -f "$ML_BUILD_DIR/autoexec.bin" ]; then
