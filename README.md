@@ -73,7 +73,7 @@ The last official 70D build had 20 modules, no hardware validation, and was base
 - Pre-deployment test suite (`tests/run_all.sh`) — catches symbol errors before camera
 - Auto-build system — all 31 modules rebuild on `make`, no stale artifacts
 - ~740 lines dead code removed, 10+ cleanup sprints
-- CHANGELOG.md with complete project history
+- [CHANGELOG.md](CHANGELOG.md) with complete day-by-day project history
 
 ### QEMU Emulation (qemu-eos)
 

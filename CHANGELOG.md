@@ -363,3 +363,74 @@ and `reticulatedpines/qemu-eos`.
 - **Module registers**: wifi_enable added to ML_MODULES in modules/Makefile and platform modules.included
 - All 7 RAM-loaded socket functions (0x0005xxxx) verified and used for TCP server
 - Build: 457KB autoexec.bin, 454KB magiclantern.bin (4.9KB module)
+
+## 2026-05-05 — Sprint 35: DRYOS Kernel Dispatch Architecture RE
+
+### Added
+- **Discovered: DIGIC V uses NO SWI/SVC instructions for system calls** (unlike typical ARM CPUs)
+- **RAM-loaded kernel modules**: firmware functions at 0x000xxxxx are loaded by `cstart` at boot
+- **Jump table at ROM1+0xBA4BB0**: `LDR PC,[PC,#-4]!` trampolines → RAM module addresses
+- **Wrap-around BL mechanism**: firmware at 0xFF0Cxxxx calls RAM via 32-bit address wrap
+- **cstart analysis**: 85 BL calls to RAM with 36 unique targets during boot
+- **Descriptor table**: at 0xFF0Axxxx for boot-time NSTUB fixup
+- **FIO dispatch fully documented**: filesystem driver struct with function pointer table
+- **Full analysis**: `doc/dryos_dispatch.md`
+
+### Changed
+- **0xFF000000 corrected**: previously modeled as ROM1 mirror in QEMU (real HW has RAM here)
+- **AGENTS.md**: update discovered 7 RAM jump tables, 41 entries total
+- **TODO.md**: Sprint 35 completion
+
+### Fixed
+- SWI dispatch gap: resolved via QEMU `-d int` trace — zero SWI exceptions during firmware boot
+- Audio codec: AKM AK4646 confirmed via build system (ML_AUDIO_OBJ default, no 70D override)
+- GPS: 70D has no internal GPS (external GP-E2 only); call() returns -1 is expected
+- MMIO registers expanded from ~45 to ~179 across 15+ categories
+
+### Build
+- autoexec.bin: 457KB, magiclantern.bin: 454KB, 28 modules
+
+## 2026-05-05 — Documentation Reorganization
+
+### Changed
+- **Analysis docs moved to `doc/` directory**: RAMDUMP.md → doc/ramdump.md, DEEPDIVE.md → doc/deepdive.md,
+  WIFI_INIT.md → doc/wifi_init.md, HARDWARE-TESTING.md → doc/hardware_testing.md,
+  QEMU_VERSION_ANALYSIS.md → doc/qemu_version_analysis.md, NEXT_STEPS.md → doc/next_steps.md,
+  FIRMWARE_ANALYSIS.md → doc/firmware_analysis.md, ROM-DUMP.md → doc/rom_dump.md
+- All cross-references updated across AGENTS.md, CHANGELOG.md, README.md, TODO.md
+- Core dump file (core.1593555) removed
+- `70d-dev/` directory removed from repo (stale build deployment)
+
+## 2026-05-05 — CONFIG_AUDIO_CONTROLS Enabled + 96kHz Sample Rate
+
+### Added
+- **CONFIG_AUDIO_CONTROLS enabled** (`platform/70D.112/internals.h`): unlocks 8 audio features
+  - Analog gain (0-32dB in 8 steps), digital gain (L/R independent)
+  - AGC toggle (Canon's auto-level permanently disabled via `my_sounddev_task` override)
+  - Wind filter (HPF), input source (internal/ext/balanced/auto)
+  - Mic power (Low Z / High Z), headphone monitoring, headphone volume
+- **96kHz sample rate in mlv_snd**: added to `mlv_snd_rates[]` selector — AK4646 supports it
+- **sounddev_active_in NSTUB**: added at same address as SoundDevActiveIn (0xFF11936C)
+
+### Fixed
+- **Null dereference in audio-ak.c:191**: guarded `HOTPLUG_VIDEO_OUT_STATUS_ADDR` write
+  (value is 0 on 70D, causing `-Wnull-dereference` error with -Werror)
+
+### Changed
+- 24-bit mode documented as blocked by missing `SetASIFMode` address (needs ROM search;
+  present on 6D.116 at 0xFF11CD44, 700D.113 at 0xFF109510)
+- mlv_snd_prepare_audio(): falls back to 16-bit if 24-bit is selected (infrastructure ready)
+
+### Build
+- autoexec.bin: 461KB (+4KB from 457KB baseline, safe at 656KB limit)
+
+## 2026-05-05 — Script Reorganization
+
+### Changed
+- **Root directory cleaned**: moved test/tool scripts to appropriate subdirectories
+  - `test_module_load.sh` → `tests/test_module_load.sh`
+  - `run_hw_test.sh` → `tests/run_hw_test.sh`
+  - `extract_hw_logs.sh` → `tools/extract_hw_logs.sh`
+- **Kept in root**: `test_70d_qemu.sh`, `deploy.sh`, `validate_build.sh`
+- Fixed internal path references in moved scripts (SCRIPT_DIR resolution)
+- Build verification test (`tests/run_all.sh`) already in `tests/`
