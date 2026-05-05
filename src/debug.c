@@ -417,8 +417,12 @@ static void hw_test_task(void* priv, int unused)
     TEST_RESULT(ok12);
 
     TEST_HEADER(13, "battery level");
-    int batt = GetBatteryLevel();
-    int ok13 = (batt >= 0 && batt <= 100);
+    int ok13 = 0;
+    int batt = -1;
+    #ifdef CONFIG_BATTERY_INFO
+    batt = GetBatteryLevel();
+    ok13 = (batt >= 0 && batt <= 100);
+    #endif
     if (ok13) LOG("[DETAIL] battery=%d%%\n", batt);
     TEST_RESULT(ok13);
 
