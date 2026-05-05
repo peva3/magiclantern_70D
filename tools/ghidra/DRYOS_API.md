@@ -1,6 +1,12 @@
 DRYOS API Reference — Canon 70D (FW 1.1.2, DIGIC V)
 ============================================================
 
+ARCHITECTURE: DIGIC V DryOS does NOT use ARM SWI/SVC for syscalls.
+Instead, kernel services are compiled as RAM-loaded modules dispatched
+via BL to RAM addresses (0x000xxxxx range). ROM1-resident NSTUB wrappers
+load function pointers from RAM module space and call through them.
+This is a C-level function table dispatch — no SWI vector table exists.
+
 Kernel functions loaded at 0x000xxxxx offsets (DryOS module space)
 ROM1-resident wrappers use absolute 0xFFxxxxxx addresses
 
