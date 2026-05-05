@@ -2312,3 +2312,32 @@ All software-layer reverse engineering is now complete:
 - To re-run analysis: `analyzeHeadless /app/70d 70D -process ROM1.BIN -postScript ApplyLabels.java`
 - To import: `python3 tools/ghidra/create_project_from_roms.py 70D --rom0 roms/70D/ROM0.BIN --rom1 roms/70D/ROM1.BIN`
 
+### Sprint 31 RE Discoveries
+
+#### Eventproc Dispatch Analysis
+- `call()` at `0xF814439C` dispatches by name string lookup
+- Eventproc strings stored near call() in ROM1 (e.g., EnableBootDisk at 0xF8144198)
+- Strings discovered: EnableFirmware, DisableFirmware, EnableBootDisk, DisableBootDisk, EnableMainFirm, DisableMainFirm, Prepare(Disable/Enable)Firmware
+- Source: `./BootInfo/BootInfo.c` registers boot eventprocs
+- Table walker at `FUN_f8144420` iterates eventproc tables (8-byte entries: string_ptr, func_ptr)
+
+#### WiFi Chipset: "Diana" Platform (Broadcom)
+- Codename **"diana"** discovered in ROM source paths: `./platform/diana/dry_nell_task.c`, `./ifwrapper/sdio/diana/esdio_dcp.c`
+- Full WiFi crypto stack confirmed: RSA, DH, SHA-256, AES, WPA2, WPS, X.509
+- "nell" namespace = Canon WiFi firmware/driver stack
+- SDIO PTP transport confirmed: `./PtpMgr/ComFrame/PTPRspnd/SdioPTPTrnsp2/`
+- Full source tree reconstructed: `tools/ghidra/SRCFILES.md` (200+ source file paths)
+
+#### Canon Source Tree (key paths)
+| System | Files |
+|--------|-------|
+| Kernel | KerTask, KerSem, KerSys, KerFlag, KerQueue, KerRLock |
+| Wi-Fi | WlanMgr, WlanSDIODriver, Nell*, platform/diana, wpsa  |
+| DLNA | DlnaMgr, DlnaUtility, DmsCtrl, httpd/cUPeNdHttpClient |
+| PTP | PtpMgr/ComFrame/PTPRspnd (USB + SDIO transports) |
+| GPS | Gps/Gps.c |
+| Touch | Touch/TouchState.c |
+| Audio | AudioIC, ASIF, AudioCtrl, SoundDevice |
+| LV/EVF | Evf, LvCommon, HeadControl, Path/Lv* |
+| Sensor | SensorDrive, Device/TG/TGdriver |
+

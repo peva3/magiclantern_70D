@@ -1312,9 +1312,18 @@ hw_test v19 dumps 3 RAM regions (33MB total) to SD card. Analysis on development
 
 ### S31.6 — Pending Ghidra Work (Future)
 - [ ] Identify DryOS SWI handler dispatch table
-- [ ] Map the eventproc name-to-address table used by call()
-- [ ] Extract call graph for ML-relevant subsystems
+- [x] Map the eventproc name-to-address table used by call() — **strings found at 0xF8144154+, source mapped**
+- [x] Extract call graph for ML-relevant subsystems — **ClusterReport.java executed, all 98 symbols analyzed**
 - [ ] Annotate interrupt handlers
+
+### Sprint 31 Additional Findings
+- [x] **Eventproc dispatch analyzed**: call() at 0xF814439C, table walker at FUN_f8144420, strings at 0xF8144154+ (BootInfo.c)
+- [x] **WiFi chipset "Diana" identified**: codename found in ROM paths (`platform/diana`, `nell` namespace)
+- [x] **Full Canon source tree reconstructed**: 200+ file paths in `tools/ghidra/SRCFILES.md`
+- [x] **Function cluster report**: EngDrvOut (2802 callers), prop_request_change (503), call (153), engio_write (153)
+- [x] **WiFi crypto stack confirmed**: RSA, DH, SHA-256, AES, WPA2, WPS, X.509 all present in ROM
+- [x] **SDIO PTP transport confirmed**: `SdioPTPTrnsp2` directory — WiFi can communicate over PTP via SDIO
+- [x] DLNA, GPS, Touch source paths confirmed in ROM strings
 
 ---
 
