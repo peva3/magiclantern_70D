@@ -1354,25 +1354,35 @@ hw_test v19 dumps 3 RAM regions (33MB total) to SD card. Analysis on development
 
 ## Sprint 33 — Eventproc Address Mapping (2026-05-05)
 
-**Status:** ✅ COMPLETE — 96 eventproc functions mapped from name to address
+**Status:** ✅ COMPLETE — 263 eventproc functions mapped from name to address across 40 tables
 
 ### S33.1 — Search ROM for Eventproc Tables
-- [x] Python script `find_eventproc_tables.py`: searches ROM for string+function-pointer pairs
-- [x] Found 8 distinct eventproc tables in ROM1
-- [x] **Result:** 96 eventproc names → runtime address mappings
-- [x] Tables at: 0xA15C00 (FA display/LV), 0xBD7300 (FA property), 0xDC70F8 (Power),
-      0xDDF93C (PTP), 0xDE0298 (Filter/Display), 0xDE04BC (Touch)
-- [x] **Status:** COMPLETE
+- [x] Comprehensive scan of ROM1.BIN for 8-byte (name_ptr, func_ptr) pairs with C-identifier name validation
+- [x] **40 distinct eventproc tables found**, 263 entries (260 unique functions)
+- [x] Tables span: FA_* (4 tables, ~140 entries), Display/Filter (0xDE0298, 23 entries), Touch (0xDE0464, 26 entries),
+      WiFi/Protocol (0xBD8C30: PrepareCommunication, SetWiFiEnable, etc), PTP (0xDDF93C), 
+      Power (0xDC70F8: Enable/DisablePowerSave), Debug Mon (0xA81DBC), 
+      CU Capture (0xBDF4C0: 11 entries), Display TFT (0xDC6A8C), LV Debug (0xDC87AC), 
+      Grid/Guides (0xDC88A4: gmtwaku_*), Shutter (0xA14E78: sht_*),
+      Memory Nav (0xDDE1B4), ISO Speed (0xBDFD70), Test Images (0xDE0228)
+- [x] **Output:** `tools/ghidra/eventproc_full_map.csv` (263 mappings)
+- [x] Discovered 315 new eventproc names NOT in original RAMDUMP.md list
 
 ### S33.2 — Apply Labels to Ghidra Project
-- [x] Updated all_symbols.csv with 96 new eventproc entries (315 total)
-- [x] Re-ran ApplyLabels.java: 194 ROM1-resident symbols applied
-- [x] **Result:** 122,430 total symbols in Ghidra project
-- [x] **Status:** COMPLETE
+- [x] `eventproc_labels.csv` generated with Ghidra-compatible format (ROM1 address + name)
+- [x] 457 total labels appended to `all_symbols.csv` (existing + new eventproc entries)
+- [x] Applied via `analyzeHeadless` with `ApplyLabels.java`
+- [x] **Result:** All 263 eventproc entries applied as ROM1-resident labels
 
 ### S33.3 — Commit and Document
-- [x] Save eventproc_map.csv
+- [x] Save eventproc_full_map.csv, eventproc_labels.csv
 - [x] Update AGENTS.md with eventproc discovery
-- [x] Build, commit, push
+- [x] Updated TODO.md with current status
 - [ ] **Status:** PENDING (need to commit)
+
+### Known Gaps
+- ~200 eventproc names still UNMAPPED (not found in any table): Eeko_* (61), PROP_* (33), AfCtrl_* (18), FIO_* (17),
+      WLANSDCOMDRV_* (11), LVGAIN_* (10), SDRV_* (12), AllocateMemoryResource (6), ASSE_* (5), IVA_* (3)
+- These likely use a separate dispatch mechanism (hash table, direct call, or dynamically registered)
+- The BSS/data initialization tables for Eeko image processing paths need different discovery approach
 
