@@ -92,6 +92,7 @@ qemu-eos/stubs/
 qemu-eos/trace/trace-generated.c
 qemu-eos/trace/trace-generated.h
 qemu-eos/trace/trace-generated-timestamp.c
+core.*
 qemu-eos/magiclantern/core.*
 qemu-eos/magiclantern/disk_images/*.qcow2
 qemu-eos/ui/keycodemapdb/

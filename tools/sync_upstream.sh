@@ -22,6 +22,12 @@ QEMU_REPO="https://github.com/reticulatedpines/qemu-eos.git"
 QEMU_BRANCH="master"
 QEMU_SUBTREE_PREFIX="qemu-eos"
 
+# NOTE on qemu-eos upstream: The upstream repo's master branch no longer contains
+# Canon EOS emulation code (hw/eos/* was removed). The last branch with EOS code
+# is "qemu-eos-v4.2.1" which is what our subtree was forked from. Merging from
+# master would DELETE all EOS emulation. DO NOT merge qemu-eos master unless
+# upstream restores the EOS code. Our subtree is the canonical version.
+
 # ── helpers ──────────────────────────────────────────────────────────────────
 green()  { printf "\033[32m%s\033[0m\n" "$*"; }
 yellow() { printf "\033[33m%s\033[0m\n" "$*"; }

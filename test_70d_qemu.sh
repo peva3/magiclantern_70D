@@ -31,7 +31,7 @@ BUILD=1
 BOOT_MODE=0
 D_ARGS=()
 SERIAL_FILE=""
-DISPLAY_OPT="-display none"
+DISPLAY_OPT=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in

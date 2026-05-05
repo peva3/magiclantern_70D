@@ -14,7 +14,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 4. Extract modules: `unzip -o platform/70D.112/build/magiclantern.zip -d 70d-latest/`
 5. Update size tracking log below
 
-**Current Build:** 457KB (2026-04-30) - hw_test v27: 35 PASS / 5 SKIP / 0 FAIL on physical 70D. **All automated hardware testing complete.** Full 512MB RAM dump (0x40000000-0x5FFFFFFF) comprehensively analyzed: 509MB data pages, 12,639 unique strings, ~520 callable functions extracted, 270+ ML symbols confirmed, 30+ PROP_ IDs mapped, 55 Canon source file paths identified. Canon WiFi/DLNA/UPnP stack fully documented. GPS, touch, defect management systems discovered. 31 modules auto-build. See [CHANGELOG.md](CHANGELOG.md) for full project history.
+**Current Build:** 461KB (2026-05-05) - CONFIG_AUDIO_CONTROLS enabled, 96kHz sample rate, EOS M QEMU support. RE complete (~95%); all software-layer gaps closed. Generic `test_qemu.sh` supports 70D + 19 other models. See [CHANGELOG.md](CHANGELOG.md) for full project history.
 **CRITICAL:** Build with `make -j$(nproc)` (no CONFIG_QEMU=y) for hardware deployment. QEMU builds include testing code that causes red LED on physical 70D.
 
 ---
@@ -80,6 +80,8 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 
 The qemu-eos codebase is merged directly into this repo (as a git subtree with full history). No separate clone needed.
 
+**Important:** The upstream `reticulatedpines/qemu-eos` master branch no longer contains Canon EOS emulation (hw/eos/ deleted). Our subtree was merged from `qemu-eos-v4.2.1` tag, which is the canonical EOS emulation version. DO NOT merge upstream master into the subtree.
+
 ### One-time build setup:
 ```bash
 # 1. Populate nested submodules (keycodemapdb, dtc, capstone)
@@ -99,15 +101,20 @@ make -j$(nproc)
 
 ### Quick test:
 ```bash
-./test_70d_qemu.sh              # Quick test (10s, placeholder ROMs)
-./test_70d_qemu.sh --gdb        # With GDB server
-./test_70d_qemu.sh --boot-trace # GDB + boot-trace script
+./test_qemu.sh 70D --boot                  # Quick 70D test (10s, placeholder ROMs)
+./test_qemu.sh EOSM --boot                 # Quick EOS M test
+./test_qemu.sh 70D --gdb                   # 70D with GDB server
+./test_qemu.sh 70D --boot-trace            # 70D GDB + boot-trace script
+./test_qemu.sh --list                      # List all supported models
 ```
 
 ### GDB scripts:
 - `qemu-eos/magiclantern/cam_config/70D/debugmsg.gdb` — Standard task/interrupt/func logging
 - `qemu-eos/magiclantern/cam_config/70D/boot.gdb` — Enhanced 4-phase boot trace
 - `qemu-eos/magiclantern/cam_config/70D/patches.gdb` — Patches only (sio_send_retry)
+
+### Supported Models:
+The test_qemu.sh script supports: 70D, EOSM, EOSM2, 100D, 200D, 5D3, 6D, 700D, 550D, 600D, 60D, 500D, 50D, 5D2, 5DC, 7D, 1100D, 650D, 1000D, 450D.
 
 ---
 
