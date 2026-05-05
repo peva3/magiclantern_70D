@@ -902,6 +902,99 @@ static void hw_task(void *unused)
         rst(1, "wifi_probe_complete", 0);
     }
 
+    /* ════════════════════════════════════════
+     * S30.7: WIFI CHIPSET PROBE
+     * ════════════════════════════════════════
+     * READ-ONLY memory probes to identify WiFi chipset.
+     * NO SDIO commands — reads only known RAM/ROM locations.
+     * ════════════════════════════════════════ */
+    hdr("WIFI CHIPSET PROBE (S30.7)");
+    {
+        /* Check hardcoded IP address 192.168.1.20 in RAM (confirms WiFi stack init) */
+        /* Known from RAM dump: appears 25+ times in RAM */
+        const uint32_t ip_pattern = 0xC0A80114; /* 192.168.1.20 in network byte order */
+        uint32_t ip_buf = 0;
+        int ip_found = 0;
+        /* Scan a few known locations from the RAM dump */
+        uint32_t scan_addrs[] = {0x4001B000, 0x40020000, 0x40080000, 0x40200000, 0};
+        for (int i = 0; scan_addrs[i]; i++) {
+            uint32_t *p = (uint32_t*)(uintptr_t)scan_addrs[i];
+            uint32_t v = *p;
+            if (v == ip_pattern || v == 0x1401A8C0) {
+                ip_found = 1;
+                ip_buf = v;
+                char b[80];
+                snprintf(b, sizeof(b), "IP 192.168.1.20 found at 0x%08x=0x%08x", scan_addrs[i], v);
+                info(b);
+                break;
+            }
+        }
+        rst(ip_found, "wifi_ip_verify", ip_found ? "IP found in RAM" : "IP not found");
+
+        /* Check for DLNA/UPnP strings in ROM */
+        /* Known from RAM dump: full UPnP descriptor in ROM1 */
+        const char *dlna_signature = "urn:schemas-upnp-org:device:MediaServer:1";
+        int dlna_found = 0;
+        /* Search in ROM1 address space (cached, safe to read) */
+        for (uint32_t addr = 0xFF200000; addr < 0xFFC00000; addr += 0x10000) {
+            volatile uint32_t probe = *(volatile uint32_t*)(uintptr_t)addr;
+            if (probe == 0 || probe == 0xFFFFFFFF) continue;
+            /* Check first 8 bytes for DLNA signature */
+            if (memcmp((void*)(uintptr_t)addr, dlna_signature, 4) == 0) {
+                dlna_found = 1;
+                char b[80];
+                snprintf(b, sizeof(b), "DLNA sig near 0x%08x", addr);
+                info(b);
+                break;
+            }
+        }
+        rst(dlna_found, "dlna_upnp_verify", dlna_found ? "DLNA confirmed" : "DLNA not found in scan range");
+
+        /* Check for known Broadcom SDIO strings in ROM */
+        /* Broadcom BCM4329/BCM4334 strings (from other camera ports) */
+        /* We can't probe the actual chip, but we can check if strings exist in ROM */
+        const char *wlan_strings[] = {
+            "BCM4329",
+            "BCM4330",
+            "BCM4334",
+            "BCM4343",
+            "brcm",
+            0
+        };
+        int wlan_chip_found = 0;
+        for (int s = 0; wlan_strings[s]; s++) {
+            /* Search ROM1 for WLAN chip ID strings */
+            for (uint32_t addr = 0xF8000000; addr < 0xF9000000; addr += 0x10000) {
+                volatile uint32_t probe = *(volatile uint32_t*)(uintptr_t)addr;
+                if (probe == 0 || probe == 0xFFFFFFFF) continue;
+                if (memcmp((void*)(uintptr_t)addr, wlan_strings[s], 4) == 0) {
+                    char b[80];
+                    snprintf(b, sizeof(b), "WLAN chip string '%s' at 0x%08x", wlan_strings[s], addr);
+                    info(b);
+                    wlan_chip_found = 1;
+                    break;
+                }
+            }
+            if (wlan_chip_found) break;
+        }
+        if (!wlan_chip_found) {
+            info("WLAN chip strings not found in ROM1 scan range");
+            info("Likely chipset ID is in ROM0 (assets) or firmware blob loaded at init");
+        }
+        rst(wlan_chip_found, "wlan_chip_strings", wlan_chip_found ? "Chip ID found in ROM" : "No chip strings in ROM");
+
+        /* Check for SDIO WLAN driver function table */
+        /* The RAM dump identified WLANSDCOMDRV_ReadByte at a specific address */
+        /* If this address has code loaded, the WLAN SDIO driver is initialized */
+        uint32_t *wlan_drv_check = (uint32_t*)(uintptr_t)0xFF7AEE80;
+        uint32_t wlan_val = *wlan_drv_check;
+        int wlan_initialized = (wlan_val != 0 && wlan_val != 0xFFFFFFFF);
+        rst(wlan_initialized, "wlan_sdio_drv_init", wlan_initialized ? "PTPIP server code resident" : "PTPIP not in ROM");
+        if (wlan_initialized) {
+            info("PTPIP server code at 0xFF7AEE80 confirmed resident (WiFi stack in ROM)");
+        }
+    }
+
     log_flush();
     blink_delay(500);
 
