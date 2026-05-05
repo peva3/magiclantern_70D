@@ -14,7 +14,7 @@ The 70D port was originally created by [nikfreak](https://bitbucket.org/nikfreak
 
 The result: a fully modern, buildable, and hardware-validated Magic Lantern for the Canon 70D.
 
-> **For exhaustive technical details on every module, reverse engineering finding, and hardware validation result, see [DEEPDIVE.md](DEEPDIVE.md).**
+> **For exhaustive technical details on every module, reverse engineering finding, and hardware validation result, see [doc/deepdive.md](doc/deepdive.md).**
 
 ---
 
@@ -166,8 +166,8 @@ magiclantern_70D/
 ├── camremote.py             # WiFi remote control
 ├── camtunnel.py             # USB PTP tunnel
 ├── CHANGELOG.md             # Full project history
-├── DEEPDIVE.md              # Exhaustive technical deep dive
-├── RAMDUMP.md               # Complete 512MB RAM dump analysis
+├── doc/deepdive.md              # Exhaustive technical deep dive
+├── doc/ramdump.md               # Complete 512MB RAM dump analysis
 ├── AGENTS.md                # Technical architecture deep dive
 ├── TODO.md                  # Remaining work
 └── qemu-eos/                # QEMU emulator (git subtree)

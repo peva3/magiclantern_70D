@@ -323,7 +323,7 @@ and `reticulatedpines/qemu-eos`.
 ### Documentation
 - AGENTS.md: comprehensive architectural analysis (22 sections, 50+ files analyzed)
 - TODO.md: sprint planning, hardware vs non-hardware task categorization
-- HARDWARE-TESTING.md: crop_rec calibration checklist
+- doc/hardware_testing.md: crop_rec calibration checklist
 - README.md: current status and progress tracking
 
 ## 2026-05-05 — Sprint 33: Eventproc Address Mapping Complete (263 entries, 40 tables)
@@ -340,7 +340,7 @@ and `reticulatedpines/qemu-eos`.
   - PTP: 1 table, 4 entries — PTP framework control
   - Others: 17 tables — shutter, pixel shift, power, GPU graphics, etc.
 - **263 unique functions mapped** from name to runtime address
-- **315 new eventproc names discovered** beyond original RAMDUMP.md list
+- **315 new eventproc names discovered** beyond original doc/ramdump.md list
 - **457 Ghidra labels applied** via analyzeHeadless/ApplyLabels.java
 
 ### Fixed

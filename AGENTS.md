@@ -806,7 +806,7 @@ MPU Stats: 250+ messages, 93 complete spell cycles, 0 hangs
 5. ⏳ Test property access (PROP_LV_LENS, etc.)
 
 ### Hardware Testing (Requires Physical Camera)
-1. Follow HARDWARE-TESTING.md checklist
+1. Follow doc/hardware_testing.md checklist
 2. Capture test frames for each crop mode
 3. Calibrate CMOS/ENGIO registers
 4. Enable and test CROP_PRESET_3X
@@ -839,7 +839,7 @@ All software-level validation has passed. The crop_rec module is correctly confi
 3. Verify image quality and stability
 4. Enable and test 3X_TALL mode
 
-See `HARDWARE-TESTING.md` for the complete hardware testing checklist.
+See `doc/hardware_testing.md` for the complete hardware testing checklist.
 # Ready for Hardware Testing - Canon 70D Magic Lantern
 
 ## Executive Summary
@@ -963,7 +963,7 @@ See `HARDWARE-TESTING.md` for the complete hardware testing checklist.
    - Verify stability
 
 ### Documentation
-- Use `HARDWARE-TESTING.md` checklist
+- Use `doc/hardware_testing.md` checklist
 - Record all register values
 - Capture sample frames
 - Note any crashes or issues
@@ -992,7 +992,7 @@ See `HARDWARE-TESTING.md` for the complete hardware testing checklist.
 ## Next Steps
 
 ### Immediate (Hardware)
-1. Follow HARDWARE-TESTING.md
+1. Follow doc/hardware_testing.md
 2. Calibrate CMOS registers (S5.5)
 3. Calibrate ENGIO registers (S5.6)
 4. Test CROP_PRESET_3X (S5.7)
@@ -1029,7 +1029,7 @@ See `HARDWARE-TESTING.md` for the complete hardware testing checklist.
 ## Contact & Resources
 
 **Repository:** https://github.com/peva3/magiclantern_70D  
-**Documentation:** See AGENTS.md, TODO.md, HARDWARE-TESTING.md  
+**Documentation:** See AGENTS.md, TODO.md, doc/hardware_testing.md  
 **QEMU Testing:** `./test_70d_qemu.sh --boot --no-build`
 
 ---
@@ -1103,7 +1103,7 @@ Until automated tests are implemented, follow this manual workflow:
 
 1. **Prioritize**: Decide if automated testing is worth development time vs manual testing
 2. **If automated**: Implement `hw_test` module with full hardware access
-3. **If manual**: Use HARDWARE-TESTING.md checklist for systematic testing
+3. **If manual**: Use doc/hardware_testing.md checklist for systematic testing
 
 **Recommendation**: Start with manual testing to validate the approach, then automate repetitive tests if needed.
 

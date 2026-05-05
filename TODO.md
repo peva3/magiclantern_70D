@@ -844,7 +844,7 @@ For collaboration or testing partnerships:
 - ✅ crop_rec module loads (32KB, in magiclantern.zip)
 - ✅ All 70D register addresses (CMOS_WRITE=0x26B54, ADTG_WRITE=0x2684C, ENGIO_WRITE=0xFF2BC6C4) verified in code
 - ✅ 70D-specific timer tables (TG_FREQ_BASE=32MHz) defined
-- ✅ Hardware calibration checklist documented in HARDWARE-TESTING.md
+- ✅ Hardware calibration checklist documented in doc/hardware_testing.md
 - ❌ Module task didn't execute within 60s timeout (low priority — normal in QEMU)
 - ❌ Cannot test crop_rec (no sensor model, no LV mode in QEMU)
 
@@ -1251,7 +1251,7 @@ hw_test v19 dumps 3 RAM regions (33MB total) to SD card. Analysis on development
 - [x] **Status:** COMPLETE
 
 ### S30.5 — Generate Full Symbol Table for Ghidra Import
-- [x] Collected 81 ML symbols from RAMDUMP.md with confirmed addresses
+- [x] Collected 81 ML symbols from doc/ramdump.md with confirmed addresses
 - [x] Merged with 166 NSTUBs = 219 total unique symbols
 - [x] CSV output: `tools/ghidra/all_symbols.csv` (Name, Address, Source)
 - [x] Ghidra label import: `tools/ghidra/all_symbols_ghidra.csv` (Label, Address)
@@ -1366,7 +1366,7 @@ hw_test v19 dumps 3 RAM regions (33MB total) to SD card. Analysis on development
       Grid/Guides (0xDC88A4: gmtwaku_*), Shutter (0xA14E78: sht_*),
       Memory Nav (0xDDE1B4), ISO Speed (0xBDFD70), Test Images (0xDE0228)
 - [x] **Output:** `tools/ghidra/eventproc_full_map.csv` (263 mappings)
-- [x] Discovered 315 new eventproc names NOT in original RAMDUMP.md list
+- [x] Discovered 315 new eventproc names NOT in original doc/ramdump.md list
 
 ### S33.2 — Apply Labels to Ghidra Project
 - [x] `eventproc_labels.csv` generated with Ghidra-compatible format (ROM1 address + name)
