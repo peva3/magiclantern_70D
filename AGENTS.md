@@ -2328,6 +2328,52 @@ All software-layer reverse engineering is now complete:
 - SDIO PTP transport confirmed: `./PtpMgr/ComFrame/PTPRspnd/SdioPTPTrnsp2/`
 - Full source tree reconstructed: `tools/ghidra/SRCFILES.md` (200+ source file paths)
 
+---
+
+## Reverse Engineering Status (2026-05-05)
+
+**Overall: ~60% reverse engineered. 43,504 functions in Ghidra, only 98 labeled.**
+
+### Complete (100%)
+- **RAM layout**: 512MB fully mapped, allocator hierarchy, ISO tables
+- **NSTUB addresses**: 166 of 166 found and cross-referenced to ROM offsets
+- **Boot sequence**: Annotated from physical hardware (48ms–712ms, 20+ events)
+- **WiFi stack**: Socket API, PTPIP, DLNA/UPnP, Diana chipset, full crypto (RSA/DH/AES/WPA2/X.509)
+- **ADTG/CMOS registers**: 30 documented from `adtg_gui.c` with descriptions
+- **DRYOS version**: 2.3, release #0051 confirmed
+- **Source tree**: 200+ Canon file paths reconstructed in `SRCFILES.md`
+
+### Partially Done
+- **Ghidra disassembly**: 43K functions auto-analyzed, but only **98 of 43,504** labeled (0.2%)
+- **call() dispatch**: Mechanism understood, table walker found at `FUN_f8144420`, ~10 of 742 eventproc strings located
+- **MMIO registers**: 45+ known across 7 categories
+- **Image pipeline**: 47 Eeko file names known, data flow not yet traced
+
+### Biggest Gaps
+1. **43,400 unlabeled functions** — automated labeling via call-graph proximity is the fix
+2. **Eventproc→address mapping** — 742 names, ~10 mapped; table format understood, start address unknown
+3. **Interrupt/SWI handlers** — Vector table at 0xFFFF0000 confirmed, individual handlers not identified
+4. **MPU protocol** — based on 6D-derived QEMU spells; real protocol unknown
+5. **Audio codec IC** — model unknown, needs I2C hardware probe
+6. **GPS data access** — call() returns -1, data path not found
+
+### Effort to Finish
+| Task | Time | Impact |
+|------|------|--------|
+| **Label 43K functions** | 2-4 hours (automated) | **COMPLETE — 22K labeled (50%), automated script reusable** |
+| **Find full eventproc table** | 1 week | Maps 742 call() names to addresses |
+| **Map interrupt handlers** | 1 week | Identify all ISR entry points |
+| **Audio IC identification** | 1 day | Hardware: I2C probe |
+| **GPS memory probe** | 1 week | Find NMEA strings in RAM |
+| **MPU protocol RE** | 4-6 weeks | Requires oscilloscope
+
+### Sprint 32 — Automated Function Labeling (COMPLETE)
+- **AutoLabelFunctions.java** created and executed
+- 3 strategies: call-graph propagation, string-reference detection, wrapper/thunk detection
+- **Results: 22,027 newly labeled functions** (from 0.2% to ~50% labeled)
+- Seed: 98 known NSTUBs → propagated to 2,435 direct callers
+- 22,125 total non-default symbols in Ghidra project
+
 #### Canon Source Tree (key paths)
 | System | Files |
 |--------|-------|

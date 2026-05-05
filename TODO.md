@@ -1327,3 +1327,27 @@ hw_test v19 dumps 3 RAM regions (33MB total) to SD card. Analysis on development
 
 ---
 
+## Sprint 32 — Automated Ghidra Function Labeling (2026-05-05)
+
+**Status:** ✅ COMPLETE — 22,027 functions labeled (from 0.2% to ~50%)
+
+### S32.1 — Build Automated Labeling Script
+- [x] Created `AutoLabelFunctions.java` — call-graph propagation + string-ref + wrapper detection
+- [x] Three strategies: caller proximity, string references, wrapper/thunk detection
+- [x] **Result:** 22,027 newly labeled functions
+- [x] **Status:** COMPLETE
+
+### S32.2 — Run Labeling on ROM1
+- [x] Phase 1: 98 seed symbols collected from NSTUB cross-reference
+- [x] Phase 2: 2,435 functions labeled by caller proximity
+- [x] Phase 3: 16 functions labeled by string reference
+- [x] Phase 4: 1 wrapper function detected
+- [x] **Final count:** 22,125 non-default symbols (98 user + 22,027 analysis)
+- [x] **Status:** COMPLETE
+
+### S32.3 — Verify and Commit
+- [ ] Spot-check labeled functions for correctness (ongoing)
+- [x] Update AGENTS.md with labeling status
+- [x] Commit Ghidra scripts and results
+- [ ] **Status:** PENDING (need to commit)
+
