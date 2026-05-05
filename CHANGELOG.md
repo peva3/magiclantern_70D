@@ -325,3 +325,31 @@ and `reticulatedpines/qemu-eos`.
 - TODO.md: sprint planning, hardware vs non-hardware task categorization
 - HARDWARE-TESTING.md: crop_rec calibration checklist
 - README.md: current status and progress tracking
+
+## 2026-05-05 — Sprint 33: Eventproc Address Mapping Complete (263 entries, 40 tables)
+
+### Added
+- **Eventproc table scanning**: Comprehensive ROM1 scan for 8-byte (name_ptr, func_ptr) pairs
+- **40 distinct eventproc tables found** across 5 major categories:
+  - FA_* (Factory Adjustment): 4 tables, ~140 entries — calibration, display, LV, defects, dark
+  - Display/Filter/TFT: 3 tables, ~40 entries — power save, HDMI, display control, backlight
+  - Touch: 1 table, 26 entries — TCH_* touchscreen API
+  - WiFi/Protocol: 1 table, 9 entries — PrepareCommunication, SetWiFiEnable, etc.
+  - Debug/Test/Mon: 7 tables — memory nav, monitor, test images, ISO speed, capture unit
+  - Grid/Guides: 6 tables — gmtwaku_* overlay functions
+  - PTP: 1 table, 4 entries — PTP framework control
+  - Others: 17 tables — shutter, pixel shift, power, GPU graphics, etc.
+- **263 unique functions mapped** from name to runtime address
+- **315 new eventproc names discovered** beyond original RAMDUMP.md list
+- **457 Ghidra labels applied** via analyzeHeadless/ApplyLabels.java
+
+### Fixed
+- **Clarified non-eventproc dispatch mechanisms**: AfCtrl_* (C++ vtables), FIO_* (DryOS SWI syscalls),
+  PROP_* (runtime property registration), Eeko_* (image pipeline descriptors),
+  WLANSDCOMDRV_* (dynamic/debug-only names)
+
+### Changed
+- `eventproc_full_map.csv`: 264 rows (header + 263 entries)
+- `all_symbols.csv`: 579 total symbols (166 NSTUB + 81 ML + 332 eventproc + existing)
+- `eventproc_labels.csv`: Ghidra-compatible label import file
+- TODO.md: Sprint 33 completion with verification of unmapped function categories

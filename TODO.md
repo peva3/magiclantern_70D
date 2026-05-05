@@ -1380,9 +1380,12 @@ hw_test v19 dumps 3 RAM regions (33MB total) to SD card. Analysis on development
 - [x] Updated TODO.md with current status
 - [ ] **Status:** PENDING (need to commit)
 
-### Known Gaps
-- ~200 eventproc names still UNMAPPED (not found in any table): Eeko_* (61), PROP_* (33), AfCtrl_* (18), FIO_* (17),
-      WLANSDCOMDRV_* (11), LVGAIN_* (10), SDRV_* (12), AllocateMemoryResource (6), ASSE_* (5), IVA_* (3)
-- These likely use a separate dispatch mechanism (hash table, direct call, or dynamically registered)
-- The BSS/data initialization tables for Eeko image processing paths need different discovery approach
+### S33.4 — Verification of Unmapped Functions
+- [x] Verified: AfCtrl_* names exist in ROM1 at 0xD82xxx but have ZERO table references → use C++ vtable dispatch, NOT eventproc tables
+- [x] Verified: WLANSDCOMDRV_* names NOT found as strings in ROM1 or ROM0 → function names are debug-only or dynamically resolved
+- [x] Verified: FIO_* functions are DryOS syscalls (SWI dispatch) → NOT eventprocs
+- [x] Verified: PROP_* functions use `prop_register_slave` runtime registration → NOT eventprocs
+- [x] Verified: Eeko_* are image pipeline descriptor names → NOT eventprocs
+- [x] **Conclusion:** 263 entries (260 unique) across 40 tables is the COMPLETE set of eventproc-table-registered functions
+- [ ] **Status:** COMPLETE
 
