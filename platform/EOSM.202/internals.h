@@ -37,8 +37,8 @@
 /** This camera has no miror **/
 //~ #define CONFIG_MLU
 
-/** This camera reports focus info in LiveView **/
-//~ #define CONFIG_LV_FOCUS_INFO
+/** This camera reports focus info in LiveView (PROP_LV_FOCUS_DATA supported) **/
+#define CONFIG_LV_FOCUS_INFO
 
 /** Sensor gives some data Needs Help **/
 //~ #define CONFIG_ELECTRONIC_LEVEL

@@ -2609,4 +2609,8 @@ The EOS M (original/M1) is Canon's first mirrorless camera (2012). Shares the 18
 | Add 96kHz to mlv_snd | ✅ DONE (already in code) |
 | Write hardware test plan | ✅ DONE (doc/eosm_test_plan.md) |
 | Set up EOSM GDB scripts | ✅ DONE (boot.gdb) |
+| Enable CONFIG_LV_FOCUS_INFO | ✅ DONE (PROP_LV_FOCUS_DATA native) |
+| Enable shutter fine tuning, rack focus, focus stacking | ✅ DONE |
+| Add hw_test.mo to modules.included | ✅ DONE (22 modules) |
+| Fix focus.c build bug (trap_focus_autoscaling) | ✅ DONE |
 

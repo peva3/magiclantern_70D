@@ -19,6 +19,11 @@
 | 0.9 | Set up EOSM GDB scripts for QEMU | ✅ DONE | boot.gdb + existing debugmsg/patches |
 | 0.10 | Fix test_qemu.sh EOSM ROM loading | ✅ DONE | Added QEMU_EOS_WORKDIR |
 | 0.11 | Port hw_test module for EOSM and 70D | ✅ DONE | #ifdef CONFIG_70D/CONFIG_EOSM guards; EOSM SKIPs WiFi tests, has own RAM regions |
+| 0.12 | Enable CONFIG_LV_FOCUS_INFO for EOSM | ✅ DONE | Focus features work natively (PROP_LV_FOCUS_DATA) |
+| 0.13 | Enable FEATURE_SHUTTER_FINE_TUNING | ✅ DONE | Confirmed working per comment |
+| 0.14 | Enable FEATURE_RACK_FOCUS/FOCUS_STACKING | ✅ DONE | Both compile-tested (focus.c build fix) |
+| 0.15 | Add hw_test.mo to modules.included | ✅ DONE | 22 modules total |
+| 0.16 | Fix focus.c trap_focus_autoscaling build bug | ✅ DONE | Variable moved outside FEATURE_TRAP_FOCUS guard |
 
 ## Phase 1: Initial Hardware Bring-up (Camera Arrives)
 

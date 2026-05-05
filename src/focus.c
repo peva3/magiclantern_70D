@@ -906,9 +906,7 @@ int is_continuous_af()
     return is_movie_mode() ? continuous_af_movie : continuous_af_photo;
 }
 
-#ifdef FEATURE_TRAP_FOCUS
 static int trap_focus_autoscaling = 1;
-#endif
 
 #ifdef FEATURE_TRAP_FOCUS
 int handle_trap_focus(struct event * event)
