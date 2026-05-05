@@ -1,0 +1,38 @@
+# Jython Ghidra script to apply labels from CSV
+#@category Canon70D
+# Uses Jython (bundled with Ghidra) - no PyGhidra needed
+
+import java.io
+import java.util
+
+csv_path = "/app/70d/tools/ghidra/all_symbols.csv"
+
+try:
+    reader = java.io.BufferedReader(java.io.FileReader(csv_path))
+    reader.readLine()  # skip header
+    count = 0
+    line = reader.readLine()
+    while line is not None:
+        parts = line.split(",")
+        if len(parts) >= 2:
+            name = parts[0].strip()
+            addr_str = parts[1].strip()
+            if addr_str.startswith("0x") or addr_str.startswith("0X"):
+                try:
+                    addr = long(addr_str[2:], 16)
+                    # Map runtime addresses (0xFFxxxxxx) to ROM1 offsets (0xF8xxxxxx)
+                    if addr >= 0xFF000000 and addr <= 0xFFFFFFFF:
+                        rom_addr = addr - 0xFF000000 + 0xF8000000
+                        if rom_addr >= 0xF8000000 and rom_addr < 0xF9000000:
+                            currentProgram.getSymbolTable().createLabel(
+                                toAddr(rom_addr), name,
+                                ghidra.program.model.symbol.SourceType.USER_DEFINED
+                            )
+                            count += 1
+                except:
+                    pass
+        line = reader.readLine()
+    reader.close()
+    print "Applied %d symbols to %s" % (count, currentProgram.getName())
+except Exception, e:
+    print "Error: " + str(e)

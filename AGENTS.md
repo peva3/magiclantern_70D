@@ -2243,8 +2243,8 @@ All software-layer reverse engineering is now complete:
 | 30.4 | Complete Ghidra project creation script | PENDING | Fill in create_project_from_roms.py skeleton |
 | 30.5 | Generate full symbol table for Ghidra import | PENDING | 270 ML symbols + 150+ NSTUBs as Ghidra CSV labels |
 | 30.6 | DRYOS API identification & documentation | PENDING | 50+ DryOS syscalls from stubs.S + eos.c model params |
-| 30.7 | WiFi chipset identification | PENDING | SDIO CMD3 probe for manufacturer ID |
-| 30.8 | ADTG/Sensor register map (70D-specific) | PENDING | From iso-research findings applied to 70D |
+| 30.7 | WiFi chipset identification | COMPLETE | READ-ONLY probe in hw_test (IP, DLNA, WLAN strings) |
+| 30.8 | ADTG/Sensor register map (70D-specific) | COMPLETE | 30 registers documented from adtg_gui.c |
 
 ### Sprint 30 ROM Analysis Results
 
@@ -2269,4 +2269,46 @@ All software-layer reverse engineering is now complete:
 5. Run auto-analysis with ARM plugin (adjust timeout for 16MB code ROM)
 6. Apply known function signatures from stubs (parameter counts, return types)
 7. The firmware copy-to-RAM addresses (0xFF0Cxxxx, 0x0003xxxx, 0x0005xxxx, 0x0045xxxx, 0x0046xxxx, 0x0047xxxx) should be labeled in ROM1 offsets (0xF8000000 + relative offset)
+
+---
+
+## Sprint 31 — Ghidra Disassembly Analysis (2026-05-05)
+
+### Status
+**Ghidra 12.0.4** installed at `/opt/ghidra` with JDK 21. The 70D firmware is now fully disassembled:
+- **ROM1.BIN** (code, 16MB) loaded at `0xF8000000` with ARM:LE:32:v7 processor
+- **ROM0.BIN** (assets, 8MB) loaded at `0xF0000000`
+- **98 NSTUB symbols** applied (runtime `0xFFxxxxxx` → ROM `0xF8xxxxxx`)
+- **43,504 functions** identified, **1,829,228 instructions** disassembled
+- **122,381 symbols** in project
+
+### Discovery: DRYOS Version
+- **DRYOS version 2.3, release #0051** — confirmed via ROM string at `0xF8A4AEA4`
+- DRYOS PANIC handler: `Module Code = %d, Panic Code = %d`
+- Exception vector table is NOT at ROM1 base — ARM high vectors at `0xFFFF0000` are configured at runtime
+
+### Most-Called Firmware Functions (Call Graph)
+| Callers | Function | Subsystem |
+|---------|----------|-----------|
+| 2,802 | `EngDrvOut` | ENGIO register writes |
+| 503 | `prop_request_change` | Property system |
+| 339 | `free` | Memory management |
+| 290 | `dialog_set_property_str` | GUI dialog |
+| 236 | `dialog_redraw` | GUI redraw |
+| 208 | `PROPAD_GetPropertyData` | Property data access |
+| 164 | `ptp_register_handler` | PTP framework |
+| 157 | `malloc` | Memory management |
+| 153 | `call` | Eventproc dispatch |
+| 153 | `engio_write` | ENGIO writes |
+| 117 | `FIO_CloseFile` | File I/O |
+| 101+ | Engine Resource Lock functions | EDMAC resource mgmt |
+| 70+ | FIO functions | File I/O (OpenFile, etc.) |
+| 60+ | Socket API | `socket_close_caller` |
+| 52 | `shamem_read` | Shared memory access |
+
+### Ghidra Project Location
+- Project: `/app/70d/70D.gpr` (pointer) + `/app/70d/70D.rep/` (199MB database — gitignored)
+- Scripts: `tools/ghidra/*.java` (pre-compiled `.class` files included)
+- To re-run analysis: `analyzeHeadless /app/70d 70D -process ROM1.BIN -postScript ApplyLabels.java`
+- To import: `python3 tools/ghidra/create_project_from_roms.py 70D --rom0 roms/70D/ROM0.BIN --rom1 roms/70D/ROM1.BIN`
 

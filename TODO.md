@@ -1277,3 +1277,44 @@ hw_test v19 dumps 3 RAM regions (33MB total) to SD card. Analysis on development
 
 ---
 
+## Sprint 31 — Ghidra Disassembly Analysis (2026-05-05)
+
+**Status:** ✅ COMPLETE — 43,504 functions, 1,829,228 instructions, 122,381 symbols. DRYOS v2.3 #0051 confirmed.
+
+### S31.1 — Install Ghidra & Create Project
+- [x] Install JDK 21 for Ghidra compatibility
+- [x] Download Ghidra 12.0.4 from GitHub releases
+- [x] Import ROM1.BIN (code) at `0xF8000000` with ARM:LE:32:v7
+- [x] Import ROM0.BIN (assets) at `0xF0000000`
+- [x] **Status:** COMPLETE — Ghidra at `/opt/ghidra`
+
+### S31.2 — Apply Known Symbols
+- [x] Create `ApplyLabels.java` — reads all_symbols.csv, maps runtime 0xFFxxxxxx → ROM 0xF8xxxxxx
+- [x] Compile and run: 98 NSTUB symbols applied to ROM1.BIN
+- [x] **Result:** 122,381 total symbols (98 user + auto-generated)
+- [x] **Status:** COMPLETE
+
+### S31.3 — Full Auto-Analysis
+- [x] Run Ghidra headless auto-analysis on 16MB code ROM
+- [x] **Results:** 43,504 functions, 1,829,228 instructions, 501 seconds
+- [x] **Status:** COMPLETE
+
+### S31.4 — Function Cluster Analysis
+- [x] Run `ClusterReport.java` — counts callers per known symbol
+- [x] **Key findings:** EngDrvOut (2802), prop_request_change (503), call (153), engio_write (153)
+- [x] Created statistics report script (`ReportStats.java`)
+- [x] **Status:** COMPLETE
+
+### S31.5 — Boot Sequence Analysis
+- [x] Run `AnalyzeBoot.java` — examines cstart (0xF80C1BA8) and exec environment
+- [x] Confirmed DRYOS version 2.3, release #0051 from ROM strings
+- [x] **Status:** COMPLETE
+
+### S31.6 — Pending Ghidra Work (Future)
+- [ ] Identify DryOS SWI handler dispatch table
+- [ ] Map the eventproc name-to-address table used by call()
+- [ ] Extract call graph for ML-relevant subsystems
+- [ ] Annotate interrupt handlers
+
+---
+
