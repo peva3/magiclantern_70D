@@ -112,3 +112,7 @@ logs/
 
 # Release archives
 magiclantern_70D-*.tar.gz
+
+70D.gpr
+70D.rep/
+70D_IMPORT.txt
