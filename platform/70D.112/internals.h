@@ -56,8 +56,8 @@
 /** Bulb mode is done by going to M mode and setting shutter speed beyond 30s **/
 #define CONFIG_SEPARATE_BULB_MODE
 
-/** We can't control audio settings from ML, YET! **/
-//~ #define CONFIG_AUDIO_CONTROLS
+/** We can control audio settings from ML now **/
+#define CONFIG_AUDIO_CONTROLS
 
 /** Zoom button can't be used while recording (for Magic Zoom) **/
 //~ #define CONFIG_ZOOM_BTN_NOT_WORKING_WHILE_RECORDING

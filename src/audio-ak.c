@@ -188,7 +188,8 @@ static int get_mic_power(int input_source)
 static void audio_monitoring_update()
 {
     // kill video connect/disconnect event... or not
-    *(int*)HOTPLUG_VIDEO_OUT_STATUS_ADDR = audio_monitoring ? 2 : 0;
+    if (HOTPLUG_VIDEO_OUT_STATUS_ADDR)
+        *(int*)HOTPLUG_VIDEO_OUT_STATUS_ADDR = audio_monitoring ? 2 : 0;
         
     if (audio_monitoring && rca_monitor)
     {

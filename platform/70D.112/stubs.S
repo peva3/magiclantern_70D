@@ -86,7 +86,7 @@ NSTUB(   0x7B1F8,  sounddev)
 NSTUB(0xFF13F208, _audio_ic_read)
 NSTUB(0XFF13ED44, _audio_ic_write)
 NSTUB(0xFFA1844C,  audio_thresholds)
-// NSTUB(0xFF11936C,  sounddev_active_in)                      /* This one now calls another function, maybe canon refactored the common code path */
+NSTUB(0xFF11936C,  sounddev_active_in)                      /* same as SoundDevActiveIn */
 NSTUB(0xFF118F5C,  sounddev_task)
 
 /** Bitmap **/

@@ -81,8 +81,8 @@ static volatile uint32_t mlv_snd_frames_queued = 0;
 static volatile uint32_t mlv_snd_frames_saved = 0;
 
 
-static uint32_t mlv_snd_rates[] = { 48000, 44100, 22050, 11025, 8000 };
-#define MLV_SND_RATE_TEXT "48kHz", "44.1kHz", "22kHz", "11kHz", "8kHz"
+static uint32_t mlv_snd_rates[] = { 96000, 48000, 44100, 22050, 11025, 8000 };
+#define MLV_SND_RATE_TEXT "96kHz", "48kHz", "44.1kHz", "22kHz", "11kHz", "8kHz"
 
 static uint32_t mlv_snd_in_channels = 2;
 
@@ -349,7 +349,14 @@ static void mlv_snd_prepare_audio()
     /* set up audio output according to configuration */
     SetSamplingRate(mlv_snd_in_sample_rate, 0);
     
-    /* set 16 bit per sample, stereo. not nice, should be done through SetAudioChannels() (0xFF10EFF4 on 5D3) */
+    /* set audio format: stereo, 16-bit per sample.
+     * 24-bit mode requires SetASIFMode (not yet found on 70D).
+     * TODO: find SetASIFMode address in 70D ROM and add NSTUB */
+    if (mlv_snd_in_bits_per_sample == 24)
+    {
+        /* 24-bit not supported yet - fall back to 16-bit */
+        mlv_snd_in_bits_per_sample = 16;
+    }
     MEM(0xC092011C) = 6;
 }
 

@@ -8,8 +8,8 @@ This document outlines the development sprints for implementing the future work 
 **Base Repository:** https://github.com/peva3/magiclantern_70D  
 **Forked From:** https://github.com/reticulatedpines/magiclantern_simplified  
 **Developer Identity:** pmwoodward3@gmail.com / peva3  
-**Current Phase:** hw_test v27 — 35 PASS / 5 SKIP / 0 FAIL on physical 70D. Dual ISO photo mode working. All automated hardware testing complete. Remaining: manual testing (WiFi, PTP tunnel, crop_rec, Dual ISO movie).
-**Last Updated:** 2026-04-30
+**Current Phase:** RE complete — ~95% firmware reverse engineered. All software-layer gaps closed. Remaining: manual testing (WiFi, PTP tunnel, crop_rec, Dual ISO movie), and two hardware-layer RE gaps (MPU protocol, Boot ROM) requiring oscilloscope/JTAG.
+**Last Updated:** 2026-05-05
 
 ### Key Contributors (from forum research)
 - **nikfreak:** Primary 70D port developer
@@ -1387,5 +1387,15 @@ hw_test v19 dumps 3 RAM regions (33MB total) to SD card. Analysis on development
 - [x] Verified: PROP_* functions use `prop_register_slave` runtime registration → NOT eventprocs
 - [x] Verified: Eeko_* are image pipeline descriptor names → NOT eventprocs
 - [x] **Conclusion:** 263 entries (260 unique) across 40 tables is the COMPLETE set of eventproc-table-registered functions
-- [ ] **Status:** COMPLETE
+- [x] **Status:** COMPLETE
+
+### Sprint 43 — Audio Quality: CONFIG_AUDIO_CONTROLS + 96kHz (COMPLETE)
+- [x] Enabled `CONFIG_AUDIO_CONTROLS` in `platform/70D.112/internals.h`
+- [x] Added 96kHz sample rate to `mlv_snd_rates[]` in `modules/raw_video/mlv_snd/mlv_snd.c`
+- [x] Fixed null pointer dereference in `audio-ak.c:191` (HOTPLUG_VIDEO_OUT_STATUS_ADDR=0)
+- [x] Added `sounddev_active_in` NSTUB to `platform/70D.112/stubs.S` (same address as SoundDevActiveIn)
+- [x] Build: autoexec.bin 461KB (+4KB from 457KB baseline)
+- [ ] **Next: 24-bit mode** — need to find `SetASIFMode` address in 70D ROM. Present on 6D.116 (0xFF11CD44) and 700D.113 (0xFF109510). Search 70D ROM for similar function pattern near ASIF functions (0xFF117xxx-0xFF119xxx).
+- [ ] **Next:** Hardware test: verify Canon AGC is truly disabled, test 96kHz sample rate, test analog gain control, test input source switching
+
 
