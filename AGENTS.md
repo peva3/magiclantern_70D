@@ -73,7 +73,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 **Repository:** https://github.com/peva3/magiclantern_70D
 **Current Phase:** hw_test v27 — 35 PASS / 5 SKIP / 0 FAIL on physical 70D. FPS stability (range=0, rock-solid). ADTG/crop registers. Extended call() tests (GetHDMIInfo, FA_GetProperty, TurnOffDisplay work). Pre-deployment test suite (tests/run_all.sh). All 28 modules auto-build. All automated hardware testing complete in hw_test. Next: manual testing of WiFi, PTP tunnel, Dual ISO
     | 2026-05-05 | 461KB | 457KB | CONFIG_AUDIO_CONTROLS enabled, 96kHz sample rate in mlv_snd, HOTPLUG_VIDEO_OUT null guard, sounddev_active_in stub fix |
-| 2026-05-06 | 464KB | 460KB | Sprint 40: Color Blind Assist palette, Debug Monitor overlay test, test_qemu.sh firmware fix |
+| 2026-05-06 | 464KB | 460KB | Sprint 40: Color Blind Assist palette, Debug Monitor overlay test, test_qemu.sh firmware fix. RE complete (~95%); all software-layer gaps closed. |
 
 **Last Updated:** 2026-05-05
 

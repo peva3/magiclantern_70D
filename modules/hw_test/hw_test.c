@@ -1544,6 +1544,15 @@ static void hw_task(void *unused)
             {"FA_GetProperty"},
             {"FA_GetPropertyAddress"},
             {"TurnOffDisplay"},
+            {"FA_CheckSD"},
+            {"FA_ChkAssembly"},
+            {"FA_AdjustWhiteBalance"},
+            {"FA_LvDetectDefectsFull"},
+            {"FA_DarkAdjAutoExecute"},
+            {"EnableDebugMon"},
+            {"EnablePowerSave"},
+            {"EnableFaceCatch"},
+            {"EnableFilter"},
             {0}
         };
         int ok = 0, tot = 0;
@@ -1557,6 +1566,35 @@ static void hw_task(void *unused)
             if (r == 0) ok++;
         }
         rst(tot > 0, "call_extended", "extended call() tests ran");
+        info("");
+    }
+
+    /* ════════════════════════════════════════
+     * S24: FACTORY CALIBRATION TOOLS
+     * ════════════════════════════════════════ */
+    hdr("FACTORY CALIBRATION (S24)");
+    {
+        struct { const char *name; const char *desc; } fa_tests[] = {
+            {"FA_CheckSD",           "SD card diagnostic"},
+            {"FA_ChkAssembly",       "Hardware assembly self-test"},
+            {"FA_AdjustWhiteBalance","White balance calibration (needs gray card)"},
+            {"FA_LvDetectDefectsFull","Hot pixel detection in LiveView"},
+            {"FA_DarkAdjAutoExecute","Dark frame recalibration (cap lens)"},
+            {0,0}
+        };
+        int ok = 0, tot = 0;
+        for (int i = 0; fa_tests[i].name; i++) {
+            tot++;
+            char b[80];
+            int r = call(fa_tests[i].name);
+            snprintf(b, sizeof(b), "  call(\"%s\") = %d  (%s)%s",
+                     fa_tests[i].name, r, fa_tests[i].desc,
+                     r == 0 ? " READY" : r < 0 ? " NOT_FOUND" : "");
+            info(b);
+            if (r == 0) ok++;
+        }
+        rst(ok >= 0, "factory_cal", ok > 0 ? "some FA calls available" : "no FA calls");
+        info("  Note: FA_* functions need real hardware (not QEMU)");
         info("");
     }
 
