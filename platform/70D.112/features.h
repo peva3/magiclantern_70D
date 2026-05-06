@@ -19,7 +19,9 @@
 /* see comments in lens.c */
 #undef FEATURE_FOLLOW_FOCUS
 #undef FEATURE_RACK_FOCUS
-#undef FEATURE_FOCUS_STACKING
+
+/* Focus stacking: works with job_state wait fix in lens_focus */
+#define FEATURE_FOCUS_STACKING
 
 /* disable RAW zebras as they cause problems in QR and LV too */
 #undef FEATURE_RAW_ZEBRAS
