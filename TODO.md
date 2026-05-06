@@ -1398,4 +1398,21 @@ hw_test v19 dumps 3 RAM regions (33MB total) to SD card. Analysis on development
 - [ ] **Next: 24-bit mode** — need to find `SetASIFMode` address in 70D ROM. Present on 6D.116 (0xFF11CD44) and 700D.113 (0xFF109510). Search 70D ROM for similar function pattern near ASIF functions (0xFF117xxx-0xFF119xxx).
 - [ ] **Next:** Hardware test: verify Canon AGC is truly disabled, test 96kHz sample rate, test analog gain control, test input source switching
 
+### Sprint 44 — Easy Wins: Color Blind Assist, hw_test Extensions, QEMU Script Fix (COMPLETE)
+- [x] **Color scheme:** Added scheme 6 (Blue Shift — color blind assist for protanopia) and scheme 7 (High Contrast) to `src/tweaks.c`
+- [x] **hw_test:** Added palette write/read-back verification test in Display System section
+- [x] **hw_test:** Added `EnableDebugMon` / `DisableDebugMon` call() verification test
+- [x] **test_qemu.sh:** Fixed firmware version path (was hardcoded to `.202`, now handles `.112` for 70D)
+- [x] **test_qemu.sh:** Added `--no-build` flag for testing existing builds
+- [x] **doc/EOS-M1.md:** Added comprehensive forum research (developers, shutter bug, ASIF hang, LV_FOCUS_DATA, Danne's builds, timing)
+- [x] **doc/FUTURE-FEATURES.md:** 31-feature research-backed roadmap across 4 tiers
+- [x] Build: 70D=464KB (+3KB), EOSM=452KB (no regression)
 
+### Sprint 45 — Next Steps from FUTURE-FEATURES.md
+- [ ] **Tier 1: DLNA Media Server Toggle** — property change to enable WiFi/DLNA (easy, test on hardware)
+- [ ] **Tier 1: SD Card Health Diagnostic** — call("FA_CheckSD") wrapper (easy, test on hardware)
+- [ ] **Tier 1: Hardware Self-Test** — call("FA_ChkAssembly") wrapper (easy, test on hardware)
+- [ ] **Tier 2: Hot Pixel Remapping** — call("FA_LvDetectDefectsFull") etc. (medium, needs LiveView)
+- [ ] **Tier 2: WB Calibration Tool** — call("FA_AdjustWhiteBalance") wrapper (easy, test on hardware)
+- [ ] **Tier 2: WiFi Remote Trigger** — socket server on port 5555 (needs WiFi hardware)
+- [ ] **Research:** Find `SetASIFMode` for 24-bit audio (search ROM near ASIF functions at 0xFF117xxx-0xFF119xxx)
