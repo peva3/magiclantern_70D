@@ -1599,6 +1599,48 @@ static void hw_task(void *unused)
     }
 
     /* ════════════════════════════════════════
+     * S24b: LCD TEST PATTERNS
+     * ════════════════════════════════════════ */
+    hdr("LCD TEST PATTERNS (S24b)");
+    {
+        struct { const char *name; const char *desc; } disp_tests[] = {
+            {"FA_DISP_Start100White","Full white pattern"},
+            {"FA_DISP_Start50Gray",  "50% gray pattern"},
+            {"FA_DISP_StartColor",   "Color bars"},
+            {"FA_DISP_StartMix",     "Mixed test pattern"},
+            {"FA_DISP_SetBrightness","Display brightness control"},
+            {0,0}
+        };
+        int ok = 0, tot = 0;
+        for (int i = 0; disp_tests[i].name; i++) {
+            tot++;
+            char b[80];
+            int r = call(disp_tests[i].name);
+            snprintf(b, sizeof(b), "  call(\"%s\") = %d  (%s)%s",
+                     disp_tests[i].name, r, disp_tests[i].desc,
+                     r == 0 ? " READY" : r < 0 ? " NOT_FOUND" : "");
+            info(b);
+            if (r == 0) ok++;
+        }
+        rst(ok > 0, "lcd_test_patterns", ok > 0 ? "some FA_DISP calls available" : "no FA_DISP calls");
+        info("");
+    }
+
+    /* ════════════════════════════════════════
+     * S24c: WIFI STATUS PROBE
+     * ════════════════════════════════════════ */
+    hdr("WIFI STATUS (S24c)");
+    {
+        info("  WiFi init: use wifi_enable module (TCP server on :5555)");
+        info("  DLNA/DMS: native 70D server at 192.168.1.20");
+        info("  Socket API: 7 functions validated in RAM (hw_test v15)");
+        info("  WiFi init calls available in call() dispatch");
+        int p = call("InitializePTPFrameworkController");
+        info_int("  InitializePTPFrameworkController", p);
+        info("");
+    }
+
+    /* ════════════════════════════════════════
      * S5.8: ADTG / CROP REC REGISTERS
      * ════════════════════════════════════════ */
     hdr("CROP REC / ADTG REGISTERS (S5.8)");
