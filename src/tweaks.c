@@ -2782,6 +2782,8 @@ static void grayscale_menus_step()
                 else if (bmp_color_scheme == 3) alter_bitmap_palette(3,1,0,0);
                 else if (bmp_color_scheme == 4) alter_bitmap_palette(5,0,-170/2,500/2); // strong shift towards red
                 else if (bmp_color_scheme == 5) alter_bitmap_palette(3,0,-170/2,-500/2); // strong shift toward green (pink 5,0,170/2,500/2)
+                else if (bmp_color_scheme == 6) alter_bitmap_palette(3,0,500/2,-170/2); // blue shift (color blind assist)
+                else if (bmp_color_scheme == 7) alter_bitmap_palette(3,0,0,0); // high contrast (dimmed, no color shift)
             }
             msleep(50);
         }
@@ -3631,9 +3633,11 @@ static struct menu_entry display_menus[] = {
             {
                 .name = "Color scheme",
                 .priv     = &bmp_color_scheme,
-                .max = 5,
-                .choices = (const char *[]) {"Default", "Dark", "Bright Gray", "Dark Gray", "Dark Red", "Dark Green"},
+                .max = 7,
+                .choices = (const char *[]) {"Default", "Dark", "Bright Gray", "Dark Gray", "Dark Red", "Dark Green", "Blue Shift", "High Contrast"},
                 .help = "Color scheme for bitmap overlays (ML menus, Canon menus...)",
+                .help2 = "Blue Shift: shifts colors toward blue (color blind assist for red-blind).\n"
+                         "High Contrast: dimmed but no color shift, for strong backlight.",
                 .icon_type = IT_DICE_OFF,
             },
             #endif

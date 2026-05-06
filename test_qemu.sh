@@ -25,6 +25,7 @@ TIMEOUT=10
 GDB_MODE=0
 BOOT_TRACE=0
 BOOT_MODE=0
+NO_BUILD=0
 D_ARGS=()
 
 while [[ $# -gt 0 ]]; do
@@ -39,8 +40,9 @@ while [[ $# -gt 0 ]]; do
         --io) D_ARGS+=("io_quick"); shift ;;
         --tasks) D_ARGS+=("tasks"); shift ;;
         --calls) D_ARGS+=("calls"); shift ;;
-        --boot) BOOT_MODE=1; TIMEOUT=180; shift ;;
-        --timeout) TIMEOUT="$2"; shift; shift ;;
+         --boot) BOOT_MODE=1; TIMEOUT=180; shift ;;
+         --no-build) NO_BUILD=1; shift ;;
+         --timeout) TIMEOUT="$2"; shift; shift ;;
         *) echo "Usage: $0 <CAMERA> [options]"; echo "Cameras: 70D, EOSM, EOSM2, 100D, 200D, 5D3, 6D, 700D, ..."; exit 1 ;;
     esac
 done
@@ -104,7 +106,19 @@ if [[ " ${D_ARGS[*]} " =~ " debugmsg " ]]; then
 fi
 
 if [ "$BOOT_MODE" -eq 1 ]; then
-    ML_BUILD_DIR="$SCRIPT_DIR/platform/${CAMERA}.202/build"
+    case "$CAMERA" in
+        70D)  FW_VER="112" ;;
+        EOSM) FW_VER="202" ;;
+        100D) FW_VER="101" ;;
+        200D) FW_VER="101" ;;
+        5D3)  FW_VER="123" ;;
+        6D)   FW_VER="116" ;;
+        700D) FW_VER="115" ;;
+        650D) FW_VER="104" ;;
+        600D) FW_VER="102" ;;
+        *)    FW_VER="202" ;;
+    esac
+    ML_BUILD_DIR="$SCRIPT_DIR/platform/${CAMERA}.${FW_VER}/build"
     if [ -f "$ML_BUILD_DIR/autoexec.bin" ]; then
         echo "Booting $CAMERA from ML build..."
         SD_IMG="$QEMU_DIR/sd_${CAMERA}.qcow2"

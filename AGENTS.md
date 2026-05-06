@@ -14,7 +14,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 4. Extract modules: `unzip -o platform/70D.112/build/magiclantern.zip -d 70d-latest/`
 5. Update size tracking log below
 
-**Current Build:** 461KB (2026-05-05) - CONFIG_AUDIO_CONTROLS enabled, 96kHz sample rate, EOS M QEMU support. RE complete (~95%); all software-layer gaps closed. Generic `test_qemu.sh` supports 70D + 19 other models. See [CHANGELOG.md](CHANGELOG.md) for full project history.
+**Current Build:** 464KB (2026-05-06) - Sprint 40: Color Blind Assist palette, Debug Monitor overlay test, test_qemu.sh firmware fix. RE complete (~95%); all software-layer gaps closed. Generic `test_qemu.sh` supports 70D + 19 other models. See [CHANGELOG.md](CHANGELOG.md) for full project history.
 **CRITICAL:** Build with `make -j$(nproc)` (no CONFIG_QEMU=y) for hardware deployment. QEMU builds include testing code that causes red LED on physical 70D.
 
 ---

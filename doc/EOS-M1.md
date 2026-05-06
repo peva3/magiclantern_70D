@@ -461,20 +461,129 @@ Placeholder ROMs required at `roms/EOSM/` (ROM0.BIN, ROM1.BIN, SFDATA.BIN).
 
 ## 11. Online Research Findings
 
-### Forum Development Thread
-- **Topic 11054:** EOS M development thread (Wayback Machine: `https://web.archive.org/web/2023/https://www.magiclantern.fm/forum/index.php?topic=11054`)
-- Primary developer: **nanomad** (similar to 100D/650D/700D ports)
-- nanomad also the primary developer for 650D, 700D, 100D ports
-- EOS M considered the "mirrorless companion" to the 650D/700D family
-- Port was declared stable/main build around 2016
-- Forum mentions: *"If only someone with an EOS M would fix the touchscreen..."*
+### Forum Development Thread (Topic 9741, 75 pages, 2013-2023)
+- Wayback Machine: `https://web.archive.org/web/2023/https://www.magiclantern.fm/forum/index.php?topic=9741`
 
-### Known Limitations from Community
-1. **Touchscreen not fully working** — everyone agreed this needed hardware access to fix
-2. **ASIF beep hang** — acknowledged but unfixed across all DIGIC V cameras in the 650D family
-3. **Frame ISO stubborn** — discussed in forum topic 5200, considered a Canon firmware limitation
-4. **SD overclock** — EOS M is one of the best DIGIC V cameras for SD overclocking (240MHz stable)
-5. **No WiFi, no GPS** — expected for this era of camera
+### Developers & Contributors
+| Person | Role | Notes |
+|--------|------|-------|
+| **nanomad** | Primary port author | Also 650D/700D/100D (all 18MP sensor family). Forum admin. |
+| **jordancolburn** | Initial ML 2.0.2 port | Ported from Tragic Lantern fork (Dec 2013) |
+| **1%** | Tragic Lantern maintainer | His EOSM work was the foundation for ML port |
+| **dfort** | Major contributor | Shutter bug investigation, boot method experiments, focus pixel maps, build tutorials |
+| **Danne** | Experimental builds | crop_rec_4k + mv1080p (most feature-rich options) |
+| **theBilalFakhouri** | crop_rec development | 1x3 binning experiments |
+| **garry23** | Lua scripts | Focus bar, toggler, landscape tools |
+| **a1ex** | ML lead | Architectural guidance on shutter/FPS/ISO issues |
+
+### CRITICAL BUGS (Show-Stoppers)
+
+#### 1. Shutter Bug (CRITICAL, UNFIXED)
+Camera refuses to shoot with EF-M zoom lenses (especially 18-55mm kit) when using SDXC cards >32GB.
+- **Workarounds**: (a) Use ≤32GB SanDisk Extreme PRO cards, (b) twist lens off/on while camera is ON to break electrical contact, (c) use prime lenses (22mm works fine), (d) remove battery then mount kit lens
+- **Root cause**: Unknown. Not firmware-related (affects stock Canon too). dfort tried AllocateMemory boot method — didn't help.
+- **References**: Multiple forum pages (2014-2022), dfort's extensive investigation
+
+#### 2. ASIF/Beep Hang (CRITICAL, UNFIXED)
+Camera hard locks when beep attempted. Audio recording works fine (different code path).
+- nanomad: *"will look for a fix"* — never found one
+- Across entire 650D/700D/100D/EOSM family — no known solution exists
+- Root cause: ASIF DMA controller lockup during beep playback only
+
+### MAJOR BUGS
+
+#### Red LED Boot Hang (Intermittent)
+- Powers on but black screen + blinking green LED
+- Multiple battery pulls needed to recover
+- Was worse pre-Mar 2014, not fully resolved
+
+#### MLV Playback
+- RAW video won't play back in-camera (slow/doesn't work)
+- Requires computer for playback
+
+#### Shutter Display Nonsense
+- Shows `0.-1, -1818` instead of `1/48, 1/64`
+- a1ex: FRAME_SHUTTER_TIMER bug — suggests undefining to fall back to APEX
+
+#### Pink Dots in RAW (Hardware Issue)
+- Fixed pattern noise in sensor
+- Workaround: Pink Dot Remover (PDR) in post-processing
+
+#### Magic Zoom Locks UI + Overheating
+- High CPU busy-wait causes overheating
+- EOSM is in slowest code path (with 5D2/50D) — explicitly excluded from DIGIC V clean vsync
+- nanomad investigated on 650D: turned off vsync completely — no improvement
+- **UNFIXED** — always-on MZ will cause CPU overheating
+
+#### Frame ISO/Shutter Stubborn
+- Settings ignored in LV standby (only work during H.264 recording)
+- a1ex: *"EOS-M does not configure LiveView with real shutter speed while not recording"*
+- Workaround: undefine `FRAME_SHUTTER_TIMER` → fall back to APEX method
+
+#### H.264 Proxy + RAW (Single SD Bottleneck)
+- Corrupted frames on both streams when writing RAW + H.264 simultaneously
+- Unlike 5D3 (CF+SD), EOSM has single SD card — can't handle dual writes
+
+#### 3x Crop + HDMI Broken
+- Regression in later builds (~2022)
+- Users reverted to Jun 2021 build
+
+### WORKING FEATURES (Confirmed by Community)
+- ✅ 1080p H.264 with 3x crop — excellent moire/aliasing reduction
+- ✅ crop_rec basic (3x3 720p), Danne's mv1080p (1736x976 16:9 @ 24fps 14bit lossless)
+- ✅ 10/12/14-bit lossless RAW video
+- ✅ SD UHS overclock: **240MHz @ 73MB/s** — BEST of any DIGIC V! (confirmed Feb 2023 by loknar)
+- ✅ Dual ISO photo mode (fixed by nanomad Apr 2014 — was `"ISOLess PH Err (15)"`)
+- ✅ Silent pictures, focus peaking, Lua scripting, audio meters
+- ✅ Spotmeter, RAW zebras, ETTR, bulb mode, intervalometer
+- ✅ MLV lite/play/sound modules, audio recording in crop_rec
+- ✅ Audio Remote Shot
+
+### Feature Details
+
+#### LV_FOCUS_DATA Support
+**Critical difference from 70D:** EOSM firmware DOES expose PROP_LV_FOCUS_DATA.
+- QEMU spells (EOSM.h:232-431) have complete 36-byte focus point arrays with coordinates at multiple zoom levels
+- All spells are **commented out** — need activation + hardware testing
+- CONFIG_LV_FOCUS_INFO already enabled in current build
+
+#### crop_rec Status
+- **Basic**: OFF / 3x3 720p only (EOSM is `is_basic` group with 650D/700D/100D)
+- **Danne's mv1080p**: 1736x976 continuous @ 24fps with 14bit lossless + sd_uhs. Requires manual focus (AF freezes LCD)
+- **1x3 binning** (theBilalFakhouri): Works on 700D but corrupted frames on EOSM above 1150px height
+- **3x crop + HDMI**: Broken in later builds (~2022)
+
+#### Dual ISO
+- Fixed by nanomad Apr 2014 (wrong ISO register address per camera)
+- Photo mode confirmed working by garry23: *"Even the humble EOSM can exploit dual-ISO"*
+- Tables at 0x4048124C (6 entries, SIZE=16) — same pattern as 650D/700D
+
+#### SD Overclock
+- **Best DIGIC V camera**: 240MHz hybrid @ 73MB/s SDR50 (confirmed Feb 2023 by loknar)
+- 70D maxes at 160MHz
+- Caution: higher presets may ruin cards
+- SanDisk Extreme PRO ≤32GB recommended (also avoids shutter bug)
+
+### Touchscreen Status
+- CONFIG_TOUCHSCREEN defined but nanomad: *"Needs more hacking, I'll fix it once I get the EOSM"*
+- Suggesting nanomad never had physical hardware to debug touch
+- User reports: less responsive in later 2014 builds
+- Physical scroll wheel on EOSM is fragile (some reports of actual hardware failure)
+- Basic touch-focus works but not fully reliable
+
+### Port Activity Timeline
+- **Dec 2013**: jordancolburn ports Tragic Lantern to EOSM 2.0.2
+- **2014**: nanomad takes over, fixes dual ISO, shutter bug investigations
+- **~2016**: Declared stable/main build
+- **~2017-2018**: Last official nightly builds
+- **~2018**: Danne's experimental builds (mv1080p, crop_rec)
+- **2022-2023**: Thread continues but only user Q&A, no new development
+- **Current**: Maintenance mode. No active developer. Thread at 75+ pages.
+
+### Camera Popularity & Ecoystem
+- Extremely popular for RAW video due to: $100-150 used price + 240MHz SD overclock + 14bit lossless at 1736x976
+- Strong community: Lua scripts (garry23), focus pixel maps (dfort), processing tools (Danne), crop_rec experiments (theBilalFakhouri)
+- Often recommended as "cheapest RAW video camera" on ML forum
 
 ### Related Cameras
 - **650D/Rebel T4i** — Same sensor, nearly identical firmware structure

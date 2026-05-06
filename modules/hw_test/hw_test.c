@@ -1060,9 +1060,29 @@ static void hw_task(void *unused)
         if (vram) {
             hexval("bmp_vram_ptr", (uint32_t)(uintptr_t)vram);
         }
+
+        /* Palette write/read-back test */
+        uint32_t pal_test_addr = 0xC0F14080;
+        uint32_t orig = shamem_read(pal_test_addr);
+        uint32_t test_val = 0x0346de7f;
+        EngDrvOut(pal_test_addr, test_val);
+        uint32_t readback = shamem_read(pal_test_addr);
+        EngDrvOut(pal_test_addr, orig);
+        rst(readback == test_val, "palette_rw", "write/read mismatch");
     }
 
     blink_delay(500);
+
+    /* S18b: DEBUG MONITOR */
+    hdr("DEBUG MONITOR");
+    {
+        int r = call("EnableDebugMon");
+        info_int("EnableDebugMon", r);
+        if (r == 0) {
+            call("DisableDebugMon");
+        }
+        rst(r == 0 || r == -1, "debug_mon", r == 0 ? "enabled" : r == -1 ? "not found" : "error");
+    }
 
     /* ════════════════════════════════════════
      * S19: THREAD SYNCHRONIZATION
