@@ -14,7 +14,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 4. Extract modules: `unzip -o platform/70D.112/build/magiclantern.zip -d 70d-latest/`
 5. Update size tracking log below
 
-**Current Build:** 464KB (2026-05-06) - Sprint 40: Color Blind Assist palette, Debug Monitor overlay test, FA_DISP LCD patterns, FA_ factory calibration probes, test_qemu.sh firmware fix. RE complete (~95%); all software-layer gaps closed. Generic `test_qemu.sh` supports 70D + 19 other models. See [CHANGELOG.md](CHANGELOG.md) for full project history.
+**Current Build:** 468KB (2026-05-06) - Sprint 41: Holy Grail timelapse module, live_comp module, custom false color IRE ranges. RE complete (~95%); all software-layer gaps closed. Generic `test_qemu.sh` supports 70D + 19 other models. See [CHANGELOG.md](CHANGELOG.md) for full project history.
 **CRITICAL:** Build with `make -j$(nproc)` (no CONFIG_QEMU=y) for hardware deployment. QEMU builds include testing code that causes red LED on physical 70D.
 
 ---
@@ -73,6 +73,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 **Repository:** https://github.com/peva3/magiclantern_70D
 **Current Phase:** hw_test v27 — 35 PASS / 5 SKIP / 0 FAIL on physical 70D. FPS stability (range=0, rock-solid). ADTG/crop registers. Extended call() tests (GetHDMIInfo, FA_GetProperty, TurnOffDisplay work). Pre-deployment test suite (tests/run_all.sh). All 28 modules auto-build. All automated hardware testing complete in hw_test. Next: manual testing of WiFi, PTP tunnel, Dual ISO
     | 2026-05-05 | 461KB | 457KB | CONFIG_AUDIO_CONTROLS enabled, 96kHz sample rate in mlv_snd, HOTPLUG_VIDEO_OUT null guard, sounddev_active_in stub fix |
+| 2026-05-06 | 468KB | 460KB | Sprint 41: Holy Grail timelapse, live_comp module, custom false color, hw_test fixes |
 | 2026-05-06 | 468KB | 460KB | Sprint 40: Focus stacking fix, FA_DISP/FA_cal tests, Color Blind palette, Debug Monitor, test_qemu.sh fix |
 
 **Last Updated:** 2026-05-05

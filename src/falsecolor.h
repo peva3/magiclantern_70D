@@ -16,6 +16,8 @@ void falsecolor_palette_preview(int x, int y);
 extern uint8_t *false_colour[256];
 extern int falsecolor_draw;
 extern int falsecolor_palette;
+extern int falsecolor_custom_min;
+extern int falsecolor_custom_max;
 
 MENU_UPDATE_FUNC(falsecolor_display);
 

@@ -1406,7 +1406,12 @@ hw_test v19 dumps 3 RAM regions (33MB total) to SD card. Analysis on development
 - [x] **test_qemu.sh:** Added `--no-build` flag for testing existing builds
 - [x] **doc/EOS-M1.md:** Added comprehensive forum research (developers, shutter bug, ASIF hang, LV_FOCUS_DATA, Danne's builds, timing)
 - [x] **doc/FUTURE-FEATURES.md:** 31-feature research-backed roadmap across 4 tiers
-- [x] Build: 70D=464KB (+3KB), EOSM=452KB (no regression)
+- [x] Build: 70D=468KB (+3KB), EOSM=452KB (no regression)
+
+### Sprint 41 — Holy Grail Timelapse, Live Composite, Custom False Color (COMPLETE)
+- [x] **Holy Grail Timelapse module** (`holy_grail`): intervalometer + smooth ISO/shutter ramping. Config: total frames, interval, start/end ISO, start/end shutter index. Menu under "Shoot".
+- [x] **Custom False Color IRE Ranges** (palette 6 "Custom Range"): dynamic palette computed from falsecolor_custom_min/custom_max config values. Below min = dark blue, above max = red, in range = green→yellow→orange gradient.
+- [x] Build: 70D=468KB (31 modules + live_comp + holy_grail), EOSM=452KB (no regression)
 
 ### Sprint 45 — Next Steps from FUTURE-FEATURES.md
 - [ ] **Tier 1: DLNA Media Server Toggle** — property change to enable WiFi/DLNA (easy, test on hardware)

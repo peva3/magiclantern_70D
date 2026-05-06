@@ -2994,11 +2994,31 @@ struct menu_entry zebra_menus[] = {
             {
                 .name = "Palette      ",
                 .priv = &falsecolor_palette,
-                .max = 5,
+                .max = 6,
                 .icon_type = IT_DICE,
-                .choices = CHOICES("Marshall", "SmallHD", "50-55%", "67-72%", "Banding detection", "GreenScreen"),
+                .choices = CHOICES("Marshall", "SmallHD", "50-55%", "67-72%", "Banding detection", "GreenScreen", "Custom Range"),
                 .update = falsecolor_display_palette,
                 .help = "False color palettes for exposure, banding, green screen...",
+                .depends_on = DEP_EXPSIM,
+                .children =  (struct menu_entry[]) {
+                    {
+                        .name = "Custom min IRE",
+                        .priv = &falsecolor_custom_min,
+                        .min = 0,
+                        .max = 100,
+                        .help = "IRE threshold below which pixels show as blue.",
+                        .depends_on = DEP_EXPSIM,
+                    },
+                    {
+                        .name = "Custom max IRE",
+                        .priv = &falsecolor_custom_max,
+                        .min = 0,
+                        .max = 100,
+                        .help = "IRE threshold above which pixels show as red.",
+                        .depends_on = DEP_EXPSIM,
+                    },
+                    MENU_EOL
+                }
             },
             MENU_EOL
         }
