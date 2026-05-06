@@ -309,7 +309,7 @@ static const reg_entry imgproc_regs[] = {
 };
 
 static const reg_entry misc_regs[] = {
-    {"CARD_LED", CARD_LED_ADDRESS},
+    {"CARD_LED", 0xC022C06C},
     {0, 0}
 };
 
@@ -1077,7 +1077,9 @@ static void hw_task(void *unused)
     hdr("DEBUG MONITOR");
     {
         int r = call("EnableDebugMon");
-        info_int("EnableDebugMon", r);
+        char dbg_b[80];
+        snprintf(dbg_b, sizeof(dbg_b), "EnableDebugMon=%d", r);
+        info(dbg_b);
         if (r == 0) {
             call("DisableDebugMon");
         }
@@ -1636,7 +1638,9 @@ static void hw_task(void *unused)
         info("  Socket API: 7 functions validated in RAM (hw_test v15)");
         info("  WiFi init calls available in call() dispatch");
         int p = call("InitializePTPFrameworkController");
-        info_int("  InitializePTPFrameworkController", p);
+        char ptp_b[80];
+        snprintf(ptp_b, sizeof(ptp_b), "InitializePTPFrameworkController=%d", p);
+        info(ptp_b);
         info("");
     }
 

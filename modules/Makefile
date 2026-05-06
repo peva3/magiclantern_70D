@@ -61,7 +61,8 @@ ML_MODULES = \
 	wifi_enable \
 	wifi_test \
 	ptptun \
-	ramdump
+	ramdump \
+	live_comp
 
 .PHONY: clean $(BUILD_DIR)
 
