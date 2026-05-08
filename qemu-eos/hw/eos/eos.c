@@ -2031,18 +2031,20 @@ static void eos_init_common(void)
         exit(1);
     }
     
-    /* init CF card */
-    DriveInfo *dj;
-    dj = drive_get_next(IF_IDE);
-    if (!dj) {
-        fprintf(stderr, "CF init failed\n");
-        exit(1);
+    /* init CF card (only on models with CF hardware) */
+    if (eos_state->model->cf_driver_interrupt)
+    {
+        DriveInfo *dj;
+        dj = drive_get_next(IF_IDE);
+        if (!dj) {
+            fprintf(stderr, "CF init failed (no CF drive) — continuing without CF\n");
+        } else {
+            ide_bus_new(&eos_state->cf.bus, sizeof(eos_state->cf.bus), DEVICE(eos_state), 0, 2);
+            ide_init2(&eos_state->cf.bus, eos_state->interrupt);
+            ide_create_drive(&eos_state->cf.bus, 0, dj);
+            eos_state->cf.bus.ifs[0].drive_kind = IDE_CFATA;
+        }
     }
-
-    ide_bus_new(&eos_state->cf.bus, sizeof(eos_state->cf.bus), DEVICE(eos_state), 0, 2);
-    ide_init2(&eos_state->cf.bus, eos_state->interrupt);
-    ide_create_drive(&eos_state->cf.bus, 0, dj);
-    eos_state->cf.bus.ifs[0].drive_kind = IDE_CFATA;
 
 
     /* nkls: init SF */
@@ -5433,8 +5435,10 @@ case 0xD4:
 default:
  /* 70D: Handle unknown SD registers gracefully */
  if (type & MODE_READ) {
- /* Firmware is reading an unhandled register - return non-zero to avoid SDINTREP=0 errors */
- ret = 0x00000001; /* Return OK status */
+ /* Firmware reads unknown SD registers as status checks.
+  * Return 0 for most registers (indicating idle/ready),
+  * or 1 for interrupt status registers that should be nonzero. */
+ ret = 0x00000000;
  msg = "Unknown register (70D workaround)";
  fprintf(stderr, "[SDIO 70D] Unknown register read: 0x%03X (returning 0x%X)\n", address & 0xFFF, ret);
  } else {
