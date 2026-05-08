@@ -971,6 +971,7 @@ static void stub_test_engio()
 
 static void stub_test_display()
 {
+#ifndef CONFIG_70D
     // call, DISPLAY_IS_ON
     TEST_VOID(call("TurnOnDisplay"));
     TEST_FUNC_CHECK(DISPLAY_IS_ON, != 0);
@@ -978,6 +979,11 @@ static void stub_test_display()
     TEST_FUNC_CHECK(DISPLAY_IS_ON, == 0);
     TEST_VOID(call("TurnOnDisplay"));
     TEST_FUNC_CHECK(DISPLAY_IS_ON, != 0);
+#else
+    // TurnOnDisplay/TurnOffDisplay are unsafe on 70D (hard freeze)
+    // Skip display tests on 70D
+    info();
+#endif
 }
 
 static void stub_test_gui()
