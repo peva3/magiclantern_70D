@@ -2500,7 +2500,10 @@ static int eos_handle_card_led(unsigned int parm, unsigned int address, unsigned
         }
 
         /* this will trigger if somebody writes an invalid LED ON/OFF code */
-        assert(eos_state->card_led);
+        if (!eos_state->card_led) {
+            fprintf(stderr, "Warning: unrecognized card LED value 0x%X at 0x%X\n", value, address);
+            eos_state->card_led = -1;
+        }
     }
 
     io_log("GPIO", address, type, value, ret, msg, 0, 0);
