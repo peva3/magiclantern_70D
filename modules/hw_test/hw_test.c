@@ -93,7 +93,7 @@ static void log_flush(void)
 
 static void out(const char *s, int color)
 {
-    bmp_printf(FONT_SMALL | color, X0, line(), "%s", s);
+    bmp_printf(FONT(FONT_SMALL, color, COLOR_BLACK), X0, line(), "%s", s);
     char log_buf[516];
     snprintf(log_buf, sizeof(log_buf), "[HW] %s", s);
     log_write(log_buf);
@@ -123,20 +123,20 @@ static void rst(int pass, const char *name, const char *why)
 {
     t_total++;
     int y = line();
-    bmp_printf(FONT_SMALL | COLOR_WHITE, X0, y, "%s", name);
+    bmp_printf(FONT_SMALL, X0, y, "%s", name);
     char log_buf[516];
     if (pass) {
         t_pass++;
-        bmp_printf(FONT_SMALL | COLOR_GREEN1, X0 + 140, y, "PASS");
+        bmp_printf(FONT(FONT_SMALL, COLOR_GREEN1, COLOR_BLACK), X0 + 140, y, "PASS");
         snprintf(log_buf, sizeof(log_buf), "[HW] %s: PASS", name);
     } else if (why) {
         t_skip++;
-        bmp_printf(FONT_SMALL | COLOR_YELLOW, X0 + 140, y, "SKIP");
-        bmp_printf(FONT_SMALL | COLOR_CYAN, X0 + 200, y, "%s", why);
+        bmp_printf(FONT(FONT_SMALL, COLOR_YELLOW, COLOR_BLACK), X0 + 140, y, "SKIP");
+        bmp_printf(FONT(FONT_SMALL, COLOR_CYAN, COLOR_BLACK), X0 + 200, y, "%s", why);
         snprintf(log_buf, sizeof(log_buf), "[HW] %s: SKIP (%s)", name, why);
     } else {
         t_fail++;
-        bmp_printf(FONT_SMALL | COLOR_RED, X0 + 140, y, "FAIL");
+        bmp_printf(FONT(FONT_SMALL, COLOR_RED, COLOR_BLACK), X0 + 140, y, "FAIL");
         snprintf(log_buf, sizeof(log_buf), "[HW] %s: FAIL", name);
     }
     log_write(log_buf);
