@@ -1445,3 +1445,16 @@ hw_test v19 dumps 3 RAM regions (33MB total) to SD card. Analysis on development
 - [ ] **Tier 2: WB Calibration Tool** — call("FA_AdjustWhiteBalance") wrapper (easy, test on hardware)
 - [ ] **Tier 2: WiFi Remote Trigger** — socket server on port 5555 (needs WiFi hardware)
 - [ ] **Research:** Find `SetASIFMode` for 24-bit audio (search ROM near ASIF functions at 0xFF117xxx-0xFF119xxx)
+
+### Sprint 43 — QEMU CF/SD Fixes (COMPLETE)
+- [x] CF init crash: added `.cf_driver_interrupt = 0` to 70D and EOSM, made CF init non-fatal
+- [x] SDIO busy-poll: changed unknown register return from 1 to 0 (firmware polls reg 0x044)
+- [x] QEMU rebuilt and tested: boots past CF/SD, loads autoexec.bin, jumps to ML code
+
+### Sprint 44 — QEMU: Remaining Boot Blockers
+- [ ] **P1: MPU spells incomplete for ML boot** — run with `-d mpu` to capture unknown spells during ML init
+- [ ] **P1: SD DMA interrupt numbers** — verify 70D uses `sd_driver_interrupt=0x172` or needs different value (5D3 uses 0x4B)
+- [ ] **P1: bootflags_addr** — currently 0xF8000000 (ROM1 base). Writing bootflags here corrupts firmware. Find correct address.
+- [ ] **P2: SPISI SIO channel** — DIGIC V default is channel 4; 70D may differ
+- [ ] **P2: Card LED assert risk** — 70D may write different LED values than handled
+- [ ] **P2: ML SD image** — build a proper sd.qcow2 with 468KB autoexec + 32 modules

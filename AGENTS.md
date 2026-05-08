@@ -648,13 +648,9 @@ ML Init: [MCELL][GuiFactoryRegisterEventCommissionProcedure] — ML GUI factory 
 MPU Stats: 250+ messages, 93 complete spell cycles, 0 hangs
 ```
 
-### Remaining QEMU Gaps vs 6D (low priority)
-- PROP_LV_FOCUS_DATA spell missing (firmware limitation, not fixable)
-- HDMI GPIO address uses default 0x0138 (6D uses 0x0158)
-- SD card partition detection — QEMU SD emulation accuracy issue
-- I2C peripheral emulation — warnings (no I2C devices in QEMU)
-
 ### Sprint 21 — QEMU 70D Emulation Improvements (2026-04-27)
+
+**MPU spell fixes — 0 unknown messages achieved:**
 
 **MPU spell fixes — 0 unknown messages achieved:**
 - Added PROP_GUI_SWITCH (spell #62a) and PROP_ACTIVE_SWEEP_STATUS (spell #62b)
@@ -2566,6 +2562,29 @@ Full AK4646 init sequence traced and documented:
 - `wifisrv.c` / `ptptun.c`: `call("EnableBootDisk")` freezes 70D. Removed.
 - `test_qemu.sh`: Non-existent QEMU models. Removed.
 - `stubs.S`: Duplicate NSTUB entries. Cleaned up.
+
+### Sprint 43 — QEMU CF/SD Fixes & Boot Analysis (2026-05-08)
+
+**CF init crash fix:** The 70D and EOSM models inherited `cf_driver_interrupt=0x4A` from base defaults (5D3/7D have CF). Added explicit `.cf_driver_interrupt = 0` to both models. Also changed `exit(1)` to non-fatal warning in eos.c for robustness on CF-equipped models without a CF image.
+
+**SDIO busy-poll fix:** Firmware read unknown SD register 0x044 as a status check. Default return was 1, which looked like a pending interrupt → infinite loop. Changed to 0 (idle/ready).
+
+**Verified boot sequence after fixes:**
+```
+IFE Initialize → IFE Complete → SD LOAD OK →
+Open file AUTOEXEC.BIN → Now jump to AUTOEXEC.BIN!!
+```
+Firmware boots past CF and SD init, loads autoexec.bin from SD card, and jumps to ML code. 158+ MPU messages processed during boot.
+
+**Remaining QEMU blockers for full ML boot:**
+1. **MPU spells incomplete for ML init** — 13 spell tables cover Canon boot, but ML initialization (module loading, GUI setup, property hooks) triggers additional MPU interactions with no matching spells. Firmware blocks waiting for replies. Run with `-d mpu` to capture unknowns.
+2. **SD DMA interrupt mapping** — DIGIC V defaults use `sd_driver_interrupt=0x172`, `sd_dma_interrupt=0x171`. 5D3 overrides these (uses 0x4B/0x32). 70D may need different values. Verify from firmware GDB trace.
+3. **bootflags_addr** — Inherits `0xF8000000` (ROM1 base). Writing bootflags here may corrupt firmware code. Need to find correct 70D bootflags address.
+4. **SPISI SIO channel** — DIGIC V default is channel 4. 70D may differ, causing serial flash reads to return garbage.
+5. **Card LED assert risk** — If firmware writes unrecognized LED pattern value, `assert(card_led)` crashes QEMU.
+6. **SD card image** — Pre-built `sd.qcow2` has 25KB placeholder. Full ML build (468KB) needs to be mounted and installed.
+
+**Build:** QEMU 4.2.1 arm-softmmu rebuilt with fixes. QEMU changes committed to repo.
 
 ### Custom Firmware Generation Assessment
 **Can 100% RE enable standalone custom firmware? Short answer: No.**
