@@ -140,7 +140,7 @@ MENU_UPDATE_FUNC(falsecolor_display)
 {
     if (falsecolor_draw)
     {
-        MENU_SET_VALUE(
+        MENU_SET_VALUE("%s",
             falsecolor_palette_name()
         );
     }
@@ -148,7 +148,7 @@ MENU_UPDATE_FUNC(falsecolor_display)
 
 MENU_UPDATE_FUNC(falsecolor_display_palette)
 {
-    MENU_SET_VALUE(
+    MENU_SET_VALUE("%s",
         falsecolor_palette_name()
     );
     if (info->can_custom_draw) falsecolor_palette_preview(info->x, info->y + font_large.height + 10);
