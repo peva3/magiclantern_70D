@@ -39,12 +39,12 @@ int falsecolor_value_ex(int palette, int i)
 
 int falsecolor_value(int i)
 {
-  return false_colour[falsecolor_palette][i];
+  return falsecolor_value_ex(falsecolor_palette, i);
 }
 
 int falsecolor_fordraw(int i)
 {
-  return falsecolor_draw ? false_colour[falsecolor_palette][i] : COLOR_WHITE;
+  return falsecolor_draw ? falsecolor_value_ex(falsecolor_palette, i) : COLOR_WHITE;
 }
 
 extern uint8_t* get_bvram_mirror();
