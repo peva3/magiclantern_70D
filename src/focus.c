@@ -906,7 +906,11 @@ int is_continuous_af()
     return is_movie_mode() ? continuous_af_movie : continuous_af_photo;
 }
 
+#ifdef CONFIG_LV_FOCUS_INFO
+#if defined(FEATURE_TRAP_FOCUS) || defined(FEATURE_MAGIC_ZOOM)
 static int trap_focus_autoscaling = 1;
+#endif
+#endif
 
 #ifdef FEATURE_TRAP_FOCUS
 int handle_trap_focus(struct event * event)
