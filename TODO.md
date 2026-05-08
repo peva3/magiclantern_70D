@@ -1432,6 +1432,11 @@ hw_test v19 dumps 3 RAM regions (33MB total) to SD card. Analysis on development
 - [x] Build: 70D=468KB, EOSM=452KB (no regressions)
 - [x] All fixes pushed to peva3/magiclantern_70D. No PRs created.
 
+### Sprint 42d — hw_test Color Rendering Fix (COMPLETE)
+- [x] `FONT_SMALL | COLOR_RED` rendered as light blue (0x01|0x08=0x09) — FAIL text was wrong color
+- [x] Fixed all 7 color-rendering instances to use `FONT(FONT_SMALL, COLOR_X, COLOR_BLACK)` pattern
+- [x] Build: 70D=468KB, verified module loads correctly
+
 ### Sprint 45 — Next Steps from FUTURE-FEATURES.md
 - [ ] **Tier 1: DLNA Media Server Toggle** — property change to enable WiFi/DLNA (easy, test on hardware)
 - [ ] **Tier 1: SD Card Health Diagnostic** — call("FA_CheckSD") wrapper (easy, test on hardware)
