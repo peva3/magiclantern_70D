@@ -2037,7 +2037,7 @@ static void eos_init_common(void)
         DriveInfo *dj;
         dj = drive_get_next(IF_IDE);
         if (!dj) {
-            fprintf(stderr, "CF init failed (no CF drive) — continuing without CF\n");
+            fprintf(stderr, "CF init failed (no CF drive) - continuing without CF\n");
         } else {
             ide_bus_new(&eos_state->cf.bus, sizeof(eos_state->cf.bus), DEVICE(eos_state), 0, 2);
             ide_init2(&eos_state->cf.bus, eos_state->interrupt);
