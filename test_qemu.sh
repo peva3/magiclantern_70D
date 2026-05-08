@@ -30,7 +30,7 @@ D_ARGS=()
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        70D|EOSM|EOSM2|EOSM3|EOSM5|EOSM10|100D|200D|5D3|6D|700D|650D|600D|60D|80D|7D|7D2)
+        70D|EOSM|EOSM2|100D|200D|5D3|6D|700D|650D|600D|60D|80D|7D|7D2)
             CAMERA="$1"; shift ;;
         --gdb) GDB_MODE=1; TIMEOUT=120; shift ;;
         --boot-trace) GDB_MODE=1; BOOT_TRACE=1; TIMEOUT=120; shift ;;

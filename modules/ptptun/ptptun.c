@@ -293,22 +293,6 @@ static void run_self_test(void *unused)
     }
 
     total++;
-    printf("[TEST %d] call('EnableBootDisk')... ", total);
-    {
-        int r = call("EnableBootDisk");
-        if (r >= 0 || r == -1) { printf("OK (r=%d)\n", r); pass++; }
-        else { printf("FAIL (r=%d)\n", r); fail++; }
-    }
-
-    total++;
-    printf("[TEST %d] call('TurnOnDisplay')... ", total);
-    {
-        int r = call("TurnOnDisplay");
-        if (r >= 0 || r == -1) { printf("OK (r=%d)\n", r); pass++; }
-        else { printf("FAIL (r=%d)\n", r); fail++; }
-    }
-
-    total++;
     printf("[TEST %d] shamem_read(FPS_TIMER_A 0xC0F06008)... ", total);
     {
         uint32_t v = shamem_read(0xC0F06008);

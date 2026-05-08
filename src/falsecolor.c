@@ -65,6 +65,9 @@ void draw_false_downsampled( void )
         return;
     }
 
+    // palette 6 is a dynamic custom range, fall back to Marshall for draw
+    int palette = (falsecolor_palette == 6) ? 0 : falsecolor_palette;
+
     //~ bvram_mirror_init();
     uint8_t * const bvram = bmp_vram_real();
     if (!bvram) return;
@@ -72,7 +75,7 @@ void draw_false_downsampled( void )
     if (!bvram_mirror) return;
 
     uint8_t * const lvram = get_yuv422_vram()->vram;
-    uint8_t* fc = false_colour[falsecolor_palette];
+    uint8_t* fc = false_colour[palette];
 
     int off = get_y_skip_offset_for_overlays();
     for(int y = os.y0 + off; y < os.y_max - off; y += 2 )
@@ -120,11 +123,13 @@ char* falsecolor_palette_name()
         falsecolor_palette == 2 ? "50-55%" :
         falsecolor_palette == 3 ? "67-72%" :
         falsecolor_palette == 4 ? "Banding detection" :
-        falsecolor_palette == 5 ? "GreenScreen" : "Unk";
+        falsecolor_palette == 5 ? "GreenScreen" :
+        falsecolor_palette == 6 ? "Custom Range" : "Unk";
 }
 
 void falsecolor_palette_preview(int x, int y)
 {
+    if (falsecolor_palette == 6) return; // custom range, no static palette
     for (int i = 0; i < 256; i++)
     {
         draw_line(x + i, y, x + i, y + font_large.height - 2, false_colour[falsecolor_palette][i]);

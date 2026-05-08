@@ -180,8 +180,7 @@ static void handle_client(int client_fd)
         }
 
         case 'B':
-            call("EnableBootDisk");
-            rlen = snprintf(resp, sizeof(resp), "BOOTDISK_OK");
+            rlen = snprintf(resp, sizeof(resp), "ERR_UNSAFE_CMD");
             send_resp(client_fd, resp, rlen);
             break;
 

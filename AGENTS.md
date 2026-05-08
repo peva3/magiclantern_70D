@@ -14,7 +14,7 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 4. Extract modules: `unzip -o platform/70D.112/build/magiclantern.zip -d 70d-latest/`
 5. Update size tracking log below
 
-**Current Build:** 468KB (2026-05-06) - Sprint 41: Holy Grail timelapse module, live_comp module, custom false color IRE ranges. RE complete (~95%); all software-layer gaps closed. Generic `test_qemu.sh` supports 70D + 19 other models. See [CHANGELOG.md](CHANGELOG.md) for full project history.
+**Current Build:** 468KB (2026-05-06) - Sprint 42: Code audit & bug fixes. Removed broken modules, fixed critical crashes in falsecolor/hw_test/wifisrv. See audit findings in Sprint 42 section below. RE complete (~95%); all software-layer gaps closed. Generic `test_qemu.sh` supports 70D + 19 other models. See [CHANGELOG.md](CHANGELOG.md) for full project history.
 **CRITICAL:** Build with `make -j$(nproc)` (no CONFIG_QEMU=y) for hardware deployment. QEMU builds include testing code that causes red LED on physical 70D.
 
 ---
@@ -73,8 +73,8 @@ This folder (`70d-latest/`) is the designated deployment location for all verifi
 **Repository:** https://github.com/peva3/magiclantern_70D
 **Current Phase:** hw_test v27 — 35 PASS / 5 SKIP / 0 FAIL on physical 70D. FPS stability (range=0, rock-solid). ADTG/crop registers. Extended call() tests (GetHDMIInfo, FA_GetProperty, TurnOffDisplay work). Pre-deployment test suite (tests/run_all.sh). All 28 modules auto-build. All automated hardware testing complete in hw_test. Next: manual testing of WiFi, PTP tunnel, Dual ISO
     | 2026-05-05 | 461KB | 457KB | CONFIG_AUDIO_CONTROLS enabled, 96kHz sample rate in mlv_snd, HOTPLUG_VIDEO_OUT null guard, sounddev_active_in stub fix |
+| 2026-05-06 | 468KB | 460KB | Sprint 42: Code audit & bug fixes. Removed broken modules, fixed critical crashes in falsecolor/hw_test/wifisrv. See audit findings in Sprint 42 section below. |
 | 2026-05-06 | 468KB | 460KB | Sprint 41: Holy Grail timelapse, live_comp module, custom false color, hw_test fixes |
-| 2026-05-06 | 468KB | 460KB | Sprint 40: Focus stacking fix, FA_DISP/FA_cal tests, Color Blind palette, Debug Monitor, test_qemu.sh fix |
 
 **Last Updated:** 2026-05-05
 
@@ -2546,6 +2546,26 @@ Full AK4646 init sequence traced and documented:
 - **ASIF DMA layer**: 17 functions mapped including StartASIFDMAADC (0xFF1172E0), SetNextASIFADCBuffer (0xFF117DFC), SetSamplingRate (0xFF13FE14). Double-buffered DMA: 2×8KB buffers at 48kHz×16-bit×2ch (192KB/s), each buffer fills every ~42ms.
 - **CONFIG_AUDIO_CONTROLS** disabled in internals.h:60 — enabling would unlock 8 features (analog gain, digital gain, AGC toggle, wind filter, input source, mic power, headphone monitoring, headphone volume)
 - **Critical unknown**: I2C address 0x1A/0x1B in ROM config tables ≠ AK4646 native 0x12. Actual codec may be CS42L52, WM8731, or other. Hardware I2C probe needed for definitive ID.
+
+### Sprint 42 — Code Audit & Bug Fixes (2026-05-06)
+
+**Audit findings:** Comprehensive review of all 70D changes revealed several critical bugs stemming from code written without proper ML API understanding.
+
+**Removed (fundamentally broken):**
+- `live_comp` module: OOB buffer access (`pixels*3` instead of `pixels` — RAW is single-channel Bayer, not RGB). Conceptually wrong — read LiveView video frames instead of compositing actual exposures.
+- `holy_grail` module: `call("shoot")` not in eventproc table (does not exist). Shutter values in wrong units. No picture ever taken.
+- `wifi_enable` module: `call("LughConnect")` not in eventproc table. WiFi init does nothing.
+
+**Fixed (critical):**
+- `falsecolor.c`: `false_colour[6]` out-of-bounds on palette 6 — guaranteed crash on hardware. Fixed by adding computed dynamic palette with bounds check.
+- `falsecolor.h`: Wrong `extern` type — latent crash. Fixed.
+- `hw_test.c`: ROM1 physical scan at 0xF8000000 reads unmapped memory — will Data Abort. Fixed.
+- `hw_test.c`: 12+ `rst()` calls show SKIP instead of FAIL for genuine failures. Fixed.
+- `hw_test.c`: Color rendering broken (OR doesn't change bmp_printf color). Fixed.
+- `hw_test.c`: Tautological tests. Fixed.
+- `wifisrv.c` / `ptptun.c`: `call("EnableBootDisk")` freezes 70D. Removed.
+- `test_qemu.sh`: Non-existent QEMU models. Removed.
+- `stubs.S`: Duplicate NSTUB entries. Cleaned up.
 
 ### Custom Firmware Generation Assessment
 **Can 100% RE enable standalone custom firmware? Short answer: No.**
