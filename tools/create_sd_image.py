@@ -9,14 +9,15 @@ OUTPUT = f"/app/70d/qemu-eos/sd_{CAMERA}.qcow2"
 SIZE_MB = 256
 TMP_RAW = f"/tmp/sd_{CAMERA}_raw.img"
 
-# Create empty raw image
-with open(TMP_RAW, 'wb') as f:
-    f.seek(SIZE_MB * 1024 * 1024 - 1)
-    f.write(b'\x00')
+# Use pre-built SD image as template (firmware checks BPB fields like OEM='CANONEOS')
+PREBUILT = f"/app/70d/qemu-eos/magiclantern/disk_images/sd.qcow2"
+if not os.path.exists(PREBUILT):
+    print(f"ERROR: pre-built SD image not found at {PREBUILT}")
+    sys.exit(1)
 
-# Use mkfs.vfat and mcopy to create FAT filesystem with files
-# Requires dosfstools + mtools
-subprocess.run(['mkfs.vfat', '-F32', '-n', 'ML_BOOT', TMP_RAW], check=True, capture_output=True)
+# Extract the raw template from qcow2
+subprocess.run(['qemu-img', 'convert', '-f', 'qcow2', '-O', 'raw', PREBUILT, TMP_RAW],
+               check=True, capture_output=True)
 
 # Mount via loopback
 import subprocess

@@ -4,8 +4,9 @@
 #
 # Usage: ./create_sd_image.sh [--no-clean]
 #
-# Creates sd.qcow2 and cf.qcow2 in the platform build directory,
+# Creates sd.qcow2 in the platform build directory,
 # suitable for QEMU emulation with ML autoexec.bin and modules.
+# 70D is SD-only; no CF drive needed.
 #
 set -euo pipefail
 
@@ -104,15 +105,12 @@ mdir -i "$WORK_DIR/sd.raw@@$PARTITION_OFFSET" ::
 
 echo "Converting to qcow2..."
 $QEMU_IMG convert -f raw -O qcow2 "$WORK_DIR/sd.raw" "$BUILD_DIR/sd.qcow2"
-cp "$BUILD_DIR/sd.qcow2" "$BUILD_DIR/cf.qcow2"
-
 SD_SIZE=$(stat --format="%s" "$BUILD_DIR/sd.qcow2" 2>/dev/null || stat -f "%z" "$BUILD_DIR/sd.qcow2")
 AUTOEXEC_SIZE=$(stat --format="%s" "$BUILD_DIR/autoexec.bin" 2>/dev/null || stat -f "%z" "$BUILD_DIR/autoexec.bin")
 
 echo ""
 echo "=== Done ==="
 echo "  sd.qcow2: $(( SD_SIZE / 1024 ))KB ($SD_SIZE bytes)"
-echo "  cf.qcow2: $(( SD_SIZE / 1024 ))KB"
 echo "  autoexec.bin: $(( AUTOEXEC_SIZE / 1024 ))KB"
 echo ""
 echo "  Run QEMU with: ./test_70d_qemu.sh --boot --no-build"

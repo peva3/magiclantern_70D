@@ -13,6 +13,9 @@
 #include <exmem.h>
 #include <fio-ml.h>
 #include <config.h>
+#include <dryos.h>
+#include <falsecolor.h>
+#include <lens.h>
 
 /*
  * hw_test — Comprehensive Hardware Proving Ground for Canon 70D
@@ -1011,8 +1014,46 @@ static void hw_task(void *unused)
     blink_delay(500);
 
     /* ════════════════════════════════════════
-     * S18: DISPLAY SYSTEM
+     * S18b: FOCUS SYSTEM NSTUB TEST
      * ════════════════════════════════════════ */
+    hdr("FOCUS SYSTEM (S18b)");
+    {
+        int r = call("AdjustFocusLens");
+        char b[80];
+        snprintf(b, sizeof(b), "AdjustFocusLens=%d", r);
+        info(b);
+        rst(r >= -1, "adjust_focus_nstub", r < -1 ? "error" : 0);
+    }
+
+    /* ════════════════════════════════════════
+     * S18c: DISPLAY FEATURE TEST
+     * ════════════════════════════════════════ */
+    hdr("DISPLAY FEATURES (S18c)");
+    {
+        /* Color scheme: cycle through all 8 options */
+        extern int bmp_color_scheme;
+        int orig_scheme = bmp_color_scheme;
+        for (int s = 0; s <= 7; s++) {
+            bmp_color_scheme = s;
+            char b[80];
+            snprintf(b, sizeof(b), "color_scheme=%d", s);
+            info(b);
+        }
+        bmp_color_scheme = orig_scheme;
+        rst(1, "color_schemes", 0);
+
+        /* False color palette: cycle through all 7 options */
+        int orig_pal = falsecolor_palette;
+        for (int p = 0; p <= 6; p++) {
+            falsecolor_palette = p;
+            int c = falsecolor_value_ex(p, 128);
+            char b[80];
+            snprintf(b, sizeof(b), "fc_pal%d[128]=0x%02X", p, c);
+            info(b);
+        }
+        falsecolor_palette = orig_pal;
+        rst(1, "falsecolor_palettes", 0);
+    }
     hdr("DISPLAY SYSTEM");
     {
         uint8_t *vram = bmp_vram();

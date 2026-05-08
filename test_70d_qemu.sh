@@ -106,7 +106,6 @@ fi
 echo "═══ Preparing QEMU disk images... ═══"
 DISK_DIR="$QEMU_DIR/magiclantern/disk_images"
 SD_IMG="$DISK_DIR/sd.qcow2"
-CF_IMG="$DISK_DIR/cf.qcow2"
 
 if [[ ! -f "$SD_IMG" ]]; then
     XZ_IMG="$DISK_DIR/sd.qcow2.xz"
@@ -117,12 +116,6 @@ if [[ ! -f "$SD_IMG" ]]; then
         echo "  Creating minimal sd.qcow2..."
         qemu-img create -f qcow2 "$SD_IMG" 1G 2>/dev/null
     fi
-fi
-
-if [[ ! -f "$CF_IMG" ]]; then
-    echo "  Creating minimal cf.qcow2..."
-    qemu-img create -f qcow2 "$CF_IMG" 128M 2>/dev/null || \
-        dd if=/dev/zero of="$CF_IMG" bs=1 count=0 seek=128M 2>/dev/null
 fi
 
 # If --boot mode, copy ML build to SD image
@@ -141,7 +134,6 @@ if [[ $BOOT_MODE -eq 1 ]]; then
     fi
     if [[ $BOOT_MODE -eq 1 ]] && [[ -f "$BUILD_DIR/sd.qcow2" ]]; then
         SD_IMG="$BUILD_DIR/sd.qcow2"
-        CF_IMG="$BUILD_DIR/cf.qcow2"
         echo " Using ML boot SD image: $SD_IMG"
     elif [[ $BOOT_MODE -eq 1 ]]; then
         BOOT_MODE=0
@@ -162,7 +154,6 @@ fi
 
 CMD=("$QEMU_BIN")
 CMD+=(-drive if=sd,file="$SD_IMG")
-CMD+=(-drive if=ide,file="$CF_IMG")
 CMD+=(-M "70D,firmware=boot=$BOOT_FLAG")
 CMD+=(-name "70D")
 
