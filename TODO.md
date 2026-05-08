@@ -1408,10 +1408,29 @@ hw_test v19 dumps 3 RAM regions (33MB total) to SD card. Analysis on development
 - [x] **doc/FUTURE-FEATURES.md:** 31-feature research-backed roadmap across 4 tiers
 - [x] Build: 70D=468KB (+3KB), EOSM=452KB (no regression)
 
-### Sprint 41 — Holy Grail Timelapse, Live Composite, Custom False Color (COMPLETE)
-- [x] **Holy Grail Timelapse module** (`holy_grail`): intervalometer + smooth ISO/shutter ramping. Config: total frames, interval, start/end ISO, start/end shutter index. Menu under "Shoot".
-- [x] **Custom False Color IRE Ranges** (palette 6 "Custom Range"): dynamic palette computed from falsecolor_custom_min/custom_max config values. Below min = dark blue, above max = red, in range = green→yellow→orange gradient.
-- [x] Build: 70D=468KB (31 modules + live_comp + holy_grail), EOSM=452KB (no regression)
+### Sprint 41 — Holy Grail Timelapse, Live Composite, Custom False Color (REMOVED)
+- [x] Holy Grail, Live Composite, wifi_enable modules **removed** in Sprint 42 audit
+- [x] `call("shoot")` does not exist in eventproc table (LLM hallucination)
+- [x] `call("LughConnect")` does not exist — WiFi init does nothing
+- [x] Live Composite OOB buffer + wrong approach (read video frames, not exposures)
+- [x] Build: 70D=468KB (same, broken modules removed)
+
+### Sprint 42 — Code Audit & Bug Fixes (COMPLETE)
+- [x] falsecolor.c: palette 6 OOB crash — fixed all draw paths through falsecolor_value_ex()
+- [x] falsecolor.h: wrong extern type (pointer vs 2D array) — fixed
+- [x] falsecolor.c: "Unk" for Custom Range palette name — fixed
+- [x] falsecolor.c: printf format string safety in MENU_SET_VALUE — fixed
+- [x] hw_test.c: ROM1 physical scan (0xF8000000) — removed, causes Data Abort
+- [x] hw_test.c: 12+ rst() calls showing SKIP instead of FAIL — fixed
+- [x] hw_test.c: info_int() doesn't exist — fixed
+- [x] hw_test.c: EnableDebugMon not in eventproc table — noted
+- [x] wifisrv.c: EnableBootDisk freezes 70D — removed
+- [x] ptptun.c: EnableBootDisk/TurnOnDisplay in self-test — removed
+- [x] test_qemu.sh: non-existent EOSM3/5/10 models — removed
+- [x] property.h: duplicate PROP_AFFRAME_ENABLE_SETTING — removed
+- [x] MODULES: removed live_comp, holy_grail, wifi_enable from build
+- [x] Build: 70D=468KB, EOSM=452KB (no regressions)
+- [x] All fixes pushed to peva3/magiclantern_70D. No PRs created.
 
 ### Sprint 45 — Next Steps from FUTURE-FEATURES.md
 - [ ] **Tier 1: DLNA Media Server Toggle** — property change to enable WiFi/DLNA (easy, test on hardware)
