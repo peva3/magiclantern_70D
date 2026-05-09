@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Create a bootable SD qcow2 image for ML 70D QEMU testing."""
+"""Create a bootable SD raw image for ML 70D QEMU testing."""
 import os, struct, sys, subprocess, tempfile, shutil
 
 CAMERA = sys.argv[1] if len(sys.argv) > 1 else "70D"
 FW_VER = "112" if CAMERA == "70D" else "202"
 BUILD_DIR = f"/app/70d/platform/{CAMERA}.{FW_VER}/build"
-OUTPUT = f"/app/70d/qemu-eos/sd_{CAMERA}.qcow2"
+OUTPUT = f"/app/70d/qemu-eos/sd_{CAMERA}.raw"
 SIZE_MB = 256
 TMP_RAW = f"/tmp/sd_{CAMERA}_raw.img"
 
@@ -54,7 +54,7 @@ for item in glob.glob(f"{BUILD_DIR}/zip/ML/*"):
 
 print(f"SD image created with {os.path.getsize(TMP_RAW)} bytes")
 
-# Convert to qcow2
-subprocess.run(['qemu-img', 'convert', '-f', 'raw', '-O', 'qcow2', '-c', TMP_RAW, OUTPUT], check=True)
+# Copy to raw output (no compression overhead)
+shutil.copy2(TMP_RAW, OUTPUT)
 os.remove(TMP_RAW)
-print(f"QCow2 image: {OUTPUT} ({os.path.getsize(OUTPUT)} bytes)")
+print(f"Raw image: {OUTPUT} ({os.path.getsize(OUTPUT)} bytes)")

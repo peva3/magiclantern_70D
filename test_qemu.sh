@@ -91,7 +91,7 @@ done
 
 # ── QEMU command ──────────────────────────────────────────────────────────────
 QEMU_CMD=("$QEMU_BIN" "-M" "$CAMERA" "-nographic" "$DEBUG_OPTS"
-    "-drive" "if=sd,format=qcow2,file=$QEMU_DIR/sd.qcow2")
+    "-drive" "if=sd,format=raw,file=$QEMU_DIR/sd.raw,cache=unsafe")
 
 # ── QEMU_EOS_WORKDIR for ROM path resolution ────────────────────────────────────
 export QEMU_EOS_WORKDIR="$ROM_DIR"
@@ -121,16 +121,21 @@ if [ "$BOOT_MODE" -eq 1 ]; then
     ML_BUILD_DIR="$SCRIPT_DIR/platform/${CAMERA}.${FW_VER}/build"
     if [ -f "$ML_BUILD_DIR/autoexec.bin" ]; then
         echo "Booting $CAMERA from ML build..."
-        SD_IMG="$QEMU_DIR/sd_${CAMERA}.qcow2"
+        SD_IMG="$QEMU_DIR/sd_${CAMERA}.raw"
+        CF_IMG="$QEMU_DIR/cf_${CAMERA}.raw"
         if [ ! -f "$SD_IMG" ]; then
-            python3 "$QEMU_DIR/magiclantern/create_sd_image.py" \
-                "$CAMERA" "$ML_BUILD_DIR" "$SD_IMG" 2>/dev/null || \
-                qemu-img create -f qcow2 "$SD_IMG" 256M 2>/dev/null
+            # Use raw format for speed (no COW overhead)
+            qemu-img create -f raw "$SD_IMG" 256M 2>/dev/null
+            python3 "$SCRIPT_DIR/tools/format_sd_fat32.py" "$SD_IMG" 2>/dev/null
+        fi
+        if [ ! -f "$CF_IMG" ] && grep -q "cf_driver_interrupt" "$QEMU_DIR/hw/eos/model_list.c" 2>/dev/null; then
+            qemu-img create -f raw "$CF_IMG" 64M 2>/dev/null
         fi
         QEMU_CMD=("$QEMU_BIN" "-M" "$CAMERA" "-nographic"
-            "-drive" "if=sd,format=qcow2,file=$SD_IMG"
+            "-drive" "if=sd,format=raw,file=$SD_IMG,cache=unsafe"
             "-serial" "file:$SERIAL_LOG"
-            "$DEBUG_OPTS")
+            "$DEBUG_OPTS"
+            "-display" "none")
     else
         echo "No ML build for $CAMERA. Run without --boot to test model only."
         exit 1
