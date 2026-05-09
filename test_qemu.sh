@@ -91,7 +91,7 @@ done
 
 # ── QEMU command ──────────────────────────────────────────────────────────────
 QEMU_CMD=("$QEMU_BIN" "-M" "$CAMERA" "-nographic" "$DEBUG_OPTS"
-    "-drive" "if=sd,format=raw,file=$QEMU_DIR/sd.raw,cache=unsafe")
+    "-drive" "if=sd,format=qcow2,file=$QEMU_DIR/sd.qcow2,cache=unsafe")
 
 # ── QEMU_EOS_WORKDIR for ROM path resolution ────────────────────────────────────
 export QEMU_EOS_WORKDIR="$ROM_DIR"
@@ -121,7 +121,7 @@ if [ "$BOOT_MODE" -eq 1 ]; then
     ML_BUILD_DIR="$SCRIPT_DIR/platform/${CAMERA}.${FW_VER}/build"
     if [ -f "$ML_BUILD_DIR/autoexec.bin" ]; then
         echo "Booting $CAMERA from ML build..."
-        SD_IMG="$QEMU_DIR/sd_${CAMERA}.raw"
+        SD_IMG="$QEMU_DIR/sd_${CAMERA}.qcow2"
         CF_IMG="$QEMU_DIR/cf_${CAMERA}.raw"
         if [ ! -f "$SD_IMG" ]; then
             # Use raw format for speed (no COW overhead)
@@ -132,7 +132,7 @@ if [ "$BOOT_MODE" -eq 1 ]; then
             qemu-img create -f raw "$CF_IMG" 64M 2>/dev/null
         fi
         QEMU_CMD=("$QEMU_BIN" "-M" "$CAMERA" "-nographic"
-            "-drive" "if=sd,format=raw,file=$SD_IMG,cache=unsafe"
+            "-drive" "if=sd,format=qcow2,file=$SD_IMG,cache=unsafe"
             "-serial" "file:$SERIAL_LOG"
             "$DEBUG_OPTS"
             "-display" "none")

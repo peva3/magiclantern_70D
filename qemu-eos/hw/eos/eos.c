@@ -4368,6 +4368,35 @@ unsigned int eos_handle_i2c(unsigned int parm, unsigned int address, unsigned ch
                         {
                             STR_APPEND(data, " %02X", last_i2c_txdata[pos]);
                         }
+                        /* Decode AK4646 register writes (slave address 0x1A/0x1B) */
+                        if ((last_i2c_addr == 0x1A || last_i2c_addr == 0x1B) && last_i2c_txpos == 2)
+                        {
+                            uint8_t reg_raw = last_i2c_txdata[0];
+                            uint8_t reg_idx = (reg_raw >> 1) & 0x1F;  /* AK4646: address in upper bits */
+                            uint8_t val = last_i2c_txdata[1];
+                            const char *reg_name = "UNK";
+                            switch (reg_idx) {
+                                case 0x00: reg_name = "PM1 (Power Mgmt 1)"; break;
+                                case 0x01: reg_name = "PM2 (Power Mgmt 2)"; break;
+                                case 0x02: reg_name = "SIG1 (Signal Select 1)"; break;
+                                case 0x03: reg_name = "SIG2 (Signal Select 2)"; break;
+                                case 0x04: reg_name = "MODE1 (Mic Amp Mode)"; break;
+                                case 0x05: reg_name = "MODE2 (Beep/ALC)"; break;
+                                case 0x06: reg_name = "ALC1 (ALC Mode 1)"; break;
+                                case 0x07: reg_name = "ALC2 (ALC Mode 2)"; break;
+                                case 0x08: reg_name = "IVL (Input Vol Left)"; break;
+                                case 0x09: reg_name = "IVR (Input Vol Right)"; break;
+                                case 0x0A: reg_name = "OVL (Output Vol Left)"; break;
+                                case 0x0B: reg_name = "OVR (Output Vol Right)"; break;
+                                case 0x0C: reg_name = "ALCVOL (ALC Volume)"; break;
+                                case 0x0D: reg_name = "MODE3 (Mode 3)"; break;
+                                case 0x0E: reg_name = "MODE4 (Mode 4)"; break;
+                                case 0x0F: reg_name = "PM3 (Power Mgmt 3)"; break;
+                                case 0x10: reg_name = "FIL1 (Filter 1)"; break;
+                                default: break;
+                            }
+                            STR_APPEND(data, " [AK4646] %s (reg 0x%02X) = 0x%02X", reg_name, reg_idx, val);
+                        }
                     }
 
                     if (last_i2c_rxpos)
